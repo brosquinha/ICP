@@ -1,0 +1,9 @@
+/* Para Interface de Criação de Página (teste) */
+.pi-data-value textarea { width: 100%; }
+#NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
+#CuratedContentToolModal p {
+    font-size: 14px;
+    margin: 10px 0;
+}
+#CuratedContentToolModal section { overflow-y: auto; }
+#CuratedContentToolModal { max-height: 80%; }
