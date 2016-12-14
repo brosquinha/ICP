@@ -1,4 +1,4 @@
-rtigoTexto = '';
+artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina(qm) {
 	if (qm=='edit' || qm=='view')
@@ -54,26 +54,46 @@ function inserirBotaoNovaPagina(qm) {
 					artigoTexto += (wgNamespaceNumber == 112) ? "|legends}}\n" : "|canon}}\n";
 				else
 					artigoTexto += "}}\n";
-				console.log(artigoTexto);
+				//console.log(artigoTexto);
+				console.log("Obtendo infobox...");
 				switch(artigoTipo) {
 					case "personagem":
-						console.log("Obtendo infobox...");
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
 							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-							console.log(infoboxContent);
+							//console.log(infoboxContent);
 							infoboxParser(infoboxContent, "Personagem infobox");
 						});
 						break;
 					case "planeta":
-					break;
+						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Planeta?action=raw", function(data) {
+							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
+							infoboxParser(infoboxContent, "Planeta");
+						});
+						break;
 					case "droide":
-					break;
+						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Droide_infobox?action=raw", function(data) {
+							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
+							infoboxParser(infoboxContent, "Droide infobox");
+						});
+						break;
 					case "espaçonave":
-					break;
+						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Nave?action=raw", function(data) {
+							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
+							infoboxParser(infoboxContent, "Nave");
+						});
+						break;
 					case "evento":
-					break;
+						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Evento?action=raw", function(data) {
+							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
+							infoboxParser(infoboxContent, "Evento");
+						});
+						break;
 					case "tecnologia":
-					break;
+						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Dispositivo_infobox?action=raw", function(data) {
+							infoboxContent = data.split("</infobox>")[0] + "</infobox>";
+							infoboxParser(infoboxContent, "Dispositivo infobox");
+						});
+						break;
 				}
 			});
 		});
@@ -87,6 +107,7 @@ function infoboxParser(txt, nome)
 	passo2 += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
 	'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 	artigoTexto += "{{"+nome+"\n";
+	artigoTexto += "|nome-"+wgTitle+"\n";
 	for (var i=0; i<$(infoboxObj).find("data").length; i++)
 	{
 		dataTag = $(infoboxObj).find("data")[i];
@@ -102,7 +123,7 @@ function infoboxParser(txt, nome)
 	$("#CuratedContentToolModal section button").click(function() {
 		var infTxts = $("#CuratedContentToolModal section aside textarea");
 		var subArtTxt = artigoTexto.split("=");
-		artigoTexto = subArtTxt[0];
+		artigoTexto = subArtTxt[0].replace("|nome-", "|nome=");
 		for (var i=0; i<infTxts.length; i++)
 		{
 			artigoTexto += '='+$(infTxts[i]).val();
@@ -110,11 +131,11 @@ function infoboxParser(txt, nome)
 		}
 		artigoTexto += "'''"+wgTitle+"''' foi um...";
 		console.log(artigoTexto);
-		
+ 
 		var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
 		alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
 		//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
-		
+ 
 		$("#CuratedContentToolModal a.close").click();
 		$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 		$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
@@ -127,7 +148,7 @@ function infoboxParser(txt, nome)
 		});
 	});
 }
-
+ 
 function inserirSelecionarUniverso(e) {
 	if (e.target.id != "blackout_CreatePageModalDialog") return;
 	$("#CreatePageDialogChoose").before('<label><b>Qual universo?</b> <select name="universo" id="selecionarUniverso">'+
@@ -143,7 +164,6 @@ $(document).ready(function() {
     $("body").on('DOMNodeInserted', inserirSelecionarUniverso);
     if (wgAction == "edit")
         $("img[title='Cânon link']").attr('accesskey', 'c');
-    if (wgArticleId === 0 && (wgAction == 'edit' || wgAction == 'view'))
+    if (wgArticleId === 0 && (wgAction == 'edit' || wgAction == 'view') && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
 		inserirBotaoNovaPagina(wgAction);
 });
-
