@@ -7,7 +7,7 @@ function inserirBotaoNovaPagina() {
 	$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible">'
 		+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 			+'<header>'
-				+'<a href="#" class="close" title="close">close</a>'
+				+'<a href="#" class="close" title="">Close</a>'
 					+'<h3>Criando um novo artigo</h3>'
 			+'</header>'
 			+'<section>'
@@ -129,30 +129,46 @@ function infoboxParser(txt, nome)
 		artigoTexto += "'''"+wgTitle+"''' foi um...";
 		console.log(artigoTexto);
  
-		if (wgAction == "view")
-		{
-			//Visual Editor
-			var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
-			alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
-			//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
+		inserirInterlink();
+	});
+}
+function inserirInterlink()
+{
+	$("#CuratedContentToolModal header h3").text("Passo 4: Fontes e Aparições");
+	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
+	passo4 += "<form name='form1' style='display:inline;'><input type='text' id='wookieePage' name='wookieePage' /></form><button data-interlink='true'>Enviar</button></p>";
+	$("#CuratedContentToolModal section").html(passo4);
+	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
+		$.get("http://pt.starwars.wikia.com/wiki/en:"+encodeURI(document.form1.wookieePage.value)+"?action=raw", function(data) {
+			//Procurar por fontes e aparições e traduzir da mesma forma que o BB-08 traduz
+			console.log(data);
  
-			$("#CuratedContentToolModal a.close").click();
-			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-			$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
-			$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-				setTimeout(function() {
-					$("textarea.ui-autocomplete-input").val(artigoTexto);
-					$("textarea.ui-autocomplete-input").change();
-					setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-				}, 1500);
-			});
-		}
-		else
-		{
-			//Source editor (hopefully)
-			var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
-			theTextarea.value += artigoTexto
-		}
+			if (wgAction == "view")
+			{
+				//Visual Editor
+				var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
+				alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
+				//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
+ 
+				$("#CuratedContentToolModal a.close").click();
+				$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
+				$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
+				$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
+					setTimeout(function() {
+						$("textarea.ui-autocomplete-input").val(artigoTexto);
+						$("textarea.ui-autocomplete-input").change();
+						setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
+					}, 1500);
+				});
+			}
+			else
+			{
+				//Source editor (hopefully)
+				var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
+				theTextarea.value += artigoTexto;
+				$("#CuratedContentToolModal a.close").click();
+			}
+		});
 	});
 }
  
