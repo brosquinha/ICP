@@ -166,6 +166,12 @@ function jsonpCallback(data)
 		alert("Página não encotrada!");
 		return;
 	}
+	if (wookieePage.toLowerCase().substring(0, 9) == "#redirect")
+	{
+		$("#wookieePage").val(wookieePage.split("[[")[1].split("]]")[0]);
+		$("#CuratedContentToolModal section button[data-interlink]").click();
+		return;
+	}
 	//console.log("Wookiee: "+wookieePage);
 	wookieePage.replace("{{interlang", "{{Interlang");
 	wookieeSecoes = wookieePage.split("==");
