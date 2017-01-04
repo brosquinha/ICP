@@ -147,16 +147,25 @@ function inserirInterlink()
 {
 	$("#CuratedContentToolModal header h3").text("Passo 4: Fontes e Aparições");
 	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
-	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button></p>";
+	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button>"
+	+"<button data-nope='true'>Não sei / não existe</button></p>";
 	$("#CuratedContentToolModal section").html(passo4);
 	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
 		$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"});
 		$("#CuratedContentToolModal section button").attr('disabled');
 	});
+	$("#CuratedContentToolModal section button[data-nope]").click(function() {
+		finalizarEdicao();
+	});
 }
 function jsonpCallback(data)
 {
 	wookieePage = data.content;
+	if (wookieePage === false)
+	{
+		alert("Página não encotrada!");
+		return;
+	}
 	//console.log("Wookiee: "+wookieePage);
 	wookieeSecoes = wookieePage.split("==");
 	console.log(wookieeSecoes);
@@ -176,8 +185,18 @@ function jsonpCallback(data)
 			break;
 		}
 	}
-	artigoTexto += "\n== Aparições ==\n"+wookieeAparicoes;
-	artigoTexto += "\n== Fontes ==\n"+wookieeFontes;
+	wookieePage.replace("{{interlang", "{{Interlang");
+	if (wookieePage.search("{{Interlang") > 0)
+		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
+	else
+		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
+	artigoTexto += "\n\n== Aparições =="+wookieeAparicoes;
+	artigoTexto += "== Fontes =="+wookieeFontes;
+	artigoTexto += wookieeInterlang;
+	finalizarEdicao();
+}
+function finalizarEdicao()
+{
 	if (wgAction == "view")
 	{
 		//Visual Editor
@@ -202,7 +221,7 @@ function jsonpCallback(data)
 		var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 		theTextarea.value += artigoTexto;
 		$("#CuratedContentToolModal a.close").click();
-	}
+	}	
 }
  
 function inserirSelecionarUniverso(e) {
