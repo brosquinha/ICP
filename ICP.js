@@ -167,6 +167,7 @@ function jsonpCallback(data)
 		return;
 	}
 	//console.log("Wookiee: "+wookieePage);
+	wookieePage.replace("{{interlang", "{{Interlang");
 	wookieeSecoes = wookieePage.split("==");
 	console.log(wookieeSecoes);
 	wookieeAparicoes = '';
@@ -185,7 +186,8 @@ function jsonpCallback(data)
 			break;
 		}
 	}
-	wookieePage.replace("{{interlang", "{{Interlang");
+	if (wookieeFontes.search("{{Interlang") > 0)
+		wookieeFontes = wookieeFontes.split("{{Interlang")[0];
 	if (wookieePage.search("{{Interlang") > 0)
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
 	else
