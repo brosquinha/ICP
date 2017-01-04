@@ -13,9 +13,12 @@ function inserirBotaoNovaPagina() {
 			+'<section>'
 				+'<p>Selecione um tipo de artigo:</p>'
 				+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-					+'<tr><td style="width:50%">Personagem</td><td>Planeta</td></tr>'
-					+'<tr><td style="width:50%">Droide</td><td>Espaçonave</td></tr>'
-					+'<tr><td style="width:50%">Evento</td><td>Tecnologia</td></tr>'
+					+'<tr><td style="width:50%" data-tipo="personagem"><img src="https://www.jedipedia.net/w/images/4/48/Personen.png" /><br />Personagem</td>'
+					+'<td data-tipo="planeta"><img src="https://www.jedipedia.net/w/images/1/16/Planeten.png" /><br />Planeta</td></tr>'
+					+'<tr><td style="width:50%" data-tipo="droide"><img src="https://www.jedipedia.net/w/images/f/f0/Droiden.png" /><br />Droide</td>'
+					+'<td data-tipo="espaçonave"><img src="https://www.jedipedia.net/w/images/4/4f/Raumschiffe-Icon.png" /><br />Espaçonave</td></tr>'
+					+'<tr><td style="width:50%" data-tipo="evento"><img src="https://www.jedipedia.net/w/images/7/7a/Ereignisse.png" /><br />Evento</td>'
+					+'<td data-tipo="tecnologia"><img src="https://www.jedipedia.net/w/images/8/8c/Waffen.png" /><br />Tecnologia</td></tr>'
 				+'</table>'
 				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
@@ -29,31 +32,39 @@ function inserirBotaoNovaPagina() {
 		$("#blackout_CuratedContentToolModal").removeClass('visible');
 	});
 	$("#NovaPaginaTipoDeArtigo td").click(function() {
-		artigoTipo = this.innerHTML.toLowerCase();
+		artigoTipo = $(this).attr("data-tipo");
 		console.log("Carregando modelo para "+artigoTipo);
 		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
-		passo1 = '<p>Esse artigo pertence ao universo ';
+		passo1 = '<img src="';
+		passo1 += (wgNamespaceNumber == 112) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+		passo1 += '" style="width:150px;float:right;" />';
+		passo1 += '<p style="font-size:14px">Esse artigo pertence ao universo <span style="font-weight:bold">';
 		if (wgNamespaceNumber == 112)
 		{
 			passo1 += 'Cânon';
+			txtBotaoSim = 'Sim, também pertence ao <i>Legends</i>';
+			txtBotaoNao = 'Não, pertence somente ao Cânon';
 			artigoTexto = "{{Eras|canon";
 		}
 		else
 		{
 			passo1 += '<i>Legends</i>';
+			txtBotaoSim = 'Sim, também pertence ao Cânon';
+			txtBotaoNao = 'Não, pertence somente ao <i>Legends</i>';
 			artigoTexto = "{{Eras|legends";
 		}
-		passo1 += '. Ele pertence também ao outro universo?</p>';
-		passo1 += '<p><button data-resp="s">Sim</button><button data-resp="n">Não</button>';
+		passo1 += '</span>. Ele pertence também ao outro universo?</p>';
+		passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 		$("#CuratedContentToolModal section").html(passo1);
 		$("#CuratedContentToolModal section button[data-resp]").click(function() {
-			console.log("Usuário respondeu "+this.innerHTML);
-			if (this.innerHTML == "Sim")
+			//console.log("Usuário respondeu "+this.innerHTML);
+			if ($(this).attr('data-resp') == "s")
 				artigoTexto += (wgNamespaceNumber == 112) ? "|legends}}\n" : "|canon}}\n";
 			else
 				artigoTexto += "}}\n";
-			//console.log(artigoTexto);
+			console.log(artigoTexto);
 			console.log("Obtendo infobox...");
+			$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
 			switch(artigoTipo) {
 				case "personagem":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
@@ -136,40 +147,62 @@ function inserirInterlink()
 {
 	$("#CuratedContentToolModal header h3").text("Passo 4: Fontes e Aparições");
 	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
-	passo4 += "<form name='form1' style='display:inline;'><input type='text' id='wookieePage' name='wookieePage' /></form><button data-interlink='true'>Enviar</button></p>";
+	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button></p>";
 	$("#CuratedContentToolModal section").html(passo4);
 	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
-		$.get("http://pt.starwars.wikia.com/wiki/en:"+encodeURI(document.form1.wookieePage.value)+"?action=raw", function(data) {
-			//Procurar por fontes e aparições e traduzir da mesma forma que o BB-08 traduz
-			console.log(data);
- 
-			if (wgAction == "view")
-			{
-				//Visual Editor
-				var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
-				alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
-				//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
- 
-				$("#CuratedContentToolModal a.close").click();
-				$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-				$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
-				$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-					setTimeout(function() {
-						$("textarea.ui-autocomplete-input").val(artigoTexto);
-						$("textarea.ui-autocomplete-input").change();
-						setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-					}, 1500);
-				});
-			}
-			else
-			{
-				//Source editor (hopefully)
-				var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
-				theTextarea.value += artigoTexto;
-				$("#CuratedContentToolModal a.close").click();
-			}
-		});
+		$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"});
+		$("#CuratedContentToolModal section button").attr('disabled');
 	});
+}
+function jsonpCallback(data)
+{
+	wookieePage = data.content;
+	//console.log("Wookiee: "+wookieePage);
+	wookieeSecoes = wookieePage.split("==");
+	console.log(wookieeSecoes);
+	wookieeAparicoes = '';
+	wookieeFontes = '';
+	for (i=0; i<wookieeSecoes.length; i++)
+	{
+		//alert(wookieeSecoes[i]);
+		if ($.trim(wookieeSecoes[i]) == "Appearances")
+		{
+			wookieeAparicoes = wookieeSecoes[i+1];
+			//TODO: Verficar por aparições não canônicas
+		}
+		else if ($.trim(wookieeSecoes[i]) == "Sources")
+		{
+			wookieeFontes = wookieeSecoes[i+1];
+			break;
+		}
+	}
+	artigoTexto += "\n== Aparições ==\n"+wookieeAparicoes;
+	artigoTexto += "\n== Fontes ==\n"+wookieeFontes;
+	if (wgAction == "view")
+	{
+		//Visual Editor
+		var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
+		alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
+		//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
+ 
+		$("#CuratedContentToolModal a.close").click();
+		$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
+		$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
+		$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
+			setTimeout(function() {
+				$("textarea.ui-autocomplete-input").val(artigoTexto);
+				$("textarea.ui-autocomplete-input").change();
+				setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
+			}, 1500);
+		});
+	}
+	else
+	{
+		//Source editor (hopefully)
+		var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
+		theTextarea.value += artigoTexto;
+		$("#CuratedContentToolModal a.close").click();
+	}
 }
  
 function inserirSelecionarUniverso(e) {
