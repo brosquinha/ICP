@@ -6,7 +6,7 @@ function inserirBotaoNovaPagina() {
 	$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 		+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 			+'<header>'
-				+'<a href="#" class="close" title="">Close</a>'
+				+'<span class="close">Close</span>'
 					+'<h3>Criando um novo artigo</h3>'
 			+'</header>'
 			+'<section>'
@@ -22,13 +22,16 @@ function inserirBotaoNovaPagina() {
 				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
 			+'<footer>'
-				+'<div>' //class="buttons"
+				+'<div><button id="finalizarEdicao">Terminar</button>' //class="buttons"
 				+'</div>'
 			+'</footer>'
 		+'</div>'
 	+'</div>');
-	$("#CuratedContentToolModal a.close").click(function() {
+	$("#CuratedContentToolModal span.close").click(function() {
 		$("#blackout_CuratedContentToolModal").removeClass('visible');
+	});
+	$("#finalizarEdicao").click(function () {
+		finalizarEdicao();
 	});
 	$("#NovaPaginaTipoDeArtigo td").click(function() {
 		artigoTipo = $(this).attr("data-tipo");
@@ -142,7 +145,7 @@ function infoboxParser(txt, nome)
 }
 function inserirInterlink()
 {
-	$("#CuratedContentToolModal header h3").text("Passo 4: Fontes e Aparições");
+	$("#CuratedContentToolModal header h3").text("Passo 3: Fontes e Aparições");
 	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button>"
 	+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
@@ -155,7 +158,7 @@ function inserirInterlink()
 		window.open("http://starwars.wikia.com/wiki/"+encodeURI($("#wookieePage").val().replace(" ", "_")))
 	});
 	$("#CuratedContentToolModal section button[data-nope]").click(function() {
-		finalizarEdicao();
+		categorizar();
 	});
 }
 function jsonpCallback(data)
@@ -202,7 +205,26 @@ function jsonpCallback(data)
 	if (wookieeFontes != false)
 		artigoTexto += "== Fontes =="+wookieeFontes;
 	artigoTexto += wookieeInterlang;
-	finalizarEdicao();
+	categorizar();
+}
+function categorizar()
+{
+	var passo5 = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
+	'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi"</p>';
+	$("#CuratedContentToolModal section").html(passo5);
+	if (wgAction == 'edit')
+	{
+		$("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
+	}
+	else
+	{
+		$("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
+	}
+	$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
+	$("#CuratedContentToolModal section button").click(function () {
+		$("div [data-id='categories']").insertAfter("div [data-id='insert']");
+		finalizarEdicao();
+	});
 }
 function finalizarEdicao()
 {
@@ -213,7 +235,7 @@ function finalizarEdicao()
 		alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
 		//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
  
-		$("#CuratedContentToolModal a.close").click();
+		$("#CuratedContentToolModal span.close").click();
 		$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 		$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
 		$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
@@ -229,7 +251,7 @@ function finalizarEdicao()
 		//Source editor (hopefully)
 		var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 		theTextarea.value += artigoTexto;
-		$("#CuratedContentToolModal a.close").click();
+		$("#CuratedContentToolModal span.close").click();
 	}	
 }
  
