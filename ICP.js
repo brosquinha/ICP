@@ -1,10 +1,9 @@
 artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina() {
-	//Verificar se é modo Visual ou Fonte
 	//<iframe data-url="/main/edit?useskin=wikiamobile" id="CuratedContentToolIframe" class="curated-content-tool" name="curated-content-tool" src="/main/edit?useskin=wikiamobile"></iframe>
 	$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
-	$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible">'
+	$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 		+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 			+'<header>'
 				+'<a href="#" class="close" title="">Close</a>'
@@ -23,7 +22,7 @@ function inserirBotaoNovaPagina() {
 				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
 			+'<footer>'
-				+'<div class="buttons">'
+				+'<div>' //class="buttons"
 				+'</div>'
 			+'</footer>'
 		+'</div>'
@@ -57,7 +56,6 @@ function inserirBotaoNovaPagina() {
 		passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 		$("#CuratedContentToolModal section").html(passo1);
 		$("#CuratedContentToolModal section button[data-resp]").click(function() {
-			//console.log("Usuário respondeu "+this.innerHTML);
 			if ($(this).attr('data-resp') == "s")
 				artigoTexto += (wgNamespaceNumber == 112) ? "|legends}}\n" : "|canon}}\n";
 			else
@@ -69,7 +67,6 @@ function inserirBotaoNovaPagina() {
 				case "personagem":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
 						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						//console.log(infoboxContent);
 						infoboxParser(infoboxContent, "Personagem infobox");
 					});
 					break;
@@ -148,11 +145,14 @@ function inserirInterlink()
 	$("#CuratedContentToolModal header h3").text("Passo 4: Fontes e Aparições");
 	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button>"
-	+"<button data-nope='true'>Não sei / não existe</button></p>";
+	+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
 	$("#CuratedContentToolModal section").html(passo4);
 	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
 		$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"});
 		$("#CuratedContentToolModal section button").attr('disabled');
+	});
+	$("#CuratedContentToolModal section button[data-prev]").click(function() {
+		window.open("http://starwars.wikia.com/wiki/"+encodeURI($("#wookieePage").val().replace(" ", "_")))
 	});
 	$("#CuratedContentToolModal section button[data-nope]").click(function() {
 		finalizarEdicao();
@@ -172,15 +172,13 @@ function jsonpCallback(data)
 		$("#CuratedContentToolModal section button[data-interlink]").click();
 		return;
 	}
-	//console.log("Wookiee: "+wookieePage);
 	wookieePage.replace("{{interlang", "{{Interlang");
 	wookieeSecoes = wookieePage.split("==");
 	console.log(wookieeSecoes);
-	wookieeAparicoes = '';
-	wookieeFontes = '';
+	wookieeAparicoes = false;
+	wookieeFontes = false;
 	for (i=0; i<wookieeSecoes.length; i++)
 	{
-		//alert(wookieeSecoes[i]);
 		if ($.trim(wookieeSecoes[i]) == "Appearances")
 		{
 			wookieeAparicoes = wookieeSecoes[i+1];
@@ -192,14 +190,17 @@ function jsonpCallback(data)
 			break;
 		}
 	}
+	artigoTexto += "\n\n";
 	if (wookieeFontes.search("{{Interlang") > 0)
 		wookieeFontes = wookieeFontes.split("{{Interlang")[0];
 	if (wookieePage.search("{{Interlang") > 0)
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
 	else
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
-	artigoTexto += "\n\n== Aparições =="+wookieeAparicoes;
-	artigoTexto += "== Fontes =="+wookieeFontes;
+	if (wookieeAparicoes != false)
+		artigoTexto += "== Aparições =="+wookieeAparicoes;
+	if (wookieeFontes != false)
+		artigoTexto += "== Fontes =="+wookieeFontes;
 	artigoTexto += wookieeInterlang;
 	finalizarEdicao();
 }
