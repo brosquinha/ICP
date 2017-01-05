@@ -194,9 +194,9 @@ function jsonpCallback(data)
 		}
 	}
 	artigoTexto += "\n\n";
-	if (wookieeFontes.search("{{Interlang") > 0)
+	if (wookieeFontes.search("{{Interlang") >= 0)
 		wookieeFontes = wookieeFontes.split("{{Interlang")[0];
-	if (wookieePage.search("{{Interlang") > 0)
+	if (wookieePage.search("{{Interlang") >= 0)
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
 	else
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
@@ -209,22 +209,41 @@ function jsonpCallback(data)
 }
 function categorizar()
 {
+	$("#CuratedContentToolModal header h3").text("Passo 4: Categorias");
 	var passo5 = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
-	'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi"</p>';
-	$("#CuratedContentToolModal section").html(passo5);
+	'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
 	if (wgAction == 'edit')
 	{
+		$("#CuratedContentToolModal section").html(passo5);
 		$("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
+		$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
+		$("#CuratedContentToolModal section button").click(function () {
+			$("div [data-id='categories']").insertAfter("div [data-id='insert']");
+			finalizarEdicao();
+		});
 	}
 	else
 	{
+		passo5 += '<p>Para isso, clique em "Categorias" no Editor Visual conforme lhe é apresentado e preencha o campo '
+		+'com as categorias. Quando terminar, clique no botão "Aplicar mudanças".</p>';
+		$("#CuratedContentToolModal section").html(passo5);
+		$("#CuratedContentToolModal section").append("<p><button>Ok, vamos lá</button></p>");
+		$("#CuratedContentToolModal section button").click(function () {
+					$("#blackout_CuratedContentToolModal").removeClass('visible');
+		});
+		$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
+		$("span.oo-ui-tool-name-categories").css('border', '1px solid');
+		$("span.oo-ui-tool-name-categories a").click(function() {
+			setTimeout(function() {
+				$("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click(function () {
+					$("span.oo-ui-tool-name-categories").css('border', '0px solid');
+					$("#blackout_CuratedContentToolModal").addClass('visible');
+					finalizarEdicao();
+				});
+			}, 1500);
+		});
 		$("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
 	}
-	$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
-	$("#CuratedContentToolModal section button").click(function () {
-		$("div [data-id='categories']").insertAfter("div [data-id='insert']");
-		finalizarEdicao();
-	});
 }
 function finalizarEdicao()
 {
@@ -240,7 +259,10 @@ function finalizarEdicao()
 		$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
 		$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
 			setTimeout(function() {
-				$("textarea.ui-autocomplete-input").val(artigoTexto);
+				if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
+					$("textarea.ui-autocomplete-input").val(artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val());
+				else
+					$("textarea.ui-autocomplete-input").val(artigoTexto);
 				$("textarea.ui-autocomplete-input").change();
 				setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
 			}, 1500);
@@ -274,7 +296,7 @@ $(document).ready(function() {
 		if (wgAction == 'edit')
 			inserirBotaoNovaPagina();
 		if (wgAction == 'view')
-			if (document.location.href.search("veaction=edit") > 0)
+			if (document.location.href.search("veaction=edit") >= 0)
 				inserirBotaoNovaPagina();
 			else
 				$("#ca-ve-edit").click(function () { inserirBotaoNovaPagina(); });
