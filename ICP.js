@@ -22,13 +22,41 @@ function inserirBotaoNovaPagina() {
 				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
 			+'<footer>'
-				+'<div><button id="finalizarEdicao">Terminar</button>' //class="buttons"
+				+'<div style="float:right;">'
+					+'<button id="configuracoesICP">Configurações</button>'
+					+'<button id="finalizarEdicao">Terminar</button>' //class="buttons"
 				+'</div>'
 			+'</footer>'
 		+'</div>'
 	+'</div>');
 	$("#CuratedContentToolModal span.close").click(function() {
 		$("#blackout_CuratedContentToolModal").removeClass('visible');
+	});
+	$("#configuracoesICP").click(function () {
+		configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
+		"<input type='checkbox' name='default_action' checked /></label></p></form>"
+		$.showCustomModal('Configurações', configModal, {
+			id: 'ModalSettingsWindow',
+			width: 600,
+			height: 250,
+			buttons: [{
+				message: 'Resetar mudanças',
+				handler: function() {
+					$('#ModalSettingsWindow fieldset').replaceWith(configModal);
+				}
+			},{
+				message: 'Salvar',
+				handler: function() {
+					var formRes = $('form[name="config_form"]').serialize();
+					var settingsObj = {}
+					if (formRes.search("default_action") > -1)
+						settingsObj.default_action = 1;
+					else
+						settingsObj.default_action = 0;
+					localStorage.ICPsettings = JSON.stringify(settingsObj);
+				}
+			}]
+		});
 	});
 	$("#finalizarEdicao").click(function () {
 		finalizarEdicao();
@@ -293,11 +321,25 @@ $(document).ready(function() {
     if (wgAction == "edit")
         $("img[title='Cânon link']").attr('accesskey', 'c');
     if (wgArticleId === 0 && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
-		if (wgAction == 'edit')
-			inserirBotaoNovaPagina();
-		if (wgAction == 'view')
-			if (document.location.href.search("veaction=edit") >= 0)
+	{
+		if (localStorage.ICPsettings)
+			opcoesICP = JSON.parse(localStorage.ICPsettings);
+		else
+			opcoesICP.default_action = 1;
+		if (opcoesICP.default_action == 0)
+		{
+			$("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
+			$("#ICP_opener").click(function() { inserirBotaoNovaPagina(); });
+		}
+		else
+		{
+			if (wgAction == 'edit')
 				inserirBotaoNovaPagina();
-			else
-				$("#ca-ve-edit").click(function () { inserirBotaoNovaPagina(); });
+			if (wgAction == 'view')
+				if (document.location.href.search("veaction=edit") >= 0)
+					inserirBotaoNovaPagina();
+				else
+					$("#ca-ve-edit").click(function () { inserirBotaoNovaPagina(); });
+		}
+	}
 });
