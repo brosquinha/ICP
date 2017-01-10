@@ -2,6 +2,8 @@ artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina() {
 	//<iframe data-url="/main/edit?useskin=wikiamobile" id="CuratedContentToolIframe" class="curated-content-tool" name="curated-content-tool" src="/main/edit?useskin=wikiamobile"></iframe>
+	if (wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
+		location.reload();
 	$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 	$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 		+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
@@ -22,9 +24,9 @@ function inserirBotaoNovaPagina() {
 				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
 			+'<footer>'
+				+'<button id="configuracoesICP" class="secondary">Configurações</button>'
 				+'<div style="float:right;">'
-					+'<button id="configuracoesICP">Configurações</button>'
-					+'<button id="finalizarEdicao">Terminar</button>' //class="buttons"
+					//+'<button id="finalizarEdicao">Terminar</button>' //class="buttons"
 				+'</div>'
 			+'</footer>'
 		+'</div>'
@@ -54,6 +56,7 @@ function inserirBotaoNovaPagina() {
 					else
 						settingsObj.default_action = 0;
 					localStorage.ICPsettings = JSON.stringify(settingsObj);
+					alert("Alterações salvas!");
 				}
 			}]
 		});
@@ -61,7 +64,7 @@ function inserirBotaoNovaPagina() {
 	$("#finalizarEdicao").click(function () {
 		finalizarEdicao();
 	});
-	$("#NovaPaginaTipoDeArtigo td").click(function() {
+	$("#NovaPaginaTipoDeArtigo td").one("click", function() {
 		artigoTipo = $(this).attr("data-tipo");
 		console.log("Carregando modelo para "+artigoTipo);
 		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
@@ -86,7 +89,7 @@ function inserirBotaoNovaPagina() {
 		passo1 += '</span>. Ele pertence também ao outro universo?</p>';
 		passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 		$("#CuratedContentToolModal section").html(passo1);
-		$("#CuratedContentToolModal section button[data-resp]").click(function() {
+		$("#CuratedContentToolModal section button[data-resp]").one("click", function() {
 			if ($(this).attr('data-resp') == "s")
 				artigoTexto += (wgNamespaceNumber == 112) ? "|legends}}\n" : "|canon}}\n";
 			else
@@ -156,7 +159,7 @@ function infoboxParser(txt, nome)
 	passo2 += '</aside><p><button>Pronto</button></p>';
 	$("#CuratedContentToolModal section").html(passo2);
 	$("#CuratedContentToolModal section").css('overflow-y', 'auto');
-	$("#CuratedContentToolModal section button").click(function() {
+	$("#CuratedContentToolModal section button").one("click", function() {
 		var infTxts = $("#CuratedContentToolModal section aside textarea");
 		var subArtTxt = artigoTexto.split("=");
 		artigoTexto = subArtTxt[0].replace("|nome-", "|nome=");
@@ -206,8 +209,8 @@ function jsonpCallback(data)
 	wookieePage.replace("{{interlang", "{{Interlang");
 	wookieeSecoes = wookieePage.split("==");
 	console.log(wookieeSecoes);
-	wookieeAparicoes = false;
-	wookieeFontes = false;
+	wookieeAparicoes = '';
+	wookieeFontes = '';
 	for (i=0; i<wookieeSecoes.length; i++)
 	{
 		if ($.trim(wookieeSecoes[i]) == "Appearances")
@@ -228,9 +231,9 @@ function jsonpCallback(data)
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
 	else
 		wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
-	if (wookieeAparicoes != false)
+	if (wookieeAparicoes != '')
 		artigoTexto += "== Aparições =="+wookieeAparicoes;
-	if (wookieeFontes != false)
+	if (wookieeFontes != '')
 		artigoTexto += "== Fontes =="+wookieeFontes;
 	artigoTexto += wookieeInterlang;
 	categorizar();
@@ -322,6 +325,7 @@ $(document).ready(function() {
         $("img[title='Cânon link']").attr('accesskey', 'c');
     if (wgArticleId === 0 && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
 	{
+		var opcoesICP = {}
 		if (localStorage.ICPsettings)
 			opcoesICP = JSON.parse(localStorage.ICPsettings);
 		else
