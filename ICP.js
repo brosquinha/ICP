@@ -182,8 +182,8 @@ function inserirInterlink()
 	+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
 	$("#CuratedContentToolModal section").html(passo4);
 	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
+		$("#CuratedContentToolModal section button").attr('disabled', '');
 		$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"});
-		$("#CuratedContentToolModal section button").attr('disabled');
 	});
 	$("#CuratedContentToolModal section button[data-prev]").click(function() {
 		window.open("http://starwars.wikia.com/wiki/"+encodeURI($("#wookieePage").val().replace(" ", "_")))
@@ -198,6 +198,7 @@ function jsonpCallback(data)
 	if (wookieePage === false)
 	{
 		alert("Página não encotrada!");
+		$("#CuratedContentToolModal section button").removeAttr('disabled');
 		return;
 	}
 	if (wookieePage.toLowerCase().substring(0, 9) == "#redirect")
@@ -236,7 +237,15 @@ function jsonpCallback(data)
 	if (wookieeFontes != '')
 		artigoTexto += "== Fontes =="+wookieeFontes;
 	artigoTexto += wookieeInterlang;
-	categorizar();
+	$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
+		fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
+		console.log("Apêndice de obras obtido.");
+		for (var i=0; i<fixes.replacements.length; i++) {
+			var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
+			artigoTexto = artigoTexto.replace(txtRegEx, fixes.replacements[i][1]);
+		}
+		categorizar()
+	});
 }
 function categorizar()
 {
