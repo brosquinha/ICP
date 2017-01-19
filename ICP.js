@@ -1,3 +1,7 @@
+/* ************************************************************************
+************************* Page Creation Interface *************************
+* This is a tool in development that helps new comers with the process of creating a new page. I need to gather more feedback before putting it on full use, so it is important that this code be placed here. Futhermore, I have discussed this with Fandom Staff, and I've got their approval.
+*/
 artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina() {
@@ -316,20 +320,9 @@ function finalizarEdicao()
 		$("#CuratedContentToolModal span.close").click();
 	}	
 }
- 
-function inserirSelecionarUniverso(e) {
-	if (e.target.id != "blackout_CreatePageModalDialog") return;
-	$("#CreatePageDialogChoose").before('<label><b>Qual universo?</b> <select name="universo" id="selecionarUniverso">'+
-	'<option value="Legends">Legends</option><option value="canon">Cânon</option></select></label>');
-	$("#selecionarUniverso").change(function () {
-		if ($(this).val() == "canon")
-			document.CreatePageForm.wpCreatepageDialogTitle.value = "Cânon:"+document.CreatePageForm.wpCreatepageDialogTitle.value;
-		else
-			document.CreatePageForm.wpCreatepageDialogTitle.value = document.CreatePageForm.wpCreatepageDialogTitle.value.replace("Cânon:", '');
-	});
-}
+
 $(document).ready(function() {
-    $("body").on('DOMNodeInserted', inserirSelecionarUniverso);
+ 
     if (wgAction == "edit")
         $("img[title='Cânon link']").attr('accesskey', 'c');
     if (wgArticleId === 0 && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
