@@ -142,8 +142,14 @@ function inserirBotaoNovaPagina() {
 		});
 	});
 }
+ICP_wys = false;
 function infoboxParser(txt, nome)
 {
+	if (wgAction == 'edit' && $("#cke_21_label").length == 1)
+	{
+	    $("#cke_21_label").click(); // For WYSIWYG editor
+	    ICP_wys = true;
+	}
 	var infoboxObj = $.parseXML(txt);
 	$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
 	passo2 = "<p>Preencha a infobox para o artigo</p>";
@@ -201,7 +207,7 @@ function jsonpCallback(data)
 	wookieePage = data.content;
 	if (wookieePage === false)
 	{
-		alert("Página não encotrada!");
+		alert("Página não encontrada!");
 		$("#CuratedContentToolModal section button").removeAttr('disabled');
 		return;
 	}
@@ -318,6 +324,8 @@ function finalizarEdicao()
 		var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 		theTextarea.value += artigoTexto;
 		$("#CuratedContentToolModal span.close").click();
+		if (ICP_wys == true)
+		    setTimeout(function() {$("#cke_22_label").click()}, 1500);
 	}	
 }
 
