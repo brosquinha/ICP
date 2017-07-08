@@ -2,6 +2,8 @@
 ************************* Page Creation Interface *************************
 * This is a tool in development that helps new comers with the process of creating a new page. I need to gather more feedback before putting it on full use, so it is important that this code be placed here. Futhermore, I have discussed this with Fandom Staff, and I've got their approval.
 */
+//TODO: mecanismo de log (obter dados de usuários, como quando abandonou a ICP, se houve bug, etc)
+//TODO: try catch para erros e tratá-los!
 artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina() {
@@ -24,8 +26,8 @@ function inserirBotaoNovaPagina() {
 					+'<td data-tipo="espaçonave"><img src="https://www.jedipedia.net/w/images/4/4f/Raumschiffe-Icon.png" /><br />Espaçonave</td></tr>'
 					+'<tr><td style="width:50%" data-tipo="evento"><img src="https://www.jedipedia.net/w/images/7/7a/Ereignisse.png" /><br />Evento</td>'
 					+'<td data-tipo="tecnologia"><img src="https://www.jedipedia.net/w/images/8/8c/Waffen.png" /><br />Tecnologia</td></tr>'
+					+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
 				+'</table>'
-				+'<p>Outro tipo de artigo</p>'
 			+'</section>'
 			+'<footer>'
 				+'<button id="configuracoesICP" class="secondary">Configurações</button>'
@@ -104,38 +106,50 @@ function inserirBotaoNovaPagina() {
 			switch(artigoTipo) {
 				case "personagem":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Personagem infobox");
+						infoboxParser(data, "Personagem infobox");
 					});
 					break;
 				case "planeta":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Planeta?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Planeta");
+						infoboxParser(data, "Planeta");
 					});
 					break;
 				case "droide":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Droide_infobox?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Droide infobox");
+						infoboxParser(data, "Droide infobox");
 					});
 					break;
 				case "espaçonave":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Nave?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Nave");
+						infoboxParser(data, "Nave");
 					});
 					break;
 				case "evento":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Evento?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Evento");
+						infoboxParser(data, "Evento");
 					});
 					break;
 				case "tecnologia":
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Dispositivo_infobox?action=raw", function(data) {
-						infoboxContent = data.split("</infobox>")[0] + "</infobox>";
-						infoboxParser(infoboxContent, "Dispositivo infobox");
+						infoboxParser(data, "Dispositivo infobox");
+					});
+					break;
+				default:
+					selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
+					'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
+					'<button data-resp="s">Pronto</button>';
+					$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
+					$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
+						var infoboxes = data.split("\n{{")
+						for (var i=1; i<infoboxes.length; i++)
+						{
+							$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
+						}
+						$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() {
+							$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI($("#selecionarInfoboxCustom").val().replace(" ", "_"))+"?action=raw", function(data) {
+								infoboxParser(data, $("#selecionarInfoboxCustom").val());
+							});
+						});
 					});
 					break;
 			}
@@ -145,18 +159,35 @@ function inserirBotaoNovaPagina() {
 ICP_wys = false;
 function infoboxParser(txt, nome)
 {
+	//TODO: Inserir campo "imagem"
+	infoboxContent = txt.split("</infobox>")[0] + "</infobox>";
 	if (wgAction == 'edit' && $("#cke_21_label").length == 1)
 	{
 	    $("#cke_21_label").click(); // For WYSIWYG editor
 	    ICP_wys = true;
 	}
-	var infoboxObj = $.parseXML(txt);
+	var infoboxObj = $.parseXML(infoboxContent);
 	$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
 	passo2 = "<p>Preencha a infobox para o artigo</p>";
 	passo2 += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
 	'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 	artigoTexto += "{{"+nome+"\n";
 	artigoTexto += "|nome-"+wgTitle+"\n";
+	if (nome == "Personagem infobox")
+	{
+		personagemTypes = txt.split("\n*");
+		console.log("N types: "+personagemTypes.length);
+		personagemTypes[personagemTypes.length-1] = personagemTypes[personagemTypes.length-1].split("\n")[0];
+		passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
+		'<h3 class="pi-data-label pi-secondary-font">Tipo de personagem</h3>'+
+		'<div class="pi-data-value pi-font"><select id="personagemTypes">';
+		for (var i=1; i<personagemTypes.length; i++)
+		{
+			passo2 += '<option value="'+personagemTypes[i]+'">'+personagemTypes[i]+'</option>';
+		}
+		passo2 += "</select></div></div>";
+		artigoTexto += "|type-\n";
+	}
 	for (var i=0; i<$(infoboxObj).find("data").length; i++)
 	{
 		dataTag = $(infoboxObj).find("data")[i];
@@ -169,18 +200,24 @@ function infoboxParser(txt, nome)
 	passo2 += '</aside><p><button>Pronto</button></p>';
 	$("#CuratedContentToolModal section").html(passo2);
 	$("#CuratedContentToolModal section").css('overflow-y', 'auto');
+	$("#personagemTypes").change(function() {
+		var type = $(this).val();
+		$("#CuratedContentToolModal aside").removeClass(function (index, className) {
+			return (className.match(/(^|\s)pi-theme-\S+/g) || []).join(" ");
+		});
+		$("#CuratedContentToolModal aside").addClass("pi-theme-"+type.replace(/ /g, "-"));
+	});
 	$("#CuratedContentToolModal section button").one("click", function() {
 		var infTxts = $("#CuratedContentToolModal section aside textarea");
 		var subArtTxt = artigoTexto.split("=");
-		artigoTexto = subArtTxt[0].replace("|nome-", "|nome=");
+		artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|type-", "|type = "+$("#personagemTypes").val());
 		for (var i=0; i<infTxts.length; i++)
 		{
-			artigoTexto += '='+$(infTxts[i]).val();
+			artigoTexto += ' = '+$(infTxts[i]).val();
 			artigoTexto += subArtTxt[i+1];
 		}
 		artigoTexto += "'''"+wgTitle+"''' foi um...";
 		console.log(artigoTexto);
- 
 		inserirInterlink();
 	});
 }
@@ -188,7 +225,9 @@ function inserirInterlink()
 {
 	$("#CuratedContentToolModal header h3").text("Passo 3: Fontes e Aparições");
 	passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
-	passo4 += "<textarea id='wookieePage' name='wookieePage' ></textarea><button data-interlink='true'>Enviar</button>"
+	passo4 += "<textarea id='wookieePage' name='wookieePage' >"
+	+((artigoTipo == "personagem" || artigoTipo == "planeta" || artigoTipo == "droide") ? wgPageName.replace(/_/g, " ") : '')
+	+"</textarea><button data-interlink='true'>Enviar</button>"
 	+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
 	$("#CuratedContentToolModal section").html(passo4);
 	$("#CuratedContentToolModal section button[data-interlink]").click(function() {
@@ -297,13 +336,13 @@ function categorizar()
 }
 function finalizarEdicao()
 {
+	artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
 	if (wgAction == "view")
 	{
 		//Visual Editor
 		var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
 		alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
 		//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
- 
 		$("#CuratedContentToolModal span.close").click();
 		$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 		$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
