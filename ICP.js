@@ -367,11 +367,8 @@ function finalizarEdicao()
 		    setTimeout(function() {$("#cke_22_label").click()}, 1500);
 	}	
 }
-
-$(document).ready(function() {
  
-    if (wgAction == "edit")
-        $("img[title='Cânon link']").attr('accesskey', 'c');
+$(document).ready(function() {
     if (wgArticleId === 0 && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
 	{
 		var opcoesICP = {}
@@ -395,4 +392,5 @@ $(document).ready(function() {
 					$("#ca-ve-edit").click(function () { inserirBotaoNovaPagina(); });
 		}
 	}
+ 
 });
