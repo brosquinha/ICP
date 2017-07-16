@@ -4,6 +4,7 @@
 */
 //TODO: mecanismo de log (obter dados de usuários, como quando abandonou a ICP, se houve bug, etc)
 //TODO: try catch para erros e tratá-los!
+//TODO: atalho de teclado para inserir link canon (algo com mw.toolbar.insertTags("[[Cânon:", "|", "]]", "Exemplo", 0))
 artigoTexto = '';
 artigoTipo = '';
 function inserirBotaoNovaPagina() {
@@ -75,10 +76,10 @@ function inserirBotaoNovaPagina() {
 		console.log("Carregando modelo para "+artigoTipo);
 		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
 		passo1 = '<img src="';
-		passo1 += (wgNamespaceNumber == 112) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+		passo1 += (wgNamespaceNumber == 0) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
 		passo1 += '" style="width:150px;float:right;" />';
 		passo1 += '<p style="font-size:14px">Esse artigo pertence ao universo <span style="font-weight:bold">';
-		if (wgNamespaceNumber == 112)
+		if (wgNamespaceNumber == 0)
 		{
 			passo1 += 'Cânon';
 			txtBotaoSim = 'Sim, também pertence ao <i>Legends</i>';
@@ -97,7 +98,7 @@ function inserirBotaoNovaPagina() {
 		$("#CuratedContentToolModal section").html(passo1);
 		$("#CuratedContentToolModal section button[data-resp]").one("click", function() {
 			if ($(this).attr('data-resp') == "s")
-				artigoTexto += (wgNamespaceNumber == 112) ? "|legends}}\n" : "|canon}}\n";
+				artigoTexto += (wgNamespaceNumber == 0) ? "|legends}}\n" : "|canon}}\n";
 			else
 				artigoTexto += "}}\n";
 			console.log(artigoTexto);
@@ -369,7 +370,7 @@ function finalizarEdicao()
 }
  
 $(document).ready(function() {
-    if (wgArticleId === 0 && (wgNamespaceNumber == 112 || wgNamespaceNumber === 0))
+    if (wgArticleId === 0 && (wgNamespaceNumber == 114 || wgNamespaceNumber === 0))
 	{
 		var opcoesICP = {}
 		if (localStorage.ICPsettings)
