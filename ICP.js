@@ -5,7 +5,6 @@
 //TODO: mecanismo de log (obter dados de usuários, como quando abandonou a ICP, se houve bug, etc)
 //TODO: try catch para erros e tratá-los!
 //TODO: atalho de teclado para inserir link canon (algo com mw.toolbar.insertTags("{{SUBST:Cânon|", "}}", "Exemplo", 0))
-//TODO: inserir Notas e referências
 var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -151,7 +150,22 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 								$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
 							}
 							$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() {
-								$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI($("#selecionarInfoboxCustom").val().replace(" ", "_"))+"?action=raw", function(data) {
+								var infoboxName = $("#selecionarInfoboxCustom").val();
+								if (infoboxName == "Batalha" || infoboxName == "Guerra")
+								{
+									var numParticipantes = '';
+									while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
+										numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
+									infoboxName = (infoboxName == "Batalha") ? "Battle" : "War";
+									if (numParticipantes == '2')
+										infoboxName += '300';
+									else if (numParticipantes == '3')
+										infoboxName += '350';
+									else
+										infoboxName += '400';
+								}
+								console.log('Obtendo "'+infoboxName+'"');
+								$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI(infoboxName.replace(" ", "_"))+"?action=raw", function(data) {
 									infoboxParser(data, $("#selecionarInfoboxCustom").val());
 								});
 							});
@@ -163,7 +177,6 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	}
 	var infoboxParser = function (txt, nome)
 	{
-		//TODO: Inserir campo "imagem"
 		infoboxContent = txt.split("</infobox>")[0] + "</infobox>";
 		if (wgAction == 'edit' && $("#cke_21_label").length == 1)
 		{
@@ -177,6 +190,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 		artigoTexto += "{{"+nome+"\n";
 		artigoTexto += "|nome-"+wgTitle+"\n";
+		artigoTexto += "|imagem-\n";
 		if (nome == "Personagem infobox")
 		{
 			personagemTypes = txt.split("\n*");
@@ -195,8 +209,12 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		for (var i=0; i<$(infoboxObj).find("data").length; i++)
 		{
 			dataTag = $(infoboxObj).find("data")[i];
+			if (typeof $(dataTag)[0].children[0] === "undefined")
+				labelTagText = $(dataTag).attr('source')
+			else
+				labelTagText = $(dataTag)[0].children[0].innerHTML;
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
-			'<h3 class="pi-data-label pi-secondary-font">'+$(dataTag)[0].children[0].innerHTML+'</h3>'+
+			'<h3 class="pi-data-label pi-secondary-font">'+labelTagText+'</h3>'+
 			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"></textarea></div></div>';
 			artigoTexto += "|"+($(dataTag).attr('source'))+"=\n";
 		}
@@ -214,7 +232,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		$("#CuratedContentToolModal section button").one("click", function() {
 			var infTxts = $("#CuratedContentToolModal section aside textarea");
 			var subArtTxt = artigoTexto.split("=");
-			artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|type-", "|type = "+$("#personagemTypes").val());
+			artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
 			for (var i=0; i<infTxts.length; i++)
 			{
 				artigoTexto += ' = '+$(infTxts[i]).val();
@@ -342,6 +360,13 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	}
 	var finalizarEdicao = function ()
 	{
+		if (artigoTexto.search("<ref ") >= 0)
+		{
+			if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1)
+				artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
+			else
+				artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}"
+		}
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
 		if (wgAction == "view")
 		{
