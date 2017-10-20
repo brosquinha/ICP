@@ -1,10 +1,10 @@
 /* ************************************************************************
 ************************* Page Creation Interface *************************
-* This is a tool in development that helps new comers with the process of creating a new page. I need to gather more feedback before putting it on full use, so it is important that this code be placed here. Futhermore, I have discussed this with Fandom Staff, and I've got their approval.
+* Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that divides the article-creation process step-by-step. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
 //TODO: mecanismo de log (obter dados de usuários, como quando abandonou a ICP, se houve bug, etc)
 //TODO: try catch para erros e tratá-los!
-//TODO: atalho de teclado para inserir link canon (algo com mw.toolbar.insertTags("{{SUBST:Cânon|", "}}", "Exemplo", 0))
+//TODO: refatorar em MVC?
 var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -185,7 +185,9 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		}
 		var infoboxObj = $.parseXML(infoboxContent);
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
-		passo2 = "<p>Preencha a infobox para o artigo</p>";
+		passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'.
+		'<br /><img id="linkButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804" />'.
+		'<img id="refButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243" /><br /><button>Pronto</button></p>';
 		passo2 += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
 		'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 		artigoTexto += "{{"+nome+"\n";
@@ -219,9 +221,24 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 			artigoTexto += "|"+($(dataTag).attr('source'))+"=\n";
 		}
 		artigoTexto += "}}\n";
-		passo2 += '</aside><p><button>Pronto</button></p>';
+		passo2 += '</aside>';
 		$("#CuratedContentToolModal section").html(passo2);
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
+		$("#linkButton").click(function() {
+			mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
+		});
+		$("#refButton").click(function() {
+			mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
+		});
+		$(document).keyup(function (e) {
+			if(e.which == 18) SWWICP.isAlt = false;
+		}).keydown(function (e) {
+			if(e.which == 18) SWWICP.isAlt = true;
+			if(e.which == 76 && SWWICP.isAlt == true) {
+				mw.toolbar.insertTags('[[Legends:', "|', "]]", "Exemplo", 0);
+				return false;
+			}
+		});
 		$("#personagemTypes").change(function() {
 			var type = $(this).val();
 			$("#CuratedContentToolModal aside").removeClass(function (index, className) {
@@ -360,13 +377,10 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	}
 	var finalizarEdicao = function ()
 	{
-		if (artigoTexto.search("<ref ") >= 0)
-		{
-			if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1)
-				artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
-			else
-				artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}"
-		}
+		if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1)
+			artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
+		else
+			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}"
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
 		if (wgAction == "view")
 		{
@@ -426,6 +440,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	}
 	$(document).ready(init);
 	return {
-		jsonpReturn: function(txt) { artigoTexto += txt; categorizar(); }
+		jsonpReturn: function(txt) { artigoTexto += txt; categorizar(); },
+		isAlt: false
 	}
 })(jQuery, wgAction, wgArticleId, wgNamespaceNumber);
