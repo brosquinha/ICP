@@ -185,9 +185,10 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		}
 		var infoboxObj = $.parseXML(infoboxContent);
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
-		passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'.
-		'<br /><img id="linkButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804" />'.
-		'<img id="refButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243" /><br /><button>Pronto</button></p>';
+		passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'+
+		'<br />Ferramentas:<img id="linkButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804" />'+
+		'<img id="refButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243" />'+
+		'<br /><br /><button>Pronto</button></p>';
 		passo2 += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
 		'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 		artigoTexto += "{{"+nome+"\n";
@@ -217,25 +218,29 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 				labelTagText = $(dataTag)[0].children[0].innerHTML;
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
 			'<h3 class="pi-data-label pi-secondary-font">'+labelTagText+'</h3>'+
-			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"></textarea></div></div>';
+			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"'+((i == 0) ? ' autofocus' : '')+
+			'></textarea></div></div>';
 			artigoTexto += "|"+($(dataTag).attr('source'))+"=\n";
 		}
 		artigoTexto += "}}\n";
 		passo2 += '</aside>';
 		$("#CuratedContentToolModal section").html(passo2);
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
+		if (typeof mw.toolbar === "undefined")
+			importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
 		$("#linkButton").click(function() {
 			mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
 		});
 		$("#refButton").click(function() {
 			mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
 		});
-		$(document).keyup(function (e) {
+		$("img.mw-toolbar-editbutton[title='Legends link']").attr('accesskey', '');
+		$("#CuratedContentToolModal").keyup(function (e) {
 			if(e.which == 18) SWWICP.isAlt = false;
 		}).keydown(function (e) {
 			if(e.which == 18) SWWICP.isAlt = true;
 			if(e.which == 76 && SWWICP.isAlt == true) {
-				mw.toolbar.insertTags('[[Legends:', "|', "]]", "Exemplo", 0);
+				mw.toolbar.insertTags('{{'+'SUBST:L|', "}}", "Exemplo", 0);
 				return false;
 			}
 		});
@@ -380,7 +385,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1)
 			artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
 		else
-			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}"
+			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}";
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
 		if (wgAction == "view")
 		{
