@@ -2,17 +2,18 @@
 ************************* Page Creation Interface *************************
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that divides the article-creation process step-by-step. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
-//TODO: mecanismo de log (obter dados de usuários, como quando abandonou a ICP, se houve bug, etc)
 //TODO: try catch para erros e tratá-los!
 //TODO: refatorar em MVC?
-var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
+var SWWICP = (function($) {
+	"use strict";
 	var artigoTexto = '';
 	var artigoTipo = '';
 	var ICP_wys = false;
+	var userActions = {}
  
 	var inserirBotaoNovaPagina = function() {
 		//<iframe data-url="/main/edit?useskin=wikiamobile" id="CuratedContentToolIframe" class="curated-content-tool" name="curated-content-tool" src="/main/edit?useskin=wikiamobile"></iframe>
-		if (wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
+		if (window.wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
 			location.reload();
 		$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 		$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
@@ -41,6 +42,9 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 				+'</footer>'
 			+'</div>'
 		+'</div>');
+		userActions.user = window.wgGAUserIdHash;
+		userActions.page = window.wgTitle;
+		userActions.errors = []
 		$("#CuratedContentToolModal span.close").click(function() {
 			$("#blackout_CuratedContentToolModal").removeClass('visible');
 		});
@@ -77,12 +81,18 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		$("#NovaPaginaTipoDeArtigo td").one("click", function() {
 			artigoTipo = $(this).attr("data-tipo");
 			console.log("Carregando modelo para "+artigoTipo);
+			if (localStorage.ICPsettings)
+				userActions.ICPconfig = localStorage.ICPsettings;
+			else
+				userActions.ICPconfig = false;
+			userActions.infoboxType = artigoTipo;
 			$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
+			var passo1, txtBotaoSim, txtBotaoNao;
 			passo1 = '<img src="';
-			passo1 += (wgNamespaceNumber == 0) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+			passo1 += (window.wgNamespaceNumber == 0) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
 			passo1 += '" style="width:150px;float:right;" />';
 			passo1 += '<p style="font-size:14px">Esse artigo pertence ao universo <span style="font-weight:bold">';
-			if (wgNamespaceNumber == 0)
+			if (window.wgNamespaceNumber == 0)
 			{
 				passo1 += 'Cânon';
 				txtBotaoSim = 'Sim, também pertence ao <i>Legends</i>';
@@ -101,13 +111,13 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 			$("#CuratedContentToolModal section").html(passo1);
 			$("#CuratedContentToolModal section button[data-resp]").one("click", function() {
 				if ($(this).attr('data-resp') == "s")
-					artigoTexto += (wgNamespaceNumber == 0) ? "|legends}}\n" : "|canon}}\n";
+					artigoTexto += (window.wgNamespaceNumber == 0) ? "|legends}}\n" : "|canon}}\n";
 				else
 					artigoTexto += "}}\n";
-				console.log(artigoTexto);
 				console.log("Obtendo infobox...");
+				userActions.erasAnswer = ($(this).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
-				switch(artigoTipo) {
+				switch(artigoTipo) { //Tratar erro
 					case "personagem":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
 							infoboxParser(data, "Personagem infobox");
@@ -139,10 +149,11 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 						});
 						break;
 					default:
-						selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
+						var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
 						'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
 						'<button data-resp="s">Pronto</button>';
 						$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
+						//Tratar erro
 						$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
 							var infoboxes = data.split("\n{{")
 							for (var i=1; i<infoboxes.length; i++)
@@ -151,6 +162,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 							}
 							$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() {
 								var infoboxName = $("#selecionarInfoboxCustom").val();
+								userActions.infoboxType = infoboxName;
 								if (infoboxName == "Batalha" || infoboxName == "Guerra")
 								{
 									var numParticipantes = '';
@@ -165,6 +177,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 										infoboxName += '400';
 								}
 								console.log('Obtendo "'+infoboxName+'"');
+								//Tratar erro
 								$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI(infoboxName.replace(" ", "_"))+"?action=raw", function(data) {
 									infoboxParser(data, $("#selecionarInfoboxCustom").val());
 								});
@@ -177,15 +190,17 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	}
 	var infoboxParser = function (txt, nome)
 	{
-		infoboxContent = txt.split("</infobox>")[0] + "</infobox>";
-		if (wgAction == 'edit' && $("#cke_21_label").length == 1)
+		var infoboxContent = txt.split("</infobox>")[0] + "</infobox>"; //Tratar erro
+		userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
+		if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
 		{
 			$("#cke_21_label").click(); // For WYSIWYG editor
 			ICP_wys = true;
+			userActions.editor = "WYSIWYG";
 		}
-		var infoboxObj = $.parseXML(infoboxContent);
+		var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
-		passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'+
+		var passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'+
 		'<br />Ferramentas:<img id="linkButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804" />'+
 		'<img id="refButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243" />'+
 		'<br /><br /><button>Pronto</button></p>';
@@ -196,8 +211,8 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		artigoTexto += "|imagem-\n";
 		if (nome == "Personagem infobox")
 		{
-			personagemTypes = txt.split("\n*");
-			console.log("N types: "+personagemTypes.length);
+			var personagemTypes = txt.split("\n*");
+			//console.log("N types: "+personagemTypes.length);
 			personagemTypes[personagemTypes.length-1] = personagemTypes[personagemTypes.length-1].split("\n")[0];
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
 			'<h3 class="pi-data-label pi-secondary-font">Tipo de personagem</h3>'+
@@ -211,6 +226,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		}
 		for (var i=0; i<$(infoboxObj).find("data").length; i++)
 		{
+			var dataTag, labelTagText;
 			dataTag = $(infoboxObj).find("data")[i];
 			if (typeof $(dataTag)[0].children[0] === "undefined")
 				labelTagText = $(dataTag).attr('source')
@@ -226,13 +242,16 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		passo2 += '</aside>';
 		$("#CuratedContentToolModal section").html(passo2);
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
+		userActions.usageOfNewButtons = 0;
 		if (typeof mw.toolbar === "undefined")
 			importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
 		$("#linkButton").click(function() {
 			mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
+			userActions.usageOfNewButtons += 1;
 		});
 		$("#refButton").click(function() {
 			mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
+			userActions.usageOfNewButtons += 1;
 		});
 		$("img.mw-toolbar-editbutton[title='Legends link']").attr('accesskey', '');
 		$("#CuratedContentToolModal").keyup(function (e) {
@@ -268,7 +287,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	var inserirInterlink = function ()
 	{
 		$("#CuratedContentToolModal header h3").text("Passo 3: Fontes e Aparições");
-		passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
+		var passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 		passo4 += "<textarea id='wookieePage' name='wookieePage' >"
 		+((artigoTipo == "personagem" || artigoTipo == "planeta" || artigoTipo == "droide") ? wgPageName.replace(/_/g, " ") : '')
 		+"</textarea><button data-interlink='true'>Enviar</button>"
@@ -276,12 +295,14 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		$("#CuratedContentToolModal section").html(passo4);
 		$("#CuratedContentToolModal section button[data-interlink]").click(function() {
 			$("#CuratedContentToolModal section button").attr('disabled', '');
-			$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"});
+			userActions.interlink = $("#wookieePage").val();
+			$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
 		});
 		$("#CuratedContentToolModal section button[data-prev]").click(function() {
 			window.open("http://starwars.wikia.com/wiki/"+encodeURI($("#wookieePage").val().replace(" ", "_")))
 		});
 		$("#CuratedContentToolModal section button[data-nope]").click(function() {
+			userActions.interlink = false;
 			categorizar();
 		});
 	}
@@ -289,7 +310,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 	window.jsonpCallback = function (data)
 	{
 		var artigoTexto = '';
-		wookieePage = data.content;
+		var wookieePage = data.content;
 		if (wookieePage === false)
 		{
 			alert("Página não encontrada!");
@@ -303,10 +324,10 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 			return;
 		}
 		wookieePage.replace("{{interlang", "{{Interlang");
-		wookieeSecoes = wookieePage.split("==");
+		var wookieeSecoes = wookieePage.split("==");
 		console.log(wookieeSecoes);
-		wookieeAparicoes = '';
-		wookieeFontes = '';
+		var wookieeAparicoes = '';
+		var wookieeFontes = '';
 		for (i=0; i<wookieeSecoes.length; i++)
 		{
 			if ($.trim(wookieeSecoes[i]) == "Appearances")
@@ -322,18 +343,19 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		}
 		artigoTexto += "\n\n";
 		if (wookieeFontes.search("{{Interlang") >= 0)
-			wookieeFontes = wookieeFontes.split("{{Interlang")[0];
+			wookieeFontes = wookieeFontes.split("{{Interlang")[0]; //Tratar erro
 		if (wookieePage.search("{{Interlang") >= 0)
-			wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}";
+			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}"; //Tratar erro
 		else
-			wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
+			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
 		if (wookieeAparicoes != '')
 			artigoTexto += "== Aparições =="+wookieeAparicoes;
 		if (wookieeFontes != '')
 			artigoTexto += "== Fontes =="+wookieeFontes;
 		artigoTexto += wookieeInterlang;
+		//Tratar erro
 		$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
-			fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
+			var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
 			console.log("Apêndice de obras obtido.");
 			for (var i=0; i<fixes.replacements.length; i++) {
 				var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
@@ -347,7 +369,8 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		$("#CuratedContentToolModal header h3").text("Passo 4: Categorias");
 		var passo5 = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
 		'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
-		if (wgAction == 'edit')
+		userActions.categorias = true;
+		if (window.wgAction == 'edit')
 		{
 			$("#CuratedContentToolModal section").html(passo5);
 			$("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
@@ -387,7 +410,12 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		else
 			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}";
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-		if (wgAction == "view")
+		//Tratar erro
+		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know when the data is from differente people or not. This will also be used to collect info when errors occur
+		$.ajax({url:"http://www.99luca11.com/sww_helper", type: "POST", crossDomain: true, data: userActions, success: function(data) {
+			console.log("Dados coletados: "+data);
+		}})
+		if (window.wgAction == "view")
 		{
 			//Visual Editor
 			var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
@@ -418,7 +446,7 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		}	
 	}
 	var init = function() {
-		if (wgArticleId === 0 && (wgNamespaceNumber == 114 || wgNamespaceNumber === 0))
+		if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0))
 		{
 			var opcoesICP = {}
 			if (localStorage.ICPsettings)
@@ -432,9 +460,9 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 			}
 			else
 			{
-				if (wgAction == 'edit')
+				if (window.wgAction == 'edit')
 					inserirBotaoNovaPagina();
-				if (wgAction == 'view')
+				if (window.wgAction == 'view')
 					if (document.location.href.search("veaction=edit") >= 0)
 						inserirBotaoNovaPagina();
 					else
@@ -448,4 +476,4 @@ var SWWICP = (function($, wgAction, wgArticleId, wgNamespaceNumber){
 		jsonpReturn: function(txt) { artigoTexto += txt; categorizar(); },
 		isAlt: false
 	}
-})(jQuery, wgAction, wgArticleId, wgNamespaceNumber);
+})(jQuery);
