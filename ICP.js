@@ -2,8 +2,7 @@
 ************************* Page Creation Interface *************************
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that divides the article-creation process step-by-step. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
-//TODO: try catch para erros e tratá-los!
-//TODO: refatorar em MVC?
+//TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
 var SWWICP = (function($) {
 	"use strict";
 	var artigoTexto = '';
@@ -11,6 +10,19 @@ var SWWICP = (function($) {
 	var ICP_wys = false;
 	var userActions = {}
  
+	var errorHandler = function(funcao) {
+		try {
+			funcao();
+		}
+		catch(e) {
+			console.log(e.toString());
+			var erroTxt = e.name + ": " + e.message
+			erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
+			userActions.errors.push(erroTxt);
+			alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
+			finalizarEdicao();
+		}
+	}
 	var inserirBotaoNovaPagina = function() {
 		//<iframe data-url="/main/edit?useskin=wikiamobile" id="CuratedContentToolIframe" class="curated-content-tool" name="curated-content-tool" src="/main/edit?useskin=wikiamobile"></iframe>
 		if (window.wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
@@ -42,20 +54,29 @@ var SWWICP = (function($) {
 				+'</footer>'
 			+'</div>'
 		+'</div>');
-		userActions.user = window.wgGAUserIdHash;
-		userActions.page = window.wgTitle;
-		userActions.errors = []
 		$("#CuratedContentToolModal span.close").click(function() {
 			$("#blackout_CuratedContentToolModal").removeClass('visible');
+			sendFeedback();
 		});
 		$("#configuracoesICP").click(function () {
-			configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
+			var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
 			"<input type='checkbox' name='default_action' checked /></label></p></form>"
 			$.showCustomModal('Configurações', configModal, {
 				id: 'ModalSettingsWindow',
 				width: 600,
 				height: 250,
 				buttons: [{
+					message: 'Enviar feedback',
+					handler: function() {
+						var feedbackTxt = confirm("Envie um comentário sobre essa ferramenta para os administradores: ");
+						if (feedbackTxt)
+						{
+							userActions.msgFeedback = feedbackTxt
+							sendFeedback();
+							alert("Obrigado!");
+						}
+					}
+				},				{
 					message: 'Resetar mudanças',
 					handler: function() {
 						$('#ModalSettingsWindow fieldset').replaceWith(configModal);
@@ -78,8 +99,7 @@ var SWWICP = (function($) {
 		$("#finalizarEdicao").click(function () {
 			finalizarEdicao();
 		});
-		$("#NovaPaginaTipoDeArtigo td").one("click", function() {
-			artigoTipo = $(this).attr("data-tipo");
+		$("#NovaPaginaTipoDeArtigo td").one("click", function() { artigoTipo = $(this).attr("data-tipo"); errorHandler(function() {
 			console.log("Carregando modelo para "+artigoTipo);
 			if (localStorage.ICPsettings)
 				userActions.ICPconfig = localStorage.ICPsettings;
@@ -109,43 +129,43 @@ var SWWICP = (function($) {
 			passo1 += '</span>. Ele pertence também ao outro universo?</p>';
 			passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 			$("#CuratedContentToolModal section").html(passo1);
-			$("#CuratedContentToolModal section button[data-resp]").one("click", function() {
-				if ($(this).attr('data-resp') == "s")
+			$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
+				if ($(esse).attr('data-resp') == "s")
 					artigoTexto += (window.wgNamespaceNumber == 0) ? "|legends}}\n" : "|canon}}\n";
 				else
 					artigoTexto += "}}\n";
 				console.log("Obtendo infobox...");
-				userActions.erasAnswer = ($(this).attr('data-resp') == "s");
+				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
 				switch(artigoTipo) { //Tratar erro
 					case "personagem":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
-							infoboxParser(data, "Personagem infobox");
+							errorHandler(function () { infoboxParser(data, "Personagem infobox"); });
 						});
 						break;
 					case "planeta":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Planeta?action=raw", function(data) {
-							infoboxParser(data, "Planeta");
+							errorHandler(function () { infoboxParser(data, "Planeta"); });
 						});
 						break;
 					case "droide":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Droide_infobox?action=raw", function(data) {
-							infoboxParser(data, "Droide infobox");
+							errorHandler(function () { infoboxParser(data, "Droide infobox"); });
 						});
 						break;
 					case "espaçonave":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Nave?action=raw", function(data) {
-							infoboxParser(data, "Nave");
+							errorHandler(function () { infoboxParser(data, "Nave"); });
 						});
 						break;
 					case "evento":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Evento?action=raw", function(data) {
-							infoboxParser(data, "Evento");
+							errorHandler(function () { infoboxParser(data, "Evento"); });
 						});
 						break;
 					case "tecnologia":
 						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Dispositivo_infobox?action=raw", function(data) {
-							infoboxParser(data, "Dispositivo infobox");
+							errorHandler(function () { infoboxParser(data, "Dispositivo infobox"); });
 						});
 						break;
 					default:
@@ -154,13 +174,13 @@ var SWWICP = (function($) {
 						'<button data-resp="s">Pronto</button>';
 						$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
 						//Tratar erro
-						$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
+						$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
 							var infoboxes = data.split("\n{{")
 							for (var i=1; i<infoboxes.length; i++)
 							{
 								$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
 							}
-							$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() {
+							$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() { errorHandler(function() {
 								var infoboxName = $("#selecionarInfoboxCustom").val();
 								userActions.infoboxType = infoboxName;
 								if (infoboxName == "Batalha" || infoboxName == "Guerra")
@@ -179,14 +199,14 @@ var SWWICP = (function($) {
 								console.log('Obtendo "'+infoboxName+'"');
 								//Tratar erro
 								$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI(infoboxName.replace(" ", "_"))+"?action=raw", function(data) {
-									infoboxParser(data, $("#selecionarInfoboxCustom").val());
+									errorHandler(function() { infoboxParser(data, $("#selecionarInfoboxCustom").val()); });
 								});
-							});
-						});
+							})});
+						})});
 						break;
 				}
-			});
-		});
+			})});
+		})});
 	}
 	var infoboxParser = function (txt, nome)
 	{
@@ -270,7 +290,7 @@ var SWWICP = (function($) {
 			});
 			$("#CuratedContentToolModal aside").addClass("pi-theme-"+type.replace(/ /g, "-"));
 		});
-		$("#CuratedContentToolModal section button").one("click", function() {
+		$("#CuratedContentToolModal section button").one("click", function() { errorHandler(function() {
 			var infTxts = $("#CuratedContentToolModal section aside textarea");
 			var subArtTxt = artigoTexto.split("=");
 			artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
@@ -282,7 +302,7 @@ var SWWICP = (function($) {
 			artigoTexto += "'''"+wgTitle+"''' foi um...";
 			console.log(artigoTexto);
 			inserirInterlink();
-		});
+		})});
 	}
 	var inserirInterlink = function ()
 	{
@@ -303,13 +323,16 @@ var SWWICP = (function($) {
 		});
 		$("#CuratedContentToolModal section button[data-nope]").click(function() {
 			userActions.interlink = false;
-			categorizar();
+			errorHandler(categorizar);
 		});
 	}
 	//Função global pois JSONP assim requer... para isso, a SWWICP retorna uma função para "recupar" o fluxo
-	window.jsonpCallback = function (data)
+	window.jsonpCallback = function(data)
 	{
-		var artigoTexto = '';
+		SWWICP.jsonpReturn(data);
+	}
+	var wookieeData = function (data)
+	{
 		var wookieePage = data.content;
 		if (wookieePage === false)
 		{
@@ -354,15 +377,15 @@ var SWWICP = (function($) {
 			artigoTexto += "== Fontes =="+wookieeFontes;
 		artigoTexto += wookieeInterlang;
 		//Tratar erro
-		$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
+		$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) { errorHandler(function() {
 			var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
 			console.log("Apêndice de obras obtido.");
 			for (var i=0; i<fixes.replacements.length; i++) {
 				var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
 				artigoTexto = artigoTexto.replace(txtRegEx, fixes.replacements[i][1]);
 			}
-			SWWICP.jsonpReturn(artigoTexto);//categorizar()
-		});
+			categorizar();
+		})});
 	}
 	var categorizar = function ()
 	{
@@ -387,7 +410,7 @@ var SWWICP = (function($) {
 			$("#CuratedContentToolModal section").html(passo5);
 			$("#CuratedContentToolModal section").append("<p><button>Ok, vamos lá</button></p>");
 			$("#CuratedContentToolModal section button").click(function () {
-						$("#blackout_CuratedContentToolModal").removeClass('visible');
+				$("#blackout_CuratedContentToolModal").removeClass('visible');
 			});
 			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 			$("span.oo-ui-tool-name-categories").css('border', '1px solid');
@@ -410,11 +433,6 @@ var SWWICP = (function($) {
 		else
 			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}";
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-		//Tratar erro
-		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know when the data is from differente people or not. This will also be used to collect info when errors occur
-		$.ajax({url:"http://www.99luca11.com/sww_helper", type: "POST", crossDomain: true, data: userActions, success: function(data) {
-			console.log("Dados coletados: "+data);
-		}})
 		if (window.wgAction == "view")
 		{
 			//Visual Editor
@@ -432,12 +450,12 @@ var SWWICP = (function($) {
 						$("textarea.ui-autocomplete-input").val(artigoTexto);
 					$("textarea.ui-autocomplete-input").change();
 					setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-				}, 1500);
+				}, 2000);
 			});
 		}
 		else
 		{
-			//Source editor (hopefully)
+			//Source editor and WYSIWYG editor
 			var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 			theTextarea.value += artigoTexto;
 			$("#CuratedContentToolModal span.close").click();
@@ -445,7 +463,26 @@ var SWWICP = (function($) {
 				setTimeout(function() {$("#cke_22_label").click()}, 1500);
 		}	
 	}
+	var sendFeedback = function() {
+		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know when the data is from differente people or not. This will also be used to collect info when errors occur
+		$.ajax({
+			url:"http://www.99luca11.com/sww_helper",
+			type: "POST",
+			crossDomain: true,
+			data: userActions,
+			timeout: 7000,
+			success: function(data) {
+				console.log("Dados coletados: "+data);
+			},
+			error: function(data) {
+				console.log("Envio malsucedido");
+			}
+		})
+	}
 	var init = function() {
+		userActions.user = window.wgGAUserIdHash;
+		userActions.page = window.wgTitle;
+		userActions.errors = []
 		if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0))
 		{
 			var opcoesICP = {}
@@ -456,24 +493,24 @@ var SWWICP = (function($) {
 			if (opcoesICP.default_action == 0)
 			{
 				$("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-				$("#ICP_opener").click(function() { inserirBotaoNovaPagina(); });
+				$("#ICP_opener").click(function() { errorHandler(inserirBotaoNovaPagina); });
 			}
 			else
 			{
 				if (window.wgAction == 'edit')
-					inserirBotaoNovaPagina();
+					errorHandler(inserirBotaoNovaPagina);
 				if (window.wgAction == 'view')
 					if (document.location.href.search("veaction=edit") >= 0)
-						inserirBotaoNovaPagina();
+						errorHandler(inserirBotaoNovaPagina);
 					else
-						$("#ca-ve-edit").click(function () { inserirBotaoNovaPagina(); });
+						$("#ca-ve-edit").click(function () { errorHandler(inserirBotaoNovaPagina); });
 			}
 		}
  
 	}
 	$(document).ready(init);
 	return {
-		jsonpReturn: function(txt) { artigoTexto += txt; categorizar(); },
+		jsonpReturn: function(txt) { errorHandler(function () { wookieeData(txt); }); },
 		isAlt: false
 	}
 })(jQuery);
