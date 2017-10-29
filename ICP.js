@@ -35,14 +35,14 @@ var SWWICP = (function($) {
 						+'<h3>Criando um novo artigo</h3>'
 				+'</header>'
 				+'<section>'
-					+'<p>Selecione um tipo de artigo:</p>'
+					+'<p style="margin-top:0">Selecione um tipo de artigo:</p>'
 					+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-						+'<tr><td style="width:50%" data-tipo="personagem"><img src="https://www.jedipedia.net/w/images/4/48/Personen.png" /><br />Personagem</td>'
-						+'<td data-tipo="planeta"><img src="https://www.jedipedia.net/w/images/1/16/Planeten.png" /><br />Planeta</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="droide"><img src="https://www.jedipedia.net/w/images/f/f0/Droiden.png" /><br />Droide</td>'
-						+'<td data-tipo="espaçonave"><img src="https://www.jedipedia.net/w/images/4/4f/Raumschiffe-Icon.png" /><br />Espaçonave</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="evento"><img src="https://www.jedipedia.net/w/images/7/7a/Ereignisse.png" /><br />Evento</td>'
-						+'<td data-tipo="tecnologia"><img src="https://www.jedipedia.net/w/images/8/8c/Waffen.png" /><br />Tecnologia</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="personagem"><div class="infoboxIcon"></div>Personagem</td>'
+						+'<td data-tipo="planeta"><div class="infoboxIcon"></div>Planeta</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="droide"><div class="infoboxIcon"></div>Droide</td>'
+						+'<td data-tipo="espaçonave"><div class="infoboxIcon"></div>Espaçonave</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="evento"><div class="infoboxIcon"></div>Evento</td>'
+						+'<td data-tipo="tecnologia"><div class="infoboxIcon"></div>Tecnologia</td></tr>'
 						+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
 					+'</table>'
 				+'</section>'
@@ -480,7 +480,7 @@ var SWWICP = (function($) {
 		})
 	}
 	var init = function() {
-		userActions.user = window.wgGAUserIdHash;
+		userActions.user = (window.wgGAUserIdHash || false);
 		userActions.page = window.wgTitle;
 		userActions.errors = []
 		if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0))
