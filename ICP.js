@@ -1,6 +1,6 @@
 /* ************************************************************************
 ************************* Page Creation Interface *************************
-* Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that divides the article-creation process step-by-step. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
+* Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
 //TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
 var SWWICP = (function($) {
@@ -8,6 +8,7 @@ var SWWICP = (function($) {
 	var artigoTexto = '';
 	var artigoTipo = '';
 	var ICP_wys = false;
+	var deltaTime;
 	var userActions = {}
  
 	var errorHandler = function(funcao) {
@@ -54,6 +55,7 @@ var SWWICP = (function($) {
 				+'</footer>'
 			+'</div>'
 		+'</div>');
+		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal span.close").click(function() {
 			$("#blackout_CuratedContentToolModal").removeClass('visible');
 			sendFeedback();
@@ -101,6 +103,8 @@ var SWWICP = (function($) {
 		});
 		$("#NovaPaginaTipoDeArtigo td").one("click", function() { artigoTipo = $(this).attr("data-tipo"); errorHandler(function() {
 			console.log("Carregando modelo para "+artigoTipo);
+			deltaTime = (new Date().getTime()) - deltaTime;
+			userActions.passo0DT = deltaTime;
 			if (localStorage.ICPsettings)
 				userActions.ICPconfig = localStorage.ICPsettings;
 			else
@@ -129,12 +133,14 @@ var SWWICP = (function($) {
 			passo1 += '</span>. Ele pertence também ao outro universo?</p>';
 			passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 			$("#CuratedContentToolModal section").html(passo1);
+			deltaTime = new Date().getTime();
 			$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
 				if ($(esse).attr('data-resp') == "s")
 					artigoTexto += (window.wgNamespaceNumber == 0) ? "|legends}}\n" : "|canon}}\n";
 				else
 					artigoTexto += "}}\n";
 				console.log("Obtendo infobox...");
+				userActions.passo1DT = (new Date().getTime() - deltaTime);
 				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
 				switch(artigoTipo) { //Tratar erro
@@ -261,6 +267,7 @@ var SWWICP = (function($) {
 		artigoTexto += "}}\n";
 		passo2 += '</aside>';
 		$("#CuratedContentToolModal section").html(passo2);
+		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
 		userActions.usageOfNewButtons = 0;
 		if (typeof mw.toolbar === "undefined")
@@ -291,6 +298,7 @@ var SWWICP = (function($) {
 			$("#CuratedContentToolModal aside").addClass("pi-theme-"+type.replace(/ /g, "-"));
 		});
 		$("#CuratedContentToolModal section button").one("click", function() { errorHandler(function() {
+			userActions.passo2DT = (new Date().getTime()) - deltaTime;
 			var infTxts = $("#CuratedContentToolModal section aside textarea");
 			var subArtTxt = artigoTexto.split("=");
 			artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
@@ -313,7 +321,9 @@ var SWWICP = (function($) {
 		+"</textarea><button data-interlink='true'>Enviar</button>"
 		+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
 		$("#CuratedContentToolModal section").html(passo4);
+		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section button[data-interlink]").click(function() {
+			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			$("#CuratedContentToolModal section button").attr('disabled', '');
 			userActions.interlink = $("#wookieePage").val();
 			$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodeURI($("#wookieePage").val().replace(" ", "_")), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
@@ -323,6 +333,7 @@ var SWWICP = (function($) {
 		});
 		$("#CuratedContentToolModal section button[data-nope]").click(function() {
 			userActions.interlink = false;
+			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			errorHandler(categorizar);
 		});
 	}
@@ -393,6 +404,7 @@ var SWWICP = (function($) {
 		var passo5 = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
 		'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
 		userActions.categorias = true;
+		deltaTime = new Date().getTime();
 		if (window.wgAction == 'edit')
 		{
 			$("#CuratedContentToolModal section").html(passo5);
@@ -400,6 +412,7 @@ var SWWICP = (function($) {
 			$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
 			$("#CuratedContentToolModal section button").click(function () {
 				$("div [data-id='categories']").insertAfter("div [data-id='insert']");
+				userActions.passo4DT = (new Date().getTime()) - deltaTime;
 				finalizarEdicao();
 			});
 		}
@@ -417,6 +430,7 @@ var SWWICP = (function($) {
 			$("span.oo-ui-tool-name-categories a").click(function() {
 				setTimeout(function() {
 					$("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click(function () {
+						userActions.passo4DT = (new Date().getTime()) - deltaTime;
 						$("span.oo-ui-tool-name-categories").css('border', '0px solid');
 						$("#blackout_CuratedContentToolModal").addClass('visible');
 						finalizarEdicao();
@@ -482,6 +496,7 @@ var SWWICP = (function($) {
 	var init = function() {
 		userActions.user = (window.wgGAUserIdHash || false);
 		userActions.page = window.wgTitle;
+		userActions.date = window.wgNow;
 		userActions.errors = []
 		if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0))
 		{
