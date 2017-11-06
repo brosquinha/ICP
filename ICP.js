@@ -186,8 +186,12 @@ var SWWICP = (function($) {
 							{
 								$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
 							}
-							$("#CuratedContentToolModal section button[data-resp='s']").one("click", function() { errorHandler(function() {
+							var chooseInfoboxTypeController = false;
+							$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
 								var infoboxName = $("#selecionarInfoboxCustom").val();
+								if (infoboxName == '' || chooseInfoboxTypeController ==  true)
+									return;
+								chooseInfoboxTypeController = true;
 								userActions.infoboxType = infoboxName;
 								if (infoboxName == "Batalha" || infoboxName == "Guerra")
 								{
@@ -323,6 +327,8 @@ var SWWICP = (function($) {
 		$("#CuratedContentToolModal section").html(passo4);
 		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section button[data-interlink]").click(function() {
+			if ($("#wookieePage").val() == '')
+				return;
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			$("#CuratedContentToolModal section button").attr('disabled', '');
 			userActions.interlink = $("#wookieePage").val();
