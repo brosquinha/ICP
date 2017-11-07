@@ -26,8 +26,10 @@ var SWWICP = (function($) {
 	}
 	var inserirBotaoNovaPagina = function() {
 		//<iframe data-url="/main/edit?useskin=wikiamobile" id="CuratedContentToolIframe" class="curated-content-tool" name="curated-content-tool" src="/main/edit?useskin=wikiamobile"></iframe>
-		if (window.wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
-			location.reload();
+		//if (window.wgAction == 'view' && artigoTexto != '') //Segunda chamada da Interface! Recarregar página!
+		//	location.reload();
+		if (document.getElementById("blackout_CuratedContentToolModal") != "null")
+			$("#blackout_CuratedContentToolModal").remove();
 		$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 		$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 			+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
@@ -57,6 +59,8 @@ var SWWICP = (function($) {
 		+'</div>');
 		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal span.close").click(function() {
+			if (typeof(userActions.passo0DT) != "undefined" && typeof(userActions.passo4DT) == "undefined")
+				userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
 			$("#blackout_CuratedContentToolModal").removeClass('visible');
 			sendFeedback();
 		});
@@ -70,7 +74,7 @@ var SWWICP = (function($) {
 				buttons: [{
 					message: 'Enviar feedback',
 					handler: function() {
-						var feedbackTxt = confirm("Envie um comentário sobre essa ferramenta para os administradores: ");
+						var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
 						if (feedbackTxt)
 						{
 							userActions.msgFeedback = feedbackTxt
@@ -115,22 +119,22 @@ var SWWICP = (function($) {
 			passo1 = '<img src="';
 			passo1 += (window.wgNamespaceNumber == 0) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
 			passo1 += '" style="width:150px;float:right;" />';
-			passo1 += '<p style="font-size:14px">Esse artigo pertence ao universo <span style="font-weight:bold">';
+			passo1 += '<p style="font-size:14px">Esse artigo existe no universo <span style="font-weight:bold">';
 			if (window.wgNamespaceNumber == 0)
 			{
 				passo1 += 'Cânon';
-				txtBotaoSim = 'Sim, também pertence ao <i>Legends</i>';
-				txtBotaoNao = 'Não, pertence somente ao Cânon';
+				txtBotaoSim = 'Sim, também existe no <i>Legends</i>';
+				txtBotaoNao = 'Não, existe somente no Cânon';
 				artigoTexto = "{{Eras|canon";
 			}
 			else
 			{
 				passo1 += '<i>Legends</i>';
-				txtBotaoSim = 'Sim, também pertence ao Cânon';
-				txtBotaoNao = 'Não, pertence somente ao <i>Legends</i>';
+				txtBotaoSim = 'Sim, também existe no Cânon';
+				txtBotaoNao = 'Não, existe somente no <i>Legends</i>';
 				artigoTexto = "{{Eras|legends";
 			}
-			passo1 += '</span>. Ele pertence também ao outro universo?</p>';
+			passo1 += '</span>. Ele existe também no outro universo?</p>';
 			passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
 			$("#CuratedContentToolModal section").html(passo1);
 			deltaTime = new Date().getTime();
@@ -230,10 +234,9 @@ var SWWICP = (function($) {
 		}
 		var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
-		var passo2 = '<div style="position:relative"><p style="position:fixed;">Preencha a infobox para o artigo'+
-		'<br />Ferramentas:<img id="linkButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804" />'+
-		'<img id="refButton" src="https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243" />'+
-		'<br /><br /><button>Pronto</button></p>';
+		var passo2 = '<div style="position:relative"><div style="position:fixed;"><p>Preencha a infobox para o artigo</p>'+
+		'<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
+		'<br /><button>Pronto</button></div>';
 		passo2 += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
 		'<h2 class="pi-item pi-item-spacing pi-title">'+wgTitle+'</h2>';
 		artigoTexto += "{{"+nome+"\n";
@@ -264,22 +267,35 @@ var SWWICP = (function($) {
 				labelTagText = $(dataTag)[0].children[0].innerHTML;
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
 			'<h3 class="pi-data-label pi-secondary-font">'+labelTagText+'</h3>'+
-			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"'+((i == 0) ? ' autofocus' : '')+
+			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"'+//((i == 0) ? ' autofocus' : '')+
 			'></textarea></div></div>';
 			artigoTexto += "|"+($(dataTag).attr('source'))+"=\n";
 		}
 		artigoTexto += "}}\n";
 		passo2 += '</aside>';
 		$("#CuratedContentToolModal section").html(passo2);
+		$("aside textarea").first().focus();
+		$("aside textarea").first().blur();
+		setTimeout(function () {$("aside textarea").first().focus(); }, 50);
 		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
 		userActions.usageOfNewButtons = 0;
 		if (typeof mw.toolbar === "undefined")
 			importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
-		$("#linkButton").click(function() {
-			mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
-			userActions.usageOfNewButtons += 1;
-		});
+		if (wgNamespaceNumber == 0)
+		{
+			$("#linkButton").click(function() {
+				mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
+				userActions.usageOfNewButtons += 1;
+			});			
+		}
+		else
+		{
+			$("#linkButton").click(function() {
+				mw.toolbar.insertTags("{{"+"SUBST:L|", "}}", "Exemplo", 0);
+				userActions.usageOfNewButtons += 1;
+			});			
+		}
 		$("#refButton").click(function() {
 			mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
 			userActions.usageOfNewButtons += 1;

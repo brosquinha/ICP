@@ -27,6 +27,32 @@ td[data-tipo="outro"] {
     font-size: 15px;
     padding: 15px;
 }
+.ICPbuttons div {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    border-top: 1px solid #CCC;
+    border-bottom: 1px solid #CCC;
+    border-left: 1px solid #CCC;
+}
+#linkButton {
+    background-image: url("https://vignette.wikia.nocookie.net/pt.starwars/images/f/fd/Link.png/revision/latest?cb=20141207221804");
+    background-repeat: no-repeat;
+    background-position-y: 4px;
+    background-position-x: -2px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+#refButton {
+    background-image: url('https://vignette.wikia.nocookie.net/pt.starwars/images/9/9f/Ref.png/revision/latest?cb=20141208011243');
+    border-right: 1px solid #CCC;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.ICPbuttons div:hover {
+    border-color: #969696;
+}
+#refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
 #NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
 #CuratedContentToolModal p {
