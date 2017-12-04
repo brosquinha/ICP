@@ -493,7 +493,10 @@ var SWWICP = (function($) {
 		{
 			//Source editor and WYSIWYG editor
 			var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
-			theTextarea.value += artigoTexto;
+			if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
+				theTextarea.value = artigoTexto;
+			else
+				theTextarea.value += artigoTexto;
 			$("#CuratedContentToolModal span.close").click();
 			if (ICP_wys == true)
 				setTimeout(function() {$("#cke_22_label").click()}, 1500);
