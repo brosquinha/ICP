@@ -519,7 +519,7 @@ var SWWICP = (function($) {
 		})
 	}
 	var init = function() {
-		userActions.user = (window.wgGAUserIdHash || false);
+		userActions.user = (window.wgTrackID || false);
 		userActions.page = window.wgTitle;
 		userActions.date = window.wgNow;
 		userActions.errors = []
