@@ -3,6 +3,7 @@
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
 //TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
+//TODO: tratamento para artigos fora-de-universo
 var SWWICP = (function($) {
 	"use strict";
 	var artigoTexto = '';
@@ -234,6 +235,7 @@ var SWWICP = (function($) {
 		}
 		var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
+		var titleTagParam = $($(infoboxObj).find("title")[0]).attr('source');
 		var passo2 = '<div style="position:relative"><div style="position:fixed;"><p>Preencha a infobox para o artigo</p>'+
 		'<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
 		'<br /><button>Pronto</button></div>';
@@ -262,7 +264,7 @@ var SWWICP = (function($) {
 			var dataTag, labelTagText;
 			dataTag = $(infoboxObj).find("data")[i];
 			if (typeof $(dataTag)[0].children[0] === "undefined")
-				labelTagText = $(dataTag).attr('source')
+				labelTagText = $(dataTag).attr('source');
 			else
 				labelTagText = $(dataTag)[0].children[0].innerHTML;
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
@@ -321,7 +323,7 @@ var SWWICP = (function($) {
 			userActions.passo2DT = (new Date().getTime()) - deltaTime;
 			var infTxts = $("#CuratedContentToolModal section aside textarea");
 			var subArtTxt = artigoTexto.split("=");
-			artigoTexto = subArtTxt[0].replace("|nome-", "|nome = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
+			artigoTexto = subArtTxt[0].replace("|nome-", "|"+titleTagParam+" = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
 			for (var i=0; i<infTxts.length; i++)
 			{
 				artigoTexto += ' = '+$(infTxts[i]).val();
