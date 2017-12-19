@@ -5,22 +5,22 @@
     height: 100px;
     margin: 0 auto;
 }
-td[data-tipo="personagem"] .infoboxIcon {
+td[data-tipo="personagem"] .infoboxIcon, .infoboxIcon.personagem {
     background-position: 0px 100px;
 }
-td[data-tipo="planeta"] .infoboxIcon {
+td[data-tipo="planeta"] .infoboxIcon, .infoboxIcon.planeta {
     background-position: -100px 100px;
 }
-td[data-tipo="droide"] .infoboxIcon {
+td[data-tipo="droide"] .infoboxIcon, .infoboxIcon.droide {
     background-position: 0 0;
 }
-td[data-tipo="espaçonave"] .infoboxIcon {
+td[data-tipo="espaçonave"] .infoboxIcon, .infoboxIcon.nave {
     background-position: 200px 0px;
 }
-td[data-tipo="evento"] .infoboxIcon {
+td[data-tipo="evento"] .infoboxIcon, .infoboxIcon.evento {
     background-position: 100px 0px;
 }
-td[data-tipo="tecnologia"] .infoboxIcon {
+td[data-tipo="tecnologia"] .infoboxIcon, .infoboxIcon.tecnologia {
     background-position: 100px 100px;
 }
 td[data-tipo="outro"] {
