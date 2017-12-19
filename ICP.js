@@ -4,6 +4,7 @@
 */
 //TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
 //TODO: tratamento para artigos fora-de-universo
+//TODO: importar cast para eps de TV
 var SWWICP = (function($) {
 	"use strict";
 	var artigoTexto = '';
@@ -41,12 +42,12 @@ var SWWICP = (function($) {
 				+'<section>'
 					+'<p style="margin-top:0">Selecione um tipo de artigo:</p>'
 					+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-						+'<tr><td style="width:50%" data-tipo="personagem"><div class="infoboxIcon"></div>Personagem</td>'
-						+'<td data-tipo="planeta"><div class="infoboxIcon"></div>Planeta</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="droide"><div class="infoboxIcon"></div>Droide</td>'
-						+'<td data-tipo="espaçonave"><div class="infoboxIcon"></div>Espaçonave</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="evento"><div class="infoboxIcon"></div>Evento</td>'
-						+'<td data-tipo="tecnologia"><div class="infoboxIcon"></div>Tecnologia</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
+						+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
+						+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
+						+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
+						+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
 						+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
 					+'</table>'
 				+'</section>'
@@ -115,8 +116,97 @@ var SWWICP = (function($) {
 			else
 				userActions.ICPconfig = false;
 			userActions.infoboxType = artigoTipo;
-			$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
-			var passo1, txtBotaoSim, txtBotaoNao;
+			var infoboxName, infoboxUrl, foraDeUniverso = false;
+			if (artigoTipo == 'outro')
+			{
+				var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
+				'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
+				'<button data-resp="s">Pronto</button>';
+				$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
+				//Tratar erro
+				$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
+					var infoboxes = data.split("\n{{")
+					for (var i=1; i<infoboxes.length; i++)
+					{
+						$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
+					}
+					var chooseInfoboxTypeController = false;
+					$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
+						infoboxName = $("#selecionarInfoboxCustom").val();
+						if (infoboxName == '' || chooseInfoboxTypeController ==  true)
+							return;
+						chooseInfoboxTypeController = true;
+						userActions.infoboxType = infoboxName;
+						infoboxUrl = encodeURI(infoboxName.replace(/ /g, "_"));
+						if (infoboxName == "Batalha" || infoboxName == "Guerra")
+						{
+							var numParticipantes = '';
+							while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
+								numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
+							infoboxUrl = (infoboxName == "Batalha") ? "Battle" : "War";
+							if (numParticipantes == '2')
+								infoboxUrl += '300';
+							else if (numParticipantes == '3')
+								infoboxUrl += '350';
+							else
+								infoboxUrl += '400';
+						}
+						console.log('Obtendo "'+infoboxName+'"');
+						$.get("http://pt.starwars.wikia.com/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
+							var categoryName = $($(data).find("cl")[0]).attr('title');
+							console.log(categoryName);
+							if (typeof(categoryName) != "undefined")
+								if (categoryName == "Categoria:Infoboxes de mídia")
+									foraDeUniverso = 1;
+								if (categoryName == "Categoria:Infoboxes fora do universo")
+									foraDeUniverso = 2;
+							inserirEras(foraDeUniverso, infoboxName, infoboxUrl);
+						})});
+					})});
+				})});
+			}
+			else
+			{
+				infoboxName = artigoTipo;
+				infoboxUrl = encodeURI(infoboxName.replace(/ /g, "_"));
+				inserirEras(foraDeUniverso, infoboxName, infoboxUrl);
+			}
+		})});
+	}
+	var inserirEras = function(foraDeUniverso, infoboxName, infoboxUrl)
+	{
+		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
+		var passo1, txtBotaoSim, txtBotaoNao;
+		if (foraDeUniverso)
+		{
+			if (foraDeUniverso == 2)
+			{
+				artigoTexto = "{{Eras|real}}\n";
+				userActions.passo1DT = 0;
+				$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+					errorHandler(function () { infoboxParser(data, infoboxName); });
+				});
+			}
+			else
+			{
+				passo1 = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
+				passo1 += '<p><button data-resp="canon"><img src="http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" /></button>'+
+				'<button data-resp="legends"><img src="http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" /></button>'+
+				'<button data-resp="none" style="vertical-align: top">Nenhum</button></p>';
+				$("#CuratedContentToolModal section").html(passo1);
+				deltaTime = new Date().getTime();
+				$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
+					artigoTexto = "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
+					userActions.passo1DT = (new Date().getTime() - deltaTime);
+					userActions.erasAnswer = $(esse).attr('data-resp');
+					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+						errorHandler(function () { infoboxParser(data, infoboxName); });
+					});
+				})});
+			}
+		}
+		else
+		{
 			passo1 = '<img src="';
 			passo1 += (window.wgNamespaceNumber == 0) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
 			passo1 += '" style="width:150px;float:right;" />';
@@ -148,80 +238,11 @@ var SWWICP = (function($) {
 				userActions.passo1DT = (new Date().getTime() - deltaTime);
 				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
-				switch(artigoTipo) { //Tratar erro
-					case "personagem":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Personagem_infobox?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Personagem infobox"); });
-						});
-						break;
-					case "planeta":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Planeta?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Planeta"); });
-						});
-						break;
-					case "droide":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Droide_infobox?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Droide infobox"); });
-						});
-						break;
-					case "espaçonave":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Nave?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Nave"); });
-						});
-						break;
-					case "evento":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Evento?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Evento"); });
-						});
-						break;
-					case "tecnologia":
-						$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:Dispositivo_infobox?action=raw", function(data) {
-							errorHandler(function () { infoboxParser(data, "Dispositivo infobox"); });
-						});
-						break;
-					default:
-						var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
-						'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
-						'<button data-resp="s">Pronto</button>';
-						$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
-						//Tratar erro
-						$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
-							var infoboxes = data.split("\n{{")
-							for (var i=1; i<infoboxes.length; i++)
-							{
-								$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
-							}
-							var chooseInfoboxTypeController = false;
-							$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
-								var infoboxName = $("#selecionarInfoboxCustom").val();
-								if (infoboxName == '' || chooseInfoboxTypeController ==  true)
-									return;
-								chooseInfoboxTypeController = true;
-								userActions.infoboxType = infoboxName;
-								if (infoboxName == "Batalha" || infoboxName == "Guerra")
-								{
-									var numParticipantes = '';
-									while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
-										numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
-									infoboxName = (infoboxName == "Batalha") ? "Battle" : "War";
-									if (numParticipantes == '2')
-										infoboxName += '300';
-									else if (numParticipantes == '3')
-										infoboxName += '350';
-									else
-										infoboxName += '400';
-								}
-								console.log('Obtendo "'+infoboxName+'"');
-								//Tratar erro
-								$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+encodeURI(infoboxName.replace(" ", "_"))+"?action=raw", function(data) {
-									errorHandler(function() { infoboxParser(data, $("#selecionarInfoboxCustom").val()); });
-								});
-							})});
-						})});
-						break;
-				}
+				$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+					errorHandler(function () { infoboxParser(data, infoboxName); });
+				});
 			})});
-		})});
+		}
 	}
 	var infoboxParser = function (txt, nome)
 	{
