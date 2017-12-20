@@ -3,7 +3,6 @@
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
 //TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
-//TODO: tratamento para artigos fora-de-universo
 //TODO: importar cast para eps de TV
 var SWWICP = (function($) {
 	"use strict";
@@ -12,6 +11,7 @@ var SWWICP = (function($) {
 	var ICP_wys = false;
 	var deltaTime;
 	var userActions = {}
+	var foraDeUniverso;
  
 	var errorHandler = function(funcao) {
 		try {
@@ -116,7 +116,8 @@ var SWWICP = (function($) {
 			else
 				userActions.ICPconfig = false;
 			userActions.infoboxType = artigoTipo;
-			var infoboxName, infoboxUrl, foraDeUniverso = false;
+			foraDeUniverso = false;
+			var infoboxName, infoboxUrl;
 			if (artigoTipo == 'outro')
 			{
 				var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
@@ -160,7 +161,7 @@ var SWWICP = (function($) {
 									foraDeUniverso = 1;
 								if (categoryName == "Categoria:Infoboxes fora do universo")
 									foraDeUniverso = 2;
-							inserirEras(foraDeUniverso, infoboxName, infoboxUrl);
+							inserirEras(infoboxName, infoboxUrl);
 						})});
 					})});
 				})});
@@ -169,11 +170,11 @@ var SWWICP = (function($) {
 			{
 				infoboxName = artigoTipo;
 				infoboxUrl = encodeURI(infoboxName.replace(/ /g, "_"));
-				inserirEras(foraDeUniverso, infoboxName, infoboxUrl);
+				inserirEras(infoboxName, infoboxUrl);
 			}
 		})});
 	}
-	var inserirEras = function(foraDeUniverso, infoboxName, infoboxUrl)
+	var inserirEras = function(infoboxName, infoboxUrl)
 	{
 		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
 		var passo1, txtBotaoSim, txtBotaoNao;
@@ -350,7 +351,10 @@ var SWWICP = (function($) {
 				artigoTexto += ' = '+$(infTxts[i]).val();
 				artigoTexto += subArtTxt[i+1];
 			}
-			artigoTexto += "'''"+wgTitle+"''' foi um...";
+			if (foraDeUniverso)
+				artigoTexto += "'''"+wgTitle+"''' é um...";
+			else
+				artigoTexto += "'''"+wgTitle+"''' foi um...";
 			console.log(artigoTexto);
 			inserirInterlink();
 		})});
@@ -407,6 +411,8 @@ var SWWICP = (function($) {
 		console.log(wookieeSecoes);
 		var wookieeAparicoes = '';
 		var wookieeFontes = '';
+		var wookieeBibliografia = '';
+		var wookieeCast = '';
 		for (i=0; i<wookieeSecoes.length; i++)
 		{
 			if ($.trim(wookieeSecoes[i]) == "Appearances")
@@ -419,6 +425,14 @@ var SWWICP = (function($) {
 				wookieeFontes = wookieeSecoes[i+1];
 				break;
 			}
+			else if ($.trim(wookieeSecoes[i]) == "Bibliography")
+			{
+				wookieeBibliografia = wookieeSecoes[i+1];
+			}
+			else if ($.trim(wookieeSecoes[i]) == "Cast")
+			{
+				wookieeCast = wookieeSecoes[i+1];
+			}
 		}
 		artigoTexto += "\n\n";
 		if (wookieeFontes.search("{{Interlang") >= 0)
@@ -427,10 +441,14 @@ var SWWICP = (function($) {
 			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}"; //Tratar erro
 		else
 			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
-		if (wookieeAparicoes != '')
+		if (wookieeCast != '' && foraDeUniverso == 1)
+			artigoTexto += "== Elenco =="+wookieeCast;
+		if (wookieeAparicoes != '' && foraDeUniverso == false)
 			artigoTexto += "== Aparições =="+wookieeAparicoes;
 		if (wookieeFontes != '')
 			artigoTexto += "== Fontes =="+wookieeFontes;
+		if (wookieeBibliografia != '' && foraDeUniverso)
+			artigoTexto += "== Bibliografia =="+wookieeBibliografia;
 		artigoTexto += wookieeInterlang;
 		//Tratar erro
 		$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) { errorHandler(function() {
@@ -526,7 +544,7 @@ var SWWICP = (function($) {
 		}	
 	}
 	var sendFeedback = function() {
-		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know when the data is from differente people or not. This will also be used to collect info when errors occur
+		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know when the data is from differente people or not. This is also used to collect info when errors occur
 		$.ajax({
 			url:"http://www.99luca11.com/sww_helper",
 			type: "POST",
