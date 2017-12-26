@@ -3,7 +3,6 @@
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 */
 //TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
-//TODO: importar cast para eps de TV
 var SWWICP = (function($) {
 	"use strict";
 	var artigoTexto = '';
@@ -435,12 +434,13 @@ var SWWICP = (function($) {
 			}
 		}
 		artigoTexto += "\n\n";
+		var addDisclaimer = (wookieeAparicoes || wookieeBibliografia || wookieeCast || wookieeFontes) ? ["{{ICPDisclaimer}}", "|icp=1"] : ["", ''];
 		if (wookieeFontes.search("{{Interlang") >= 0)
 			wookieeFontes = wookieeFontes.split("{{Interlang")[0]; //Tratar erro
 		if (wookieePage.search("{{Interlang") >= 0)
-			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+"}}"; //Tratar erro
+			var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+addDisclaimer[1]+"}}"; //Tratar erro
 		else
-			var wookieeInterlang = "{{Interlang\n|en="+$("#wookieePage").val()+"\n}}";
+			var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+addDisclaimer[1]+"\n}}";
 		if (wookieeCast != '' && foraDeUniverso == 1)
 			artigoTexto += "== Elenco =="+wookieeCast;
 		if (wookieeAparicoes != '' && foraDeUniverso == false)
