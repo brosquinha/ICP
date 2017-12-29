@@ -21,6 +21,7 @@ var SWWICP = (function($) {
 			var erroTxt = e.name + ": " + e.message
 			erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
 			userActions.errors.push(erroTxt);
+			userActions.userAgent = window.navigator.userAgent;
 			alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
 			finalizarEdicao();
 		}
@@ -284,14 +285,13 @@ var SWWICP = (function($) {
 		{
 			var dataTag, labelTagText;
 			dataTag = $(infoboxObj).find("data")[i];
-			if (typeof $(dataTag)[0].children[0] === "undefined")
+			if (typeof $(dataTag).children()[0] === "undefined")
 				labelTagText = $(dataTag).attr('source');
 			else
-				labelTagText = $(dataTag)[0].children[0].innerHTML;
+				labelTagText = $(dataTag).children()[0].innerHTML;
 			passo2 += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
 			'<h3 class="pi-data-label pi-secondary-font">'+labelTagText+'</h3>'+
-			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"'+//((i == 0) ? ' autofocus' : '')+
-			'></textarea></div></div>';
+			'<div class="pi-data-value pi-font"><textarea placeholder="Preencher"></textarea></div></div>';
 			artigoTexto += "|"+($(dataTag).attr('source'))+"=\n";
 		}
 		artigoTexto += "}}\n";
