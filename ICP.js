@@ -363,7 +363,7 @@ var SWWICP = (function($) {
 		$("#CuratedContentToolModal header h3").text("Passo 3: Fontes e Aparições");
 		var passo4 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 		passo4 += "<textarea id='wookieePage' name='wookieePage' >"
-		+((artigoTipo == "personagem" || artigoTipo == "planeta" || artigoTipo == "droide") ? wgPageName.replace(/_/g, " ") : '')
+		+((artigoTipo == "Personagem infobox" || artigoTipo == "Planeta" || artigoTipo == "Droide infobox") ? wgPageName.replace(/_/g, " ") : '')
 		+"</textarea><button data-interlink='true'>Enviar</button>"
 		+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
 		$("#CuratedContentToolModal section").html(passo4);
@@ -392,6 +392,7 @@ var SWWICP = (function($) {
 	}
 	var wookieeData = function (data)
 	{
+		//TODO: traduzir caixas de sucessão
 		var wookieePage = data.content;
 		if (wookieePage === false)
 		{
@@ -460,6 +461,12 @@ var SWWICP = (function($) {
 			}
 			categorizar();
 		})});
+		//Acionando HotCat
+		var hotcatInterlinks = wookieePage.split("{{Interlang")[1].split("}}")[0].split("|");
+		for (i=0; i<hotcatInterlinks.length; i++)
+			hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/, ''); //Sim, apenas o primeiro "="
+		console.log('pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|")));
+		userActions.hotCatData = 'pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|"));
 	}
 	var categorizar = function ()
 	{
@@ -561,7 +568,7 @@ var SWWICP = (function($) {
 	}
 	var init = function() {
 		userActions.user = (window.wgTrackID || false);
-		userActions.page = window.wgTitle;
+		userActions.page = window.wgPageName;
 		userActions.date = window.wgNow;
 		userActions.errors = []
 		if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0))
