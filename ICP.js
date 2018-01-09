@@ -439,7 +439,15 @@ var SWWICP = (function($) {
 		if (wookieeFontes.search("{{Interlang") >= 0)
 			wookieeFontes = wookieeFontes.split("{{Interlang")[0]; //Tratar erro
 		if (wookieePage.search("{{Interlang") >= 0)
+		{
 			var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+wookieePage.split("{{Interlang")[1].split("}}")[0]+addDisclaimer[1]+"}}"; //Tratar erro
+			//Acionando HotCat
+			var hotcatInterlinks = wookieePage.split("{{Interlang")[1].split("}}")[0].split("|");
+			for (i=0; i<hotcatInterlinks.length; i++)
+				hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/, ''); //Sim, apenas o primeiro "="
+			console.log('pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|")));
+			userActions.hotCatData = 'pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|"));
+		}
 		else
 			var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+addDisclaimer[1]+"\n}}";
 		if (wookieeCast != '' && foraDeUniverso == 1)
@@ -461,12 +469,6 @@ var SWWICP = (function($) {
 			}
 			categorizar();
 		})});
-		//Acionando HotCat
-		var hotcatInterlinks = wookieePage.split("{{Interlang")[1].split("}}")[0].split("|");
-		for (i=0; i<hotcatInterlinks.length; i++)
-			hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/, ''); //Sim, apenas o primeiro "="
-		console.log('pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|")));
-		userActions.hotCatData = 'pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|"));
 	}
 	var categorizar = function ()
 	{
