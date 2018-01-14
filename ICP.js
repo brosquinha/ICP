@@ -32,6 +32,16 @@ var SWWICP = (function($) {
 		//	location.reload();
 		if (document.getElementById("blackout_CuratedContentToolModal") != "null")
 			$("#blackout_CuratedContentToolModal").remove();
+		var passo0 = '<p style="margin-top:0" id="NovaPaginaIntroParagraph">Selecione um tipo de artigo:</p>'
+		+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
+			+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
+			+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
+			+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
+			+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
+			+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
+			+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
+			+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
+		+'</table>';
 		$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 		$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 			+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
@@ -39,18 +49,7 @@ var SWWICP = (function($) {
 					+'<span class="close">Close</span>'
 						+'<h3>Criando um novo artigo</h3>'
 				+'</header>'
-				+'<section>'
-					+'<p style="margin-top:0">Selecione um tipo de artigo:</p>'
-					+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-						+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
-						+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
-						+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
-						+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
-						+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
-						+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
-					+'</table>'
-				+'</section>'
+				+'<section>'+passo0+'</section>'
 				+'<footer>'
 					+'<button id="configuracoesICP" class="secondary">Configurações</button>'
 					+'<div style="float:right;">'
@@ -60,6 +59,25 @@ var SWWICP = (function($) {
 			+'</div>'
 		+'</div>');
 		deltaTime = new Date().getTime();
+		if (userActions.user === false && document.location.href.search("redlink=1") >= 0)
+		{
+			var passo0Anon = '<span id="passo0Anon"><p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
+			'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>'+
+			'<div style="width:80%;margin:0px auto;"><button class="secondary" onclick="window.history.back();">Voltar</button>'+
+			'<button id="anonContinuar" style="float:right">Continuar</button></div></span>';
+			$("#configuracoesICP").hide();
+			$("#NovaPaginaIntroParagraph").hide();
+			$("#NovaPaginaTipoDeArtigo").hide();
+			$("#CuratedContentToolModal").css('width', '500px');
+			$("#CuratedContentToolModal section").append(passo0Anon);
+			$("#anonContinuar").click(function() { errorHandler(function() {
+				$("#CuratedContentToolModal").css('width', '');
+				$("#configuracoesICP").show();
+				$("#NovaPaginaIntroParagraph").show();
+				$("#NovaPaginaTipoDeArtigo").show();
+				$("#passo0Anon").remove();
+			})});
+		}
 		$("#CuratedContentToolModal span.close").click(function() {
 			if (typeof(userActions.passo0DT) != "undefined" && typeof(userActions.passo4DT) == "undefined")
 				userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
@@ -68,7 +86,8 @@ var SWWICP = (function($) {
 		});
 		$("#configuracoesICP").click(function () {
 			var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
-			"<input type='checkbox' name='default_action' checked /></label></p></form>"
+			"<input type='checkbox' name='default_action' checked /></label></p></form>"+
+			'<p><a href="http://pt.starwars.wikia.com/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a></p>';
 			$.showCustomModal('Configurações', configModal, {
 				id: 'ModalSettingsWindow',
 				width: 600,
@@ -449,7 +468,10 @@ var SWWICP = (function($) {
 			userActions.hotCatData = 'pt:'+encodeURIComponent(window.wgPageName+hotcatInterlinks.join("|"));
 		}
 		else
+		{
 			var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+addDisclaimer[1]+"\n}}";
+			userActions.hotCatData = 'pt:'+encodeURIComponent(window.wgPageName);
+		}
 		if (wookieeCast != '' && foraDeUniverso == 1)
 			artigoTexto += "== Elenco =="+wookieeCast;
 		if (wookieeAparicoes != '' && foraDeUniverso == false)
