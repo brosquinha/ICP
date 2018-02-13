@@ -8,5 +8,10 @@ Conforme sua complexidade foi aumentando, foi ficando claro a importância de se
 # Teste versões beta!
 Para testar a última versão beta da ICP, simplesmente copie a seguinte linha no console de desenvolvedor do seu navegador quando a ICP estiver aberta ou, se preferir, copie em seu JavaScript pessoal: 
 ```javascript
-importScriptURI("https://rawgit.com/brosquinha/ICP/master/ICP.js");
+var ICPBeta = setInterval(function() {
+  if (typeof SWWICP !== "undefined") {
+    importScriptURI("http://rawgit.com/brosquinha/ICP/master/ICP.js");
+    clearInterval(ICPBeta);
+  }
+}, 200);
 ```
