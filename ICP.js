@@ -7,7 +7,7 @@
 //TODO: inserir Title para tipos de artigos fora-de-universo comuns
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.0-beta.2';
+	var ICPversion = '2.7.0';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
