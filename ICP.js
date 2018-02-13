@@ -7,7 +7,7 @@
 //TODO: inserir Title para tipos de artigos fora-de-universo comuns
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.8.0-beta.0';
+	var ICPversion = '2.8.0-beta.1';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -288,7 +288,7 @@ var SWWICP = (function($) {
 		userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
 		if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
 		{
-			$("#cke_21_label").click(); //For WYSIWYG editor
+			window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
 			ICP_wys = true;
 			userActions.editor = "WYSIWYG";
 		}
@@ -603,10 +603,12 @@ var SWWICP = (function($) {
 			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 			$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
 			$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
+				console.log(botaoParaClicar+" clicado");
 				var observarModal = new MutationObserver(function (mutacao, observ) {
-					//console.log("Mudei");
+					console.log("Mudei");
 					if ($("div.oo-ui-window-content.oo-ui-dialog-content.oo-ui-processDialog-content.ve-ui-wikiaSourceModeDialog-content").hasClass('oo-ui-window-content-ready'))
 					{
+						console.log("Classe mudada");
 						var textoAInserir = ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0) ? artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val() : artigoTexto;
 						$("textarea.ui-autocomplete-input").val(textoAInserir);
 						$("textarea.ui-autocomplete-input").change();
@@ -658,6 +660,8 @@ var SWWICP = (function($) {
 		else
 		{
 			//Source editor and WYSIWYG editor
+			if (ICP_wys) //For now, since there are two textareas with id=wpTextbox1 (nice job, Fandom ¬¬)
+				$('#wpTextbox1').attr('id', 'wpTextbox0');
 			var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 			if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
 				theTextarea.value = artigoTexto;
@@ -665,7 +669,7 @@ var SWWICP = (function($) {
 				theTextarea.value += artigoTexto;
 			$("#CuratedContentToolModal span.close").click();
 			if (ICP_wys == true)
-				setTimeout(function() {$("#cke_22_label").click()}, 1500);
+				setTimeout(function() {window.CKEDITOR.tools.callFunction(59)}, 1500);
 		}	
 	}
 	
