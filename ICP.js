@@ -7,7 +7,7 @@
 //TODO: inserir Title para tipos de artigos fora-de-universo comuns
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.0';
+	var ICPversion = '2.8.0-beta.0';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -599,19 +599,60 @@ var SWWICP = (function($) {
 			//Visual Editor
 			var botaoParaClicar = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
 			alert("Por favor, clique em \""+botaoParaClicar+"\" e aguarde alguns segundos.");
-			//$("div.ve-ui-toolbar-saveButton a span.oo-ui-labelElement-label").text("Continuar");
 			$("#CuratedContentToolModal span.close").click();
 			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 			$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
 			$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-				setTimeout(function() {
-					if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
-						$("textarea.ui-autocomplete-input").val(artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val());
-					else
-						$("textarea.ui-autocomplete-input").val(artigoTexto);
-					$("textarea.ui-autocomplete-input").change();
-					setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-				}, 2000);
+				var observarModal = new MutationObserver(function (mutacao, observ) {
+					//console.log("Mudei");
+					if ($("div.oo-ui-window-content.oo-ui-dialog-content.oo-ui-processDialog-content.ve-ui-wikiaSourceModeDialog-content").hasClass('oo-ui-window-content-ready'))
+					{
+						var textoAInserir = ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0) ? artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val() : artigoTexto;
+						$("textarea.ui-autocomplete-input").val(textoAInserir);
+						$("textarea.ui-autocomplete-input").change();
+						var intervalo = setInterval(function() {
+						//TODO: Testar tudo isso à exaustão
+							if ($("textarea.ui-autocomplete-input").val() !== textoAInserir)
+							{
+								$("textarea.ui-autocomplete-input").val(textoAInserir);
+								$("textarea.ui-autocomplete-input").change();
+								observ.disconnect()
+								clearInterval(intervalo);
+								setTimeout(function() {
+									$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();
+										var observarConteudo = new MutationObserver(function(mutacaoJanela, observJanela) {
+										observJanela.disconnect();
+										var observarBody = new MutationObserver(function(mutacaoBody, observBody) {
+											//TODO: testar e terminar confirmação de inserção bem-sucedida do wikitexto
+											console.log($("#title-eraicons").length == 1);
+											userActions.autoInsertSuccess = ($("#title-eraicons").length == 1);
+											if ($("#title-eraicons").length != 1)
+											{
+												$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
+												$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
+												var backupTextarea = '<p>Infelizmente não foi possível registrar automaticamente seu progresso e, portanto, você deve fazê-lo manualmente.'+
+												' Por favor, copie o código abaixo e volte em '+botaoParaClicar+' e cole-o lá.</p>'+
+												'<textarea id="backupTextarea" style="width:590px; height: 210px">'+textoAInserir+'</textarea>';
+												$.showCustomModal('Ocorreu um problema', backupTextarea, {
+													id: 'ModalBackupWindow',
+													width: 600,
+													height: 350
+												});
+												$("#backupTextarea").on("copy", function() {
+													$("#ModalBackupWindow").closeModal();
+												});
+											}
+											observBody.disconnect();
+										});
+										observarBody.observe(document.body, {childList: true});
+									});
+									observarConteudo.observe($("div.ve-ce-surface.mw-body-content").parent()[0], {childList: true});
+								}, 1000);
+							}
+						}, 250);
+					}
+				});
+				observarModal.observe($("div.oo-ui-window-content.oo-ui-dialog-content.oo-ui-processDialog-content.ve-ui-wikiaSourceModeDialog-content")[0], {attributes: true});
 			});
 		}
 		else
