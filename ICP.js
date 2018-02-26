@@ -3,11 +3,10 @@
 * Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
 * GitHub repository: https://github.com/brosquinha/ICP
 */
-//TODO: refatorar: dividir parte lógica da UI e melhorar tratamento de erros
-//TODO: inserir Title para tipos de artigos fora-de-universo comuns
+
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.8.0-beta.1';
+	var ICPversion = '2.8.0-beta.2';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -413,7 +412,7 @@ var SWWICP = (function($) {
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			$("#CuratedContentToolModal section button").attr('disabled', '');
 			userActions.interlink = $("#wookieePage").val();
-			$.ajax({url:"http://www.99luca11.com/sww_helper?qm="+encodarURL($("#wookieePage").val()), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
+			$.ajax({url:"https://www.99luca11.com/sww_helper?qm="+encodarURL($("#wookieePage").val()), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
 		});
 		$("#CuratedContentToolModal section button[data-prev]").click(function() {
 			window.open("http://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
@@ -676,7 +675,7 @@ var SWWICP = (function($) {
 	var sendFeedback = function() {
 		//This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know whether the data is from different people or not. This is also used to collect info when errors occur
 		$.ajax({
-			url:"http://www.99luca11.com/sww_helper",
+			url:"https://www.99luca11.com/sww_helper",
 			type: "POST",
 			crossDomain: true,
 			data: userActions,
@@ -694,7 +693,6 @@ var SWWICP = (function($) {
 		return encodeURI(qm.replace(/ /g, "_"))
 	}
 	
-	//TODO: terminar função de corrigir mensagem do filtro de abuso
 	//Replaces VE's useless error message for abuse filter with custom message per filter
 	var corrigirMensagemFiltroAbuso = function() {
 		if ($(".oo-ui-processDialog-error").text() != 'The modification you tried to make was aborted by an extension hook')
