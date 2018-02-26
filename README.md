@@ -6,11 +6,11 @@ Com essa ferramenta, usuários podem inserir predefinições importantes, como E
 Conforme sua complexidade foi aumentando, foi ficando claro a importância de se fazer o controle de versões da ICP. Além disso, como é um dos script mais importantes e impactantes da Star Wars Wiki, também se mostrou interessante a possibilidade de tornar públicas versões betas para testadores, a fim de garantir que a versão final publicada tenha o mínimo de bugs. 
 
 # Teste versões beta!
-Para testar a última versão beta da ICP, simplesmente copie o seguinte código no console de desenvolvedor do seu navegador quando a ICP estiver aberta ou, se preferir, copie em seu JavaScript pessoal: 
+Para testar a última versão beta da ICP, copie o seguinte código no console de desenvolvedor do seu navegador quando a ICP estiver aberta ou, se preferir, copie em seu JavaScript pessoal: 
 ```javascript
 var ICPBeta = setInterval(function() {
   if (typeof SWWICP !== "undefined") {
-    importScriptURI("http://rawgit.com/brosquinha/ICP/master/ICP.js");
+    importScriptURI("https://rawgit.com/brosquinha/ICP/master/ICP.js");
     clearInterval(ICPBeta);
   }
 }, 200);
