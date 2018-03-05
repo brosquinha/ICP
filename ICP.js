@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.8.0-beta.2';
+	var ICPversion = '2.8.0-beta.3';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -658,9 +658,6 @@ var SWWICP = (function($) {
 		}
 		else
 		{
-			//Source editor and WYSIWYG editor
-			if (ICP_wys) //For now, since there are two textareas with id=wpTextbox1 (nice job, Fandom ¬¬)
-				$('#wpTextbox1').attr('id', 'wpTextbox0');
 			var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
 			if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
 				theTextarea.value = artigoTexto;
