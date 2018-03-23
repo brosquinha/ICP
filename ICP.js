@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.8.1-beta.0';
+	var ICPversion = '2.7.2-beta.0';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -224,8 +224,8 @@ var SWWICP = (function($) {
 			else
 			{
 				passo1 = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
-				passo1 += '<p><button data-resp="canon"><img src="http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" /></button>'+
-				'<button data-resp="legends"><img src="http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" /></button>'+
+				passo1 += '<p><button data-resp="canon"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" /></button>'+
+				'<button data-resp="legends"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" /></button>'+
 				'<button data-resp="none" style="vertical-align: top">Nenhum</button></p>';
 				$("#CuratedContentToolModal section").html(passo1);
 				deltaTime = new Date().getTime();
@@ -243,7 +243,7 @@ var SWWICP = (function($) {
 		{
 			//In-universe article
 			passo1 = '<img src="';
-			passo1 += (ehNamespaceCanon) ? "http://vignette2.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "http://vignette2.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+			passo1 += (ehNamespaceCanon) ? "https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
 			passo1 += '" style="width:150px;float:right;" />';
 			passo1 += '<p style="font-size:14px">Esse artigo existe no universo <span style="font-weight:bold">';
 			if (ehNamespaceCanon)
