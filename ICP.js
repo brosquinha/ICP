@@ -6,15 +6,16 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.2-beta.0';
+	var ICPversion = '2.7.2';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
 	var ICP_wys = false;
 	var deltaTime;
-	var userActions = {}
+	var userActions = {};
 	var foraDeUniverso;
 	var ehNamespaceCanon;
+	var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Série de TV", "Videogame"];
 	
 	//In case there's an unexpected error, send details to server for analysis
 	var errorHandler = function(funcao) {
@@ -165,13 +166,18 @@ var SWWICP = (function($) {
 						chooseInfoboxTypeController = true;
 						userActions.infoboxType = infoboxName;
 						infoboxUrl = encodarURL(infoboxName);
-						if (infoboxName == "Batalha" || infoboxName == "Guerra")
+						if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
 						{
-							//Batalha and Guerra infoboxes are special
+							//Batalha, Missão and Guerra infoboxes are special
 							var numParticipantes = '';
 							while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
 								numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
-							infoboxUrl = (infoboxName == "Batalha") ? "Battle" : "War";
+							if (infoboxName == "Batalha")
+								infoboxUrl = "Battle";
+							else if (infoboxName == "Guerra")
+								infoboxUrl = "War";
+							else
+								infoboxUrl = "Mission";
 							if (numParticipantes == '2')
 								infoboxUrl += '300';
 							else if (numParticipantes == '3')
@@ -209,13 +215,25 @@ var SWWICP = (function($) {
 	{
 		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
 		var passo1, txtBotaoSim, txtBotaoNao;
+		userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
+		if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
+		{
+			window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
+			ICP_wys = true;
+			userActions.editor = "WYSIWYG";
+		}
+		if (infoboxesForTitle.indexOf(infoboxName) > -1)
+			artigoTexto = "{{Title|"+artigoTitulo+"}}\n";
+		else
+			artigoTexto = "";
+		//Title template insertion
 		if (foraDeUniverso)
 		{
 			//Out-of-universe article, defining Eras questions properly
 			if (foraDeUniverso == 2)
 			{
 				//foraDeUniverso = 2 means we already know everything we need for Eras
-				artigoTexto = "{{Eras|real}}\n";
+				artigoTexto += "{{Eras|real}}\n";
 				userActions.passo1DT = 0;
 				$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
 					errorHandler(function () { infoboxParser(data, infoboxName); });
@@ -230,7 +248,7 @@ var SWWICP = (function($) {
 				$("#CuratedContentToolModal section").html(passo1);
 				deltaTime = new Date().getTime();
 				$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
-					artigoTexto = "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
+					artigoTexto += "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
 					userActions.passo1DT = (new Date().getTime() - deltaTime);
 					userActions.erasAnswer = $(esse).attr('data-resp');
 					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
@@ -251,14 +269,14 @@ var SWWICP = (function($) {
 				passo1 += 'Cânon';
 				txtBotaoSim = 'Sim, também existe no <i>Legends</i>';
 				txtBotaoNao = 'Não, existe somente no Cânon';
-				artigoTexto = "{{Eras|canon";
+				artigoTexto += "{{Eras|canon";
 			}
 			else
 			{
 				passo1 += '<i>Legends</i>';
 				txtBotaoSim = 'Sim, também existe no Cânon';
 				txtBotaoNao = 'Não, existe somente no <i>Legends</i>';
-				artigoTexto = "{{Eras|legends";
+				artigoTexto += "{{Eras|legends";
 			}
 			passo1 += '</span>. Ele existe também no outro universo?</p>';
 			passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
@@ -284,13 +302,6 @@ var SWWICP = (function($) {
 	var infoboxParser = function (txt, nome)
 	{
 		var infoboxContent = txt.split("</infobox>")[0] + "</infobox>"; //Tratar erro
-		userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
-		if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
-		{
-			window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
-			ICP_wys = true;
-			userActions.editor = "WYSIWYG";
-		}
 		var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
 		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
 		var titleTagParam = $($(infoboxObj).find("title")[0]).attr('source');
@@ -602,58 +613,14 @@ var SWWICP = (function($) {
 			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
 			$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
 			$("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-				console.log(botaoParaClicar+" clicado");
-				var observarModal = new MutationObserver(function (mutacao, observ) {
-					console.log("Mudei");
-					if ($("div.oo-ui-window-content.oo-ui-dialog-content.oo-ui-processDialog-content.ve-ui-wikiaSourceModeDialog-content").hasClass('oo-ui-window-content-ready'))
-					{
-						console.log("Classe mudada");
-						var textoAInserir = ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0) ? artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val() : artigoTexto;
-						$("textarea.ui-autocomplete-input").val(textoAInserir);
-						$("textarea.ui-autocomplete-input").change();
-						var intervalo = setInterval(function() {
-						//TODO: Testar tudo isso à exaustão
-							if ($("textarea.ui-autocomplete-input").val() !== textoAInserir)
-							{
-								$("textarea.ui-autocomplete-input").val(textoAInserir);
-								$("textarea.ui-autocomplete-input").change();
-								observ.disconnect()
-								clearInterval(intervalo);
-								setTimeout(function() {
-									$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();
-										var observarConteudo = new MutationObserver(function(mutacaoJanela, observJanela) {
-										observJanela.disconnect();
-										var observarBody = new MutationObserver(function(mutacaoBody, observBody) {
-											//TODO: testar e terminar confirmação de inserção bem-sucedida do wikitexto
-											console.log($("#title-eraicons").length == 1);
-											userActions.autoInsertSuccess = ($("#title-eraicons").length == 1);
-											if ($("#title-eraicons").length != 1)
-											{
-												$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-												$("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
-												var backupTextarea = '<p>Infelizmente não foi possível registrar automaticamente seu progresso e, portanto, você deve fazê-lo manualmente.'+
-												' Por favor, copie o código abaixo e volte em '+botaoParaClicar+' e cole-o lá.</p>'+
-												'<textarea id="backupTextarea" style="width:590px; height: 210px">'+textoAInserir+'</textarea>';
-												$.showCustomModal('Ocorreu um problema', backupTextarea, {
-													id: 'ModalBackupWindow',
-													width: 600,
-													height: 350
-												});
-												$("#backupTextarea").on("copy", function() {
-													$("#ModalBackupWindow").closeModal();
-												});
-											}
-											observBody.disconnect();
-										});
-										observarBody.observe(document.body, {childList: true});
-									});
-									observarConteudo.observe($("div.ve-ce-surface.mw-body-content").parent()[0], {childList: true});
-								}, 1000);
-							}
-						}, 250);
-					}
-				});
-				observarModal.observe($("div.oo-ui-window-content.oo-ui-dialog-content.oo-ui-processDialog-content.ve-ui-wikiaSourceModeDialog-content")[0], {attributes: true});
+				setTimeout(function() {
+					if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
+						$("textarea.ui-autocomplete-input").val(artigoTexto+"\n\n"+$("textarea.ui-autocomplete-input").val());
+					else
+						$("textarea.ui-autocomplete-input").val(artigoTexto);
+					$("textarea.ui-autocomplete-input").change();
+					setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
+				}, 2000);
 			});
 		}
 		else
