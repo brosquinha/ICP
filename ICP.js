@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.3-beta.0';
+	var ICPversion = '2.7.3-beta.1';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -15,7 +15,7 @@ var SWWICP = (function($) {
 	var userActions = {};
 	var foraDeUniverso;
 	var ehNamespaceCanon;
-	var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Série de TV", "Videogame"];
+	var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
 	
 	//In case there's an unexpected error, send details to server for analysis
 	var errorHandler = function(funcao) {
@@ -220,11 +220,11 @@ var SWWICP = (function($) {
 			window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
 			ICP_wys = true;
 		}
+		//Title template insertion
 		if (infoboxesForTitle.indexOf(infoboxName) > -1)
-			artigoTexto = "{{Title|"+artigoTitulo+"}}\n";
+			artigoTexto = "{{Title|''"+artigoTitulo+"''}}\n";
 		else
 			artigoTexto = "";
-		//Title template insertion
 		if (foraDeUniverso)
 		{
 			//Out-of-universe article, defining Eras questions properly
