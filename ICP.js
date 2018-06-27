@@ -602,6 +602,7 @@ var SWWICP = (function($) {
 		else
 			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}";
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+		artigoTexto += "<!-- Gerado às "+new Date().toString()+"-->";
 		if (window.wgAction == "view")
 		{
 			//Visual Editor
