@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.5';
+	var ICPversion = '2.8.0-beta.1';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
