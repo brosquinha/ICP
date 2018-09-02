@@ -1,0 +1,24 @@
+{
+  "name": "sww_icp",
+  "version": "3.0.0",
+  "description": "Page Creation Interface for Star Wars Wiki",
+  "author": "Thales César <thalesgiriboni@hotmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brosquinha/ICP"
+  },
+  "license": "ICS",
+  "main": "ICPStep.js",
+  "scripts": {
+    "start": "node ICPStep.js",
+    "test": "./node_modules/mocha/bin/mocha --require babel-register",
+    "build": " ./node_modules/.bin/babel *.js -d lib"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-preset-es2015": "^6.24.1",
+    "mocha": "^5.2.0"
+  }
+}
