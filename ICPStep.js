@@ -1,55 +1,47 @@
-import I18n from "./I18n";
+import I18n from "./i18n";
+import ICP from './ICP';
+
 class ICPStep {
 	constructor() {
-		ICPStep.articleText = '';
-		ICPStep.i18n = new I18n(window.wgUserLanguage);
+		this.deltaTime = new Date().getTime();
 	}
-	build() {
-		
-	}
-	wrap_up() {
-		
-	}
-}
+	build() {}
 
-class ArticleSelection extends ICPStep {
-	constructor() {
-		super();
-		if (this.is_anon_and_redlink())
-			this.build_message(ICPStep.i18n.getMessage("anon-redlink-welcome"));
-		else
-			this.build();
+	wrap_up() {}
+
+	errorHandler(func) {
+		try {
+			func();
+		}
+		catch(e) {
+			console.log(e.toString());
+			let erroTxt = e.name + ": " + e.message
+			erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
+			ICP.userActions.errors.push(erroTxt);
+			ICP.userActions.userAgent = window.navigator.userAgent;
+			alert(ICP.i18n.getMessage("error-handler-msg"));
+			finalizarEdicao();
+		}
 	}
 
-	build() {
-		DOMHandler.build_article_selection_table({
-			columns: 2,
-			items: [
-				{
-					text: ICPStep.i18n.getMessage("character"),
-					class: "personagem"
-				},
-				{
-					text: ICPStep.i18n.getMessage("planet"),
-					class: "planeta"
-				},
-				{
-					text: ICPStep.i18n.getMessage("droid"),
-					class: "droide"
-				},
-				{
-					text: ICPStep.i18n.getMessage("starship"),
-					class: "nave"
-				},
-				{
-					text: ICPStep.i18n.getMessage("event"),
-					class: "evento"
-				},
-				{
-					text: ICPStep.i18n.getMessage("technology"),
-					class: "tecnologia"
-				}
-			]
-		})
+	get_step_deltatime() {
+		return (new Date().getTime()) - this.deltaTime;
 	}
+
+	set_userActions_property(obj) {
+		for (let item in obj) {
+			ICP.userActions[item] = obj[item];
+		}
+	}
+
+	/**
+	 * Encodes URL
+	 * 
+	 * @param {String} url String to encode
+	 * @returns {String}
+	 */
+	encodeURL(url) {
+		return encodeURI(url.replace(/ /g, "_"));
+	}
+
 }

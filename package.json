@@ -8,9 +8,9 @@
     "url": "https://github.com/brosquinha/ICP"
   },
   "license": "ICS",
-  "main": "ICPStep.js",
+  "main": "ICP.js",
   "scripts": {
-    "start": "node ICPStep.js",
+    "start": "node ICP.js",
     "test": "./node_modules/mocha/bin/mocha --require babel-register",
     "build": " ./node_modules/.bin/babel *.js -d lib"
   },

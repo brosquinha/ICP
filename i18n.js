@@ -2,7 +2,8 @@ class I18n {
     constructor(lang) {
         this._messages = {
             'pt-br': {
-                'redlink-anon-welcome': 'Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". Para voltar a navegar na Star Wars Wiki, clique em "Voltar".'
+                'redlink-anon-welcome': 'Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". Para voltar a navegar na Star Wars Wiki, clique em "Voltar".',
+                'error-handler-msg': 'Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.'
             }
         };
         if (!(lang in this._messages))
