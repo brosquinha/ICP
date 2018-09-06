@@ -1,13 +1,16 @@
-import I18n from "./i18n";
 import ICP from './ICP';
+import Event from 'events';
 
-class ICPStep {
+export default class ICPStep {
 	constructor() {
 		this.deltaTime = new Date().getTime();
+		this.stepDoneEvent = new Event.EventEmitter();
 	}
 	build() {}
 
-	wrap_up() {}
+	stepCompleted() {
+		this.stepDoneEvent.emit('stepCompleted');
+	}
 
 	errorHandler(func) {
 		try {

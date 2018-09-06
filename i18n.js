@@ -1,4 +1,4 @@
-class I18n {
+export default class I18n {
     constructor(lang) {
         this._messages = {
             'pt-br': {

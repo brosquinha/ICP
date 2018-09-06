@@ -1,8 +1,8 @@
 import ICP from './ICP';
-import ICPStep from './ICPStep';
 import DOMHandler from "./DOMHandler";
+import ICPStep from './ICPStep';
 
-class ArticleSelection extends ICPStep {
+export default class ArticleSelection extends ICPStep {
 	constructor() {
 		super();
 		if (this.is_anon_and_redlink())
@@ -40,7 +40,7 @@ class ArticleSelection extends ICPStep {
 					class: "tecnologia"
 				}
 			]
-		}, this.wrap_up)
+		}, this.wrap_up);
 	}
 
 	wrap_up(articleType) {
@@ -67,7 +67,7 @@ class ArticleSelection extends ICPStep {
 					foraDeUniverso = 1; //1 means out-of-universe article that needs Step1
 				if (categoryName == "Categoria:Infoboxes fora do universo")
 					foraDeUniverso = 2; //2 means out-of-universe article that does not need Step1
-			inserirEras(infoboxName, infoboxUrl);
+			//inserirEras(infoboxName, infoboxUrl);
 		})});
 	}
 }
