@@ -11,5 +11,6 @@ export default class DOMHandler {
                 throw new Error('tableObj.items must be an array.');
         };
         return validate_tableObj(tableObj);
+        //TODO
     }
 }

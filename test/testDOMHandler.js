@@ -1,6 +1,5 @@
-import DOMHandler from "../DOMHandler";
-
-var assert = require('assert');
+import DOMHandler from "../src/DOMHandler";
+import assert from 'assert';
 
 describe('DOMHandler', function() {
     it('should validate tableObj', function() {

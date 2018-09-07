@@ -1,4 +1,4 @@
-import ICP from './ICP';
+import Article from './Article';
 import Event from 'events';
 
 export default class ICPStep {
@@ -12,6 +12,11 @@ export default class ICPStep {
 		this.stepDoneEvent.emit('stepCompleted');
 	}
 
+	ajaxCall(url, options) {
+		//TODO
+		return;
+	}
+
 	errorHandler(func) {
 		try {
 			func();
@@ -20,21 +25,30 @@ export default class ICPStep {
 			console.log(e.toString());
 			let erroTxt = e.name + ": " + e.message
 			erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
-			ICP.userActions.errors.push(erroTxt);
-			ICP.userActions.userAgent = window.navigator.userAgent;
-			alert(ICP.i18n.getMessage("error-handler-msg"));
-			finalizarEdicao();
+			Article.userActions.errors.push(erroTxt);
+			Article.userActions.userAgent = window.navigator.userAgent;
+			alert(Article.i18n.getMessage("error-handler-msg"));
+			this.stepDoneEvent.emit('errorOccurred');
 		}
 	}
 
-	get_step_deltatime() {
+	getStepDeltatime() {
 		return (new Date().getTime()) - this.deltaTime;
 	}
 
-	set_userActions_property(obj) {
+	setUserActionsProperty(obj) {
 		for (let item in obj) {
-			ICP.userActions[item] = obj[item];
+			Article.userActions[item] = obj[item];
 		}
+	}
+
+	appendToArticleText(txt) {
+		Article.articleText += txt;
+	}
+
+	isAnonAndRedlinks() {
+		//TODO
+		return false;
 	}
 
 	/**

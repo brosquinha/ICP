@@ -1,0 +1,4 @@
+{
+    "endpoint": "http://pt.starwars.wikia.com",
+    "onAbortSaveProgress": false
+}

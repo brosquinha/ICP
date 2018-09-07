@@ -1,12 +1,12 @@
-import ICP from './ICP';
+import Article from './Article';
 import DOMHandler from "./DOMHandler";
 import ICPStep from './ICPStep';
 
 export default class ArticleSelection extends ICPStep {
 	constructor() {
 		super();
-		if (this.is_anon_and_redlink())
-			this.build_message(ICP.i18n.getMessage("anon-redlink-welcome"));
+		if (this.isAnonAndRedlink())
+			this.build_message(Article.i18n.getMessage("anon-redlink-welcome"));
 		else
 			this.build();
 	}
@@ -16,27 +16,27 @@ export default class ArticleSelection extends ICPStep {
 			columns: 2,
 			items: [
 				{
-					text: ICP.i18n.getMessage("character"),
+					text: Article.i18n.getMessage("character"),
 					class: "personagem"
 				},
 				{
-					text: ICP.i18n.getMessage("planet"),
+					text: Article.i18n.getMessage("planet"),
 					class: "planeta"
 				},
 				{
-					text: ICP.i18n.getMessage("droid"),
+					text: Article.i18n.getMessage("droid"),
 					class: "droide"
 				},
 				{
-					text: ICP.i18n.getMessage("starship"),
+					text: Article.i18n.getMessage("starship"),
 					class: "nave"
 				},
 				{
-					text: ICP.i18n.getMessage("event"),
+					text: Article.i18n.getMessage("event"),
 					class: "evento"
 				},
 				{
-					text: ICP.i18n.getMessage("technology"),
+					text: Article.i18n.getMessage("technology"),
 					class: "tecnologia"
 				}
 			]
@@ -44,8 +44,8 @@ export default class ArticleSelection extends ICPStep {
 	}
 
 	wrap_up(articleType) {
-		this.set_userActions_property({
-			passo0DT: this.get_step_deltatime(),
+		this.setUserActionsProperty({
+			passo0DT: this.getStepDeltatime(),
 			ICPconfig: (localStorage.ICPsettings || false),
 			infoboxType: articleType
 		});
@@ -58,8 +58,8 @@ export default class ArticleSelection extends ICPStep {
 	 * @param {String} articleType Article type
 	 */
 	get_infobox_type(articleType) {
-		$.get(ICP.endpoint + "/api.php?action=query&prop=categories&titles=Template:" + this.encodeURL(articleType) + "&format=xml",
-		(data) => { this.errorHandler(() => {
+		this.ajaxCall(Article.endpoint + "/api.php?action=query&prop=categories&titles=Template:" + this.encodeURL(articleType) + "&format=xml",
+		(data) => {
 			let categoryName = $($(data).find("cl")[0]).attr('title');
 			console.log(categoryName);
 			if (typeof(categoryName) != "undefined")
@@ -67,7 +67,7 @@ export default class ArticleSelection extends ICPStep {
 					foraDeUniverso = 1; //1 means out-of-universe article that needs Step1
 				if (categoryName == "Categoria:Infoboxes fora do universo")
 					foraDeUniverso = 2; //2 means out-of-universe article that does not need Step1
-			//inserirEras(infoboxName, infoboxUrl);
-		})});
+			this.stepCompleted();
+		});
 	}
 }

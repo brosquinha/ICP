@@ -1,6 +1,5 @@
-import WikitextHandler from "../WikitextHandler";
-
-var assert = require('assert');
+import WikitextHandler from "../src/WikitextHandler";
+import assert from 'assert';
 
 describe('WikitextHandler', () => {
     it('should generate template', () => {
