@@ -55,10 +55,10 @@ td[data-tipo="outro"] {
 #refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
 #NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
-#CuratedContentToolModal p {
+#ICPModal p {
     font-size: 14px;
     margin: 10px 0;
 }
-#CuratedContentToolModal section { overflow-y: auto; }
-#CuratedContentToolModal { max-height: 80%; }
+#ICPModal section { overflow-y: auto; }
+#ICPModal { max-height: 80%; }
 .ICPdisclaimer { font-size: 12px; }
