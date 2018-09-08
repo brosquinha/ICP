@@ -12,31 +12,37 @@ export default class ArticleSelection extends ICPStep {
 	}
 
 	build() {
-		DOMHandler.build_article_selection_table({
+		DOMHandler.buildArticleSelectionTable({
 			columns: 2,
 			items: [
 				{
 					text: Article.i18n.getMessage("character"),
+					infoboxName: "Personagem infobox",
 					class: "personagem"
 				},
 				{
 					text: Article.i18n.getMessage("planet"),
+					infoboxName: "Planeta",
 					class: "planeta"
 				},
 				{
 					text: Article.i18n.getMessage("droid"),
+					infoboxName: "Droide infobox",
 					class: "droide"
 				},
 				{
 					text: Article.i18n.getMessage("starship"),
+					infoboxName: "Nave",
 					class: "nave"
 				},
 				{
 					text: Article.i18n.getMessage("event"),
+					infoboxName: "Evento",
 					class: "evento"
 				},
 				{
 					text: Article.i18n.getMessage("technology"),
+					infoboxName: "Dispositivo infobox",
 					class: "tecnologia"
 				}
 			]
