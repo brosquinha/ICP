@@ -10,4 +10,4 @@ RUN npm install
 
 COPY . .
 
-CMD [ "node", "ICPStep.js" ]
+CMD [ "npm", "test" ]
