@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.3';
+	var ICPversion = '2.7.4';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -47,7 +47,7 @@ var SWWICP = (function($) {
 			+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
 			+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
 		+'</table>';
-		$(document.head).append('<link rel="stylesheet" href="http://slot1.images3.wikia.nocookie.net/__am/1480421167/sass/background-dynamic%3Dtrue%26background-image%3Dhttp%253A%252F%252Fimg3.wikia.nocookie.net%252F__cb20150811224031%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D1080%26background-image-width%3D1920%26color-body%3D%2523000000%26color-body-middle%3D%2523000000%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
+		$(document.head).append('<link rel="stylesheet" href="https://slot1-images.wikia.nocookie.net/__am/7900017900012/sass/background-dynamic%3Dtrue%26background-image%3Dhttps%253A%252F%252Fvignette.wikia.nocookie.net%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%252Frevision%252Flatest%253Fcb%253D20180407180604%26background-image-height%3D820%26background-image-width%3D1920%26color-body%3D%2523ddedfd%26color-body-middle%3D%2523ddedfd%26color-buttons%3D%25232f8f9d%26color-community-header%3D%25232f8f9d%26color-header%3D%25232f8f9d%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 		$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 			+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 				+'<header>'
@@ -95,7 +95,7 @@ var SWWICP = (function($) {
 			//Config modal
 			var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
 			"<input type='checkbox' name='default_action' checked /></label></p></form>"+
-			'<p><a href="http://pt.starwars.wikia.com/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a> - versão '+ICPversion+'</p>';
+			'<p><a href="https://starwars.fandom.com/pt/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a> - versão '+ICPversion+'</p>';
 			$.showCustomModal('Configurações', configModal, {
 				id: 'ModalSettingsWindow',
 				width: 600,
@@ -152,7 +152,7 @@ var SWWICP = (function($) {
 				'<button data-resp="s">Pronto</button>';
 				$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
 				//Tratar erro
-				$.get("http://pt.starwars.wikia.com/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
+				$.get("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
 					var infoboxes = data.split("\n{{")
 					for (var i=1; i<infoboxes.length; i++)
 					{
@@ -187,7 +187,7 @@ var SWWICP = (function($) {
 						}
 						console.log('Obtendo "'+infoboxName+'"');
 						//Tratar erro
-						$.get("http://pt.starwars.wikia.com/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
+						$.get("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
 							//Figuring out whether this is an in-universe or out-of-universe article based on infobox category
 							var categoryName = $($(data).find("cl")[0]).attr('title');
 							console.log(categoryName);
@@ -235,7 +235,7 @@ var SWWICP = (function($) {
 				//foraDeUniverso = 2 means we already know everything we need for Eras
 				artigoTexto += "{{Eras|real}}\n";
 				userActions.passo1DT = 0;
-				$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
 					errorHandler(function () { infoboxParser(data, infoboxName); });
 				});
 			}
@@ -251,7 +251,7 @@ var SWWICP = (function($) {
 					artigoTexto += "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
 					userActions.passo1DT = (new Date().getTime() - deltaTime);
 					userActions.erasAnswer = $(esse).attr('data-resp');
-					$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+					$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
 						errorHandler(function () { infoboxParser(data, infoboxName); });
 					});
 				})});
@@ -291,7 +291,7 @@ var SWWICP = (function($) {
 				userActions.passo1DT = (new Date().getTime() - deltaTime);
 				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
-				$.get("http://pt.starwars.wikia.com/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
+				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
 					errorHandler(function () { infoboxParser(data, infoboxName); });
 				});
 			})});
@@ -426,7 +426,7 @@ var SWWICP = (function($) {
 			$.ajax({url:"https://www.99luca11.com/sww_helper?qm="+encodarURL($("#wookieePage").val()), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
 		});
 		$("#CuratedContentToolModal section button[data-prev]").click(function() {
-			window.open("http://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
+			window.open("https://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
 		});
 		$("#CuratedContentToolModal section button[data-nope]").click(function() {
 			userActions.interlink = false;
@@ -540,7 +540,7 @@ var SWWICP = (function($) {
 			artigoTexto += "== Bibliografia =="+wookiee.bibliografia;
 		artigoTexto += wookieeInterlang;
 		//Tratar erro
-		$.get("http://pt.starwars.wikia.com/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) { errorHandler(function() {
+		$.get("https://starwars.fandom.com/pt/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) { errorHandler(function() {
 			var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
 			console.log("Apêndice de obras obtido.");
 			for (var i=0; i<fixes.replacements.length; i++) {
@@ -665,7 +665,7 @@ var SWWICP = (function($) {
 		if ($(".oo-ui-processDialog-error").text() != 'The modification you tried to make was aborted by an extension hook')
 			return;
 		$(".oo-ui-processDialog-error").text("Carregando detalhes do erro...");
-		$.get("http://pt.starwars.wikia.com/api.php?action=query&list=abuselog&afluser="+encodarURL(window.wgUserName)+"&afltitle="+encodarURL(artigoNome)+"&aflprop=ids|user|title|action|result|timestamp|details&format=json", function (data) {
+		$.get("https://starwars.fandom.com/pt/api.php?action=query&list=abuselog&afluser="+encodarURL(window.wgUserName)+"&afltitle="+encodarURL(artigoNome)+"&aflprop=ids|user|title|action|result|timestamp|details&format=json", function (data) {
 			console.log(data);
 			var log = data; //JSON.parse(data);
 			try {
