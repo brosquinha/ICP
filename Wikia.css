@@ -1,4 +1,10 @@
 /* Para Interface de Criação de Página */
+.ICPcontentTable {
+    width: 100%;
+    border-spacing: 3px;
+    text-align:center;
+}
+.ICPcontentTable td:hover { background-color: lightgray; }
 .infoboxIcon {
     background-image: url(https://vignette.wikia.nocookie.net/pt.starwars/images/3/3b/ICP_icons.png);
     width: 100px;
@@ -54,7 +60,6 @@ td[data-tipo="outro"] {
 }
 #refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
-#NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
 #CuratedContentToolModal p {
     font-size: 14px;
     margin: 10px 0;

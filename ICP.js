@@ -38,7 +38,7 @@ var SWWICP = (function($) {
 		if (document.getElementById("blackout_CuratedContentToolModal") != "null")
 			$("#blackout_CuratedContentToolModal").remove();
 		var passo0 = '<p style="margin-top:0" id="NovaPaginaIntroParagraph">Selecione um tipo de artigo:</p>'
-		+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
+		+'<table class="ICPcontentTable" id="NovaPaginaTipoDeArtigo">'
 			+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
 			+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
 			+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
@@ -567,7 +567,7 @@ var SWWICP = (function($) {
 			$("#CuratedContentToolModal section button").click(function () {
 				$("div [data-id='categories']").insertAfter("div [data-id='insert']");
 				userActions.passo4DT = (new Date().getTime()) - deltaTime;
-				finalizarEdicao();
+				guiasETutoriais();
 			});
 		}
 		else
@@ -588,12 +588,52 @@ var SWWICP = (function($) {
 						userActions.passo4DT = (new Date().getTime()) - deltaTime;
 						$("span.oo-ui-tool-name-categories").css('border', '0px solid');
 						$("#blackout_CuratedContentToolModal").addClass('visible');
-						finalizarEdicao();
+						finalizarEdicao(); //TODO Maybe add guiasETutoriais here as well? VE is no longer the default editor anyway...
 					});
 				}, 1500);
 			});
 			$("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
 		}
+	}
+
+	//Step 5: useful guides to common tasks and FAQ
+	var guiasETutoriais = function ()
+	{
+		$("#CuratedContentToolModal header h3").text("Passo 5: Escrever");
+		var passo5 = '<p>Agora, é escrever o corpo do artigo! Para concluir o processo e começar a escrever seu artigo, clique no botão abaixo "Terminar".</p>'+
+		'<p>Um bom artigo costuma ter alguns elementos, como seções padronizadas, citações relevantes e referências para cada informação. '+
+		'Aqui vão guias para essas tarefas comuns e imporantes:</p>'+
+		'<table class="ICPcontentTable" id="guiaETutoriais">'+
+			'<tr><td style="width:33%" data-tipo="links">Inserir links</td><td style="width:33%" data-tipo="refs">Inserir referências</td>'+
+			'<td data-tipo="citar">Fazer citações</td></tr>'+
+			'<tr><td style="width:33%" data-tipo="imagens">Inserir imagens</td><td style="width:33%" data-tipo="secoes">Inserir cabeçalhos</td>'+
+			'<td data-tipo=""></td></tr>'+
+		'</table>'+
+		'<p><button>Terminar</button></p>';
+		$("#CuratedContentToolModal section").html(passo5);
+		deltaTime = new Date().getTime();
+		userActions.visitedGuides = [];
+		$("#CuratedContentToolModal section button").click(function () {
+			userActions.passo5DT = (new Date().getTime()) - deltaTime;
+			finalizarEdicao();
+		});
+		$("#guiaETutoriais td").click(function() { var thisTd = this; errorHandler(function() {
+			var guiaTipo = $(thisTd).attr("data-tipo");
+			var guiaNome = $(thisTd).text();
+			userActions.visitedGuides.push(guiaTipo);
+			var guideContent = '<p>Carregando guia... </p>';
+			$.showCustomModal('Guia: '+guiaNome, guideContent, {
+				id: 'ModalTutorialWindow',
+				width: 600,
+				height: "auto",
+				buttons: []
+			});
+			$.get("https://starwars.fandom.com/pt/wiki/Utilizador:Thales_C%C3%A9sar/ICP/"+encodarURL(guiaTipo)+"?action=raw", function(data, txtStatus, jqXHR) { errorHandler(function() {
+				$("#ModalTutorialWindow .modalContent div").html(data.replace("<pre>", "").replace("</pre>", ""));
+			})}).fail(function() {
+				$("#ModalTutorialWindow .modalContent div").html('<p>Guia inexistente ☹️</p>');
+			});
+		})});
 	}
 	
 	//Wrapping up
