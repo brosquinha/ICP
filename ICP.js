@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.4';
+	var ICPversion = '2.7.5-beta.1';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -599,9 +599,12 @@ var SWWICP = (function($) {
 	//Wrapping up
 	var finalizarEdicao = function ()
 	{
-		if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1)
-			artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
-		else
+		if ((artigoTexto.match(/\{\{Interlang/g) || []).length == 1) {
+			var hasDisclaimer = artigoTexto.search("{{ICPDisclaimer}}") > -1;
+			artigoTexto = artigoTexto.replace("{{ICPDisclaimer}}", "");
+			artigoTexto = artigoTexto.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" + 
+			(hasDisclaimer ? "{{ICPDisclaimer}}" : "")  + "{{Interlang" + artigoTexto.split("{{Interlang")[1];
+		} else
 			artigoTexto += "\n\n== Notas e referências ==\n{{Reflist}}";
 		artigoTexto += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
 		if (window.wgAction == "view")
