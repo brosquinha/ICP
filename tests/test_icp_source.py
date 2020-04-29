@@ -1,21 +1,17 @@
 import textwrap
-import os
-import unittest
 from random import choice
 
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select,WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
-from tests.support import Support
+from tests.support import ICPTestSuite, Support
 
 
-class TestICPSource(unittest.TestCase):
+class TestICPSource(ICPTestSuite):
 
     @classmethod
     def setUpClass(cls):
-        chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
-        cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
+        super().setUpClass()
     
     def setUp(self):
         self.driver.implicitly_wait(3)
@@ -374,4 +370,4 @@ class TestICPSource(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.driver.close()
+        super().tearDownClass()

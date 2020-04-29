@@ -1,6 +1,22 @@
+import os
+from unittest import TestCase
+
+from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select, WebDriverWait
+
+
+class ICPTestSuite(TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
+        cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.driver.close()
 
 
 class Support():
