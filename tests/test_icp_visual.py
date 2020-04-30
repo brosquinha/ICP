@@ -17,9 +17,8 @@ class TestICPVisual(ICPTestSuite):
         self.support = Support(self.driver)
 
     def test_icp_full_flow(self):
-        time.sleep(7)
-        WebDriverWait(self.driver, 3).until(
-            lambda d: d.find_element_by_class_name("ve-init-target")
+        WebDriverWait(self.driver, 15).until(
+            lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
         )
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
@@ -85,9 +84,8 @@ class TestICPVisual(ICPTestSuite):
         self.assertEqual(self.driver.find_elements_by_css_selector("#WikiaArticle h2")[1].text, "Notas e referências")
 
     def test_add_categories(self):
-        time.sleep(7)
-        WebDriverWait(self.driver, 3).until(
-            lambda d: d.find_element_by_class_name("ve-init-target")
+        WebDriverWait(self.driver, 15).until(
+            lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
         )
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
@@ -110,6 +108,7 @@ class TestICPVisual(ICPTestSuite):
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_class_name("oo-ui-processDialog-location")
         )
+        time.sleep(0.5)
         self.driver.find_element_by_css_selector(".ve-ui-mwCategoryInputWidget input").send_keys("Machos")
         self.driver.find_element_by_css_selector(".ve-ui-mwCategoryInputWidget input").send_keys('')
         time.sleep(2)
@@ -129,15 +128,12 @@ class TestICPVisual(ICPTestSuite):
             lambda d: d.find_element_by_css_selector("textarea.ui-autocomplete-input")
         )
         self.driver.find_element_by_css_selector(".ve-init-mw-viewPageTarget-toolbar-actions a[accesskey='s']").click()
-        time.sleep(0.5)
+        time.sleep(1)
         self.driver.find_element_by_css_selector(".oo-ui-processDialog-actions-other .oo-ui-buttonElement-button.secondary").click()
-        time.sleep(0.5)
+        time.sleep(1)
         wikitext = self.driver.find_element_by_css_selector(".ve-ui-mwSaveDialog-viewer pre").text
         self.assertTrue(wikitext.endswith("[[Categoria:Machos]]"))
     
-    def tearDown(self):
-        self.driver.refresh()
-
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
