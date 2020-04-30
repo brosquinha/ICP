@@ -14,9 +14,10 @@ class TestICPSource(ICPTestSuite):
         super().setUpClass()
     
     def setUp(self):
-        self.driver.implicitly_wait(3)
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
         self.support = Support(self.driver)
+        self.driver.implicitly_wait(3)
+        self.support.treat_eventual_alert()
+        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
 
     def test_icp_full_basic_flow(self):
         h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")

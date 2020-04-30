@@ -16,6 +16,7 @@ class ICPTestSuite(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        Support(cls.driver).treat_eventual_alert()
         cls.driver.close()
 
 
@@ -44,17 +45,17 @@ class Support():
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal button").click()
 
     def wait_for_step_2_ready(self):
-        WebDriverWait(self.driver, 3).until(
+        WebDriverWait(self.driver, 5).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 2: Infobox"
         )
 
     def wait_for_all_infoboxes_ready(self):
-        WebDriverWait(self.driver, 3).until(
+        WebDriverWait(self.driver, 5).until(
             lambda d: len(d.find_elements_by_css_selector("#blackout_CuratedContentToolModal select option")) > 1
         )
 
     def wait_for_infobox_type_gathering(self):
-        WebDriverWait(self.driver, 3).until(
+        WebDriverWait(self.driver, 5).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text != "Criando um novo artigo"
         )
 
@@ -82,3 +83,9 @@ class Support():
 
     def select_written_text(self):
         ActionChains(self.driver).key_down(Keys.LEFT_SHIFT).send_keys(Keys.HOME).key_up(Keys.LEFT_SHIFT).perform()
+
+    def treat_eventual_alert(self):
+        try:
+            self.driver.switch_to.alert.accept()
+        except:
+            pass
