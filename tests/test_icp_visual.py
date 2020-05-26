@@ -12,9 +12,8 @@ class TestICPVisual(ICPTestSuite):
         super().setUpClass()
 
     def setUp(self):
-        self.driver.implicitly_wait(3)
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?veaction=edit")
-        self.support = Support(self.driver)
+        super().setUp()
+        super().set_up("https://starwars.fandom.com/pt/wiki/Teste?veaction=edit")
 
     def test_icp_full_flow(self):
         WebDriverWait(self.driver, 15).until(

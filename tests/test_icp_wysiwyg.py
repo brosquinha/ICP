@@ -11,9 +11,8 @@ class TestICPWYSIWYG(ICPTestSuite):
         super().setUpClass()
 
     def setUp(self):
-        self.driver.implicitly_wait(3)
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=visual")
-        self.support = Support(self.driver)
+        super().setUp()
+        super().set_up("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=visual")
 
     def test_icp_full_basic_flow(self):
         WebDriverWait(self.driver, 3).until(

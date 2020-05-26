@@ -1,3 +1,4 @@
+import re
 import textwrap
 from random import choice
 
@@ -14,10 +15,9 @@ class TestICPSource(ICPTestSuite):
         super().setUpClass()
     
     def setUp(self):
-        self.support = Support(self.driver)
-        self.driver.implicitly_wait(3)
+        super().setUp()
         self.support.treat_eventual_alert()
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
+        super().set_up("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
 
     def test_icp_full_basic_flow(self):
         h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
@@ -282,8 +282,7 @@ class TestICPSource(ICPTestSuite):
         self.assertIn("\n*''[[Estrelas Perdidas]]''", wikitext)
         self.assertNotIn("*''[[Lost Stars]]''", wikitext)
         self.assertIn("\n== Fontes ==\n", wikitext)
-        self.assertIn("{{ICPDisclaimer}}", wikitext)
-        self.assertIn("{{Interlang\n|en=Alderaan\n", wikitext)
+        self.assertIn("{{ICPDisclaimer}}{{Interlang\n|en=Alderaan\n", wikitext)
 
     def test_wookieepedia_import_in_universe_with_succession_box(self):
         self.support.skip_step_0()
@@ -313,8 +312,7 @@ class TestICPSource(ICPTestSuite):
         self.assertNotIn("{{Succession box", wikitext)
         self.assertIn("\n|antes-anos =", wikitext)
         self.assertNotIn("\n|before-years", wikitext)
-        self.assertIn("{{ICPDisclaimer}}", wikitext)
-        self.assertIn("{{Interlang\n|en=Darth Sidious\n", wikitext)
+        self.assertIn("{{ICPDisclaimer}}{{Interlang\n|en=Darth Sidious\n", wikitext)
 
     def test_wookieepedia_import_out_universe(self):
         self.support.choose_infobox("Pessoa infobox")
@@ -332,8 +330,7 @@ class TestICPSource(ICPTestSuite):
 
         wikitext = self.support.get_source_textarea_value()
         self.assertIn("\n== Bibliografia ==\n", wikitext)
-        self.assertIn("{{ICPDisclaimer}}", wikitext)
-        self.assertIn("{{Interlang\n|en=Dave Filoni\n", wikitext)
+        self.assertIn("{{ICPDisclaimer}}{{Interlang\n|en=Dave Filoni\n", wikitext)
     
     def test_categories(self):
         self.support.skip_step_0()
@@ -364,6 +361,11 @@ class TestICPSource(ICPTestSuite):
 
         self.driver.refresh()
         self.assertEqual(self.driver.find_elements_by_css_selector("#blackout_CuratedContentToolModal"), [])
+
+    def test_config_version(self):
+        self.driver.find_element_by_id("configuracoesICP").click()
+        icp_version = re.findall(r"var ICPversion = \'(.*)\'\;", self.icp_content)[0]
+        self.assertIn(icp_version, self.driver.find_element_by_css_selector(".modalContent div>p").text)
     
     def tearDown(self):
         self.driver.execute_script("window.localStorage.clear();")

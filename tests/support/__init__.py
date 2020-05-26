@@ -13,6 +13,16 @@ class ICPTestSuite(TestCase):
     def setUpClass(cls):
         chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
         cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
+        with open('ICP.js') as f:
+            cls.icp_content = f.read()
+
+    def setUp(self):
+        self.support = Support(self.driver)
+
+    def set_up(self, url):
+        self.driver.implicitly_wait(3)
+        self.driver.get(url)
+        self.driver.execute_script(self.icp_content)
 
     @classmethod
     def tearDownClass(cls):
