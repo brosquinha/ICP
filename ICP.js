@@ -23,7 +23,7 @@ var SWWICP = (function($) {
 			funcao();
 		}
 		catch(e) {
-			console.log(e.toString());
+			console.error(e.toString());
 			var erroTxt = e.name + ": " + e.message
 			erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
 			userActions.errors.push(erroTxt);
@@ -31,6 +31,14 @@ var SWWICP = (function($) {
 			alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
 			finalizarEdicao();
 		}
+	}
+
+	var treatError = function(msg) {
+		console.warn(msg);
+		userActions.errors.push(msg);
+		userActions.userAgent = window.navigator.userAgent;
+		alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
+		finalizarEdicao();
 	}
 
 	//Controller
@@ -41,9 +49,9 @@ var SWWICP = (function($) {
 			.then(inserirEras)
 			.then(infoboxParser)
 			.then(inserirInterlink)
-			.then(wookieeData)
 			.then(categorizar)
 			.then(finalizarEdicao)
+			.fail(treatError)
 	}
 
 	//Helpers
@@ -493,14 +501,9 @@ var SWWICP = (function($) {
 					} catch (e) {
 						data = false;
 					}
-					if (data === false)
-					{
-						alert("Página não encontrada!");
-						$("#CuratedContentToolModal section button").removeAttr('disabled');
-						return;
-					}
-					if (!redirectPageIfWookieeIsRedirect(data))
-						dfd.resolve(data);
+					$.when(wookieeData(data)).then(function() {
+						dfd.resolve();
+					});
 				},
 				error: function(jqXHR, textStatus, error) {
 					alert("Erro ao obter página da Wookieepedia");
@@ -523,8 +526,15 @@ var SWWICP = (function($) {
 	var wookieeData = function (data)
 	{
 		var dfd = $.Deferred();
-		if (data === false) {
-			dfd.resolve();
+		if (data === false)
+		{
+			alert("Página não encontrada!");
+			$("#CuratedContentToolModal section button").removeAttr('disabled');
+			dfd.reject();
+			return dfd.promise();
+		}
+		if (redirectPageIfWookieeIsRedirect(data)) {
+			dfd.reject();
 			return dfd.promise();
 		}
 		var wookiee = {};
