@@ -8,6 +8,7 @@ var SWWICP = (function($) {
 	"use strict";
 	var ICPversion = '2.8.0-beta.1';
 	var articleName, articleTitle;
+	var infoboxName, infoboxUrl;
 	var articleWikitext = '';
 	var articleType = '';
 	var ICP_wys = false;
@@ -41,6 +42,34 @@ var SWWICP = (function($) {
 		finishEdit();
 	}
 
+	var ajaxGet = function(url, successCallback) {
+		showLoader();
+		$.ajax({
+			method: "GET",
+			url: url,
+			success: function(data) {
+				hideLoader();
+				errorHandler(function() { successCallback(data); });
+			},
+			error: retryAjax
+		});
+	}
+
+	var retryAjax = function(xhr, textStatus, error) {
+		hideLoader();
+		if (xhr.status >= 400 && xhr.status < 500) {
+			treatError(xhr.toString());
+		} else {
+			alert("Erro ao carregar informações da wiki. Tentando novamente em 30 segundos...");
+			var ajaxSettings = this;
+			console.log(this);
+			setTimeout(function() {
+				showLoader();
+				$.ajax(ajaxSettings);
+			}, 30000);
+		}
+	}
+
 	//Controller
 	var controller = function() {
 		buildModal();
@@ -63,7 +92,8 @@ var SWWICP = (function($) {
 			+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 				+'<header>'
 					+'<span class="close">Close</span>'
-						+'<h3></h3>'
+						+'<img alt="Carregando" src="https://slot1-images.wikia.nocookie.net/__cb1591343180920/common/skins/common/images/ajax.gif" style="vertical-align: baseline; display: none; border: 0px;" />'
+						+'<h3 style="display: inline;"></h3>'
 				+'</header>'
 				+'<section></section>'
 				+'<footer>'
@@ -137,6 +167,14 @@ var SWWICP = (function($) {
 
 	var resizeModal = function(size="") {
 		$("#CuratedContentToolModal").css('width', size);
+	}
+
+	var showLoader = function() {
+		$("#CuratedContentToolModal header img").show();
+	}
+	
+	var hideLoader = function() {
+		$("#CuratedContentToolModal header img").hide();
 	}
 
 	/**
@@ -232,24 +270,19 @@ var SWWICP = (function($) {
 			console.log("Carregando modelo para "+articleType);
 			deltaTime = (new Date().getTime()) - deltaTime;
 			userActions.passo0DT = deltaTime;
-			if (localStorage.ICPsettings)
-				userActions.ICPconfig = localStorage.ICPsettings;
-			else
-				userActions.ICPconfig = false;
 			userActions.infoboxType = articleType;
-			outOfUniverse = false; //false means it's an in-universe article
-			var infoboxName, infoboxUrl;
 			if (articleType == 'outro')
 			{
-				$.when(otherInfoboxes()).then(function(infoboxName, infoboxUrl) {
-					dfd.resolve(infoboxName, infoboxUrl);
+				$.when(otherInfoboxes()).then(function() {
+					dfd.resolve();
 				})
 			}
 			else
 			{
+				outOfUniverse = false; //false means it's an in-universe article
 				infoboxName = articleType;
 				infoboxUrl = encodarURL(infoboxName);
-				dfd.resolve(infoboxName, infoboxUrl);
+				dfd.resolve();
 			}
 		});
 		deltaTime = new Date().getTime();
@@ -263,8 +296,7 @@ var SWWICP = (function($) {
 		'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
 		'<button data-resp="s">Pronto</button>';
 		updateModalBody(modalContent);
-		//Tratar erro
-		$.get("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
+		ajaxGet("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
 			var infoboxes = data.split("\n{{")
 			for (var i=1; i<infoboxes.length; i++)
 			{
@@ -272,12 +304,12 @@ var SWWICP = (function($) {
 			}
 			var chooseInfoboxTypeController = false;
 			$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
-				var infoboxName = $("#selecionarInfoboxCustom").val();
+				infoboxName = $("#selecionarInfoboxCustom").val();
 				if (infoboxName == '' || chooseInfoboxTypeController ==  true)
 					return;
 				chooseInfoboxTypeController = true;
 				userActions.infoboxType = infoboxName;
-				var infoboxUrl = encodarURL(infoboxName);
+				infoboxUrl = encodarURL(infoboxName);
 				if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
 				{
 					//Batalha, Missão and Guerra infoboxes are special
@@ -298,25 +330,25 @@ var SWWICP = (function($) {
 						infoboxUrl += '400';
 				}
 				console.log('Obtendo "'+infoboxName+'"');
-				//Tratar erro
-				$.get("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
+				ajaxGet("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) {
 					//Figuring out whether this is an in-universe or out-of-universe article based on infobox category
 					var categoryName = $($(data).find("cl")[0]).attr('title');
 					console.log(categoryName);
+					outOfUniverse = false; //false means it's an in-universe article
 					if (typeof(categoryName) != "undefined")
 						if (categoryName == "Categoria:Infoboxes de mídia")
 							outOfUniverse = 1; //1 means out-of-universe article that needs Step1
 						if (categoryName == "Categoria:Infoboxes fora do universo")
 							outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
-					dfd.resolve(infoboxName, infoboxUrl);
-				})});
+					dfd.resolve();
+				});
 			})});
-		})});
+		});
 		return dfd.promise();
 	}
 	
 	//Step1: Insert Eras template
-	var templateErasInsertion = function(infoboxName, infoboxUrl)
+	var templateErasInsertion = function()
 	{
 		var dfd = $.Deferred();
 		updateModalTitle("Passo 1: Universo");
@@ -841,10 +873,13 @@ var SWWICP = (function($) {
 					isCanonNamespace = false;
 			}
 			var opcoesICP = {}
-			if (localStorage.ICPsettings)
+			if (localStorage.ICPsettings) {
 				opcoesICP = JSON.parse(localStorage.ICPsettings);
-			else
+				userActions.ICPconfig = localStorage.ICPsettings;
+			} else {
 				opcoesICP.default_action = 1;
+				userActions.ICPconfig = false;
+			}
 			if (opcoesICP.default_action == 0)
 			{
 				$("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
