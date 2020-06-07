@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
 	"use strict";
-	var ICPversion = '2.7.5';
+	var ICPversion = '2.8.0-beta.1';
 	var artigoNome, artigoTitulo;
 	var artigoTexto = '';
 	var artigoTipo = '';
@@ -32,58 +32,41 @@ var SWWICP = (function($) {
 			finalizarEdicao();
 		}
 	}
-	
-	//Step0: article type selection
-	var inserirBotaoNovaPagina = function() {
+
+	//Controller
+	var controller = function() {
+		buildModal();
+		$.when(confirmAnon())
+			.then(inserirBotaoNovaPagina)
+			.then(inserirEras)
+			.then(infoboxParser)
+			.then(inserirInterlink)
+			.then(wookieeData)
+			.then(categorizar)
+			.then(finalizarEdicao)
+	}
+
+	//Helpers
+	var buildModal = function() {
 		if (document.getElementById("blackout_CuratedContentToolModal") != "null")
 			$("#blackout_CuratedContentToolModal").remove();
-		var passo0 = '<p style="margin-top:0" id="NovaPaginaIntroParagraph">Selecione um tipo de artigo:</p>'
-		+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-			+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
-			+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
-			+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
-			+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
-			+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
-			+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
-			+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
-		+'</table>';
 		$(document.head).append('<link rel="stylesheet" href="https://slot1-images.wikia.nocookie.net/__am/7900017900012/sass/background-dynamic%3Dtrue%26background-image%3Dhttps%253A%252F%252Fvignette.wikia.nocookie.net%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%252Frevision%252Flatest%253Fcb%253D20180407180604%26background-image-height%3D820%26background-image-width%3D1920%26color-body%3D%2523ddedfd%26color-body-middle%3D%2523ddedfd%26color-buttons%3D%25232f8f9d%26color-community-header%3D%25232f8f9d%26color-header%3D%25232f8f9d%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
 		$('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
 			+'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
 				+'<header>'
 					+'<span class="close">Close</span>'
-						+'<h3>Criando um novo artigo</h3>'
+						+'<h3></h3>'
 				+'</header>'
-				+'<section>'+passo0+'</section>'
+				+'<section></section>'
 				+'<footer>'
 					+'<button id="configuracoesICP" class="secondary">Configurações</button>'
-					+'<div style="float:right;">'
-						//+'<button id="finalizarEdicao">Terminar</button>' //class="buttons"
-					+'</div>'
 				+'</footer>'
 			+'</div>'
 		+'</div>');
-		deltaTime = new Date().getTime();
-		if (userActions.user === false && document.location.href.search("redlink=1") >= 0)
-		{
-			//Many anons get here accidentally, so let's confirm they really intend to create a new article
-			var passo0Anon = '<span id="passo0Anon"><p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
-			'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>'+
-			'<div style="width:80%;margin:0px auto;"><button class="secondary" onclick="window.history.back();">Voltar</button>'+
-			'<button id="anonContinuar" style="float:right">Continuar</button></div></span>';
-			$("#configuracoesICP").hide();
-			$("#NovaPaginaIntroParagraph").hide();
-			$("#NovaPaginaTipoDeArtigo").hide();
-			$("#CuratedContentToolModal").css('width', '500px');
-			$("#CuratedContentToolModal section").append(passo0Anon);
-			$("#anonContinuar").click(function() { errorHandler(function() {
-				$("#CuratedContentToolModal").css('width', '');
-				$("#configuracoesICP").show();
-				$("#NovaPaginaIntroParagraph").show();
-				$("#NovaPaginaTipoDeArtigo").show();
-				$("#passo0Anon").remove();
-			})});
-		}
+		setModalButtonsCallbacks();
+	}
+
+	var setModalButtonsCallbacks = function() {
 		$("#CuratedContentToolModal span.close").click(function() {
 			//Many people seem to leave in the middle of the process, so let's ask them why
 			if (typeof(userActions.passo0DT) != "undefined" && typeof(userActions.passo4DT) == "undefined" && typeof(userActions.errors[0]) == 'undefined')
@@ -134,6 +117,64 @@ var SWWICP = (function($) {
 		$("#finalizarEdicao").click(function () {
 			finalizarEdicao();
 		});
+	}
+
+	var updateModalBody = function(content) {
+		$("#CuratedContentToolModal section").html(content);
+	}
+
+	var updateModalTitle = function(title) {
+		$("#CuratedContentToolModal header h3").text(title);
+	}
+
+	var resizeModal = function(size="") {
+		$("#CuratedContentToolModal").css('width', size);
+	}
+
+	var buildArticleTypeTable = function() {
+		return '<p style="margin-top:0" id="NovaPaginaIntroParagraph">Selecione um tipo de artigo:</p>'
+		+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
+			+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
+			+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
+			+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
+			+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
+			+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
+			+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
+			+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
+		+'</table>';
+
+	}
+
+	//Pre-Step0: Confirm anons intention on creating an article
+	var confirmAnon = function() {
+		var dfd = $.Deferred();
+		if (userActions.user === false && document.location.href.search("redlink=1") >= 0)
+		{
+			//Many anons get here accidentally, so let's confirm they really intend to create a new article
+			var passo0Anon = '<span id="passo0Anon"><p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
+			'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>'+
+			'<div style="width:80%;margin:0px auto;"><button class="secondary" onclick="window.history.back();">Voltar</button>'+
+			'<button id="anonContinuar" style="float:right">Continuar</button></div></span>';
+			$("#configuracoesICP").hide();
+			resizeModal("500px");
+			updateModalBody(passo0Anon);
+			$("#anonContinuar").click(function() { errorHandler(function() {
+				resizeModal();
+				$("#configuracoesICP").show();
+				dfd.resolve();
+			})});
+		} else
+			dfd.resolve();
+		return dfd.promise();
+	}
+	
+	//Step0: article type selection
+	var inserirBotaoNovaPagina = function() {
+		var dfd = $.Deferred();
+		updateModalTitle("Criando um novo artigo");
+		var passo0 = buildArticleTypeTable();
+		updateModalBody(passo0);
+		deltaTime = new Date().getTime();
 		$("#NovaPaginaTipoDeArtigo td").one("click", function() { artigoTipo = $(this).attr("data-tipo"); errorHandler(function() {
 			console.log("Carregando modelo para "+artigoTipo);
 			deltaTime = (new Date().getTime()) - deltaTime;
@@ -147,73 +188,84 @@ var SWWICP = (function($) {
 			var infoboxName, infoboxUrl;
 			if (artigoTipo == 'outro')
 			{
-				var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
-				'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
-				'<button data-resp="s">Pronto</button>';
-				$("#CuratedContentToolModal section").html(selecionarInfoboxCustom);
-				//Tratar erro
-				$.get("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
-					var infoboxes = data.split("\n{{")
-					for (var i=1; i<infoboxes.length; i++)
-					{
-						$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
-					}
-					var chooseInfoboxTypeController = false;
-					$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
-						infoboxName = $("#selecionarInfoboxCustom").val();
-						if (infoboxName == '' || chooseInfoboxTypeController ==  true)
-							return;
-						chooseInfoboxTypeController = true;
-						userActions.infoboxType = infoboxName;
-						infoboxUrl = encodarURL(infoboxName);
-						if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
-						{
-							//Batalha, Missão and Guerra infoboxes are special
-							var numParticipantes = '';
-							while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
-								numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
-							if (infoboxName == "Batalha")
-								infoboxUrl = "Battle";
-							else if (infoboxName == "Guerra")
-								infoboxUrl = "War";
-							else
-								infoboxUrl = "Mission";
-							if (numParticipantes == '2')
-								infoboxUrl += '300';
-							else if (numParticipantes == '3')
-								infoboxUrl += '350';
-							else
-								infoboxUrl += '400';
-						}
-						console.log('Obtendo "'+infoboxName+'"');
-						//Tratar erro
-						$.get("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
-							//Figuring out whether this is an in-universe or out-of-universe article based on infobox category
-							var categoryName = $($(data).find("cl")[0]).attr('title');
-							console.log(categoryName);
-							if (typeof(categoryName) != "undefined")
-								if (categoryName == "Categoria:Infoboxes de mídia")
-									foraDeUniverso = 1; //1 means out-of-universe article that needs Step1
-								if (categoryName == "Categoria:Infoboxes fora do universo")
-									foraDeUniverso = 2; //2 means out-of-universe article that does not need Step1
-							inserirEras(infoboxName, infoboxUrl);
-						})});
-					})});
-				})});
+				$.when(otherInfoboxes()).then(function(infoboxName, infoboxUrl) {
+					dfd.resolve(infoboxName, infoboxUrl);
+				})
 			}
 			else
 			{
 				infoboxName = artigoTipo;
 				infoboxUrl = encodarURL(infoboxName);
-				inserirEras(infoboxName, infoboxUrl);
+				dfd.resolve(infoboxName, infoboxUrl);
 			}
 		})});
+		return dfd.promise();
+	}
+
+	//Step0 helper: Select "Other"
+	var otherInfoboxes = function() {
+		var dfd = $.Deferred();
+		var selecionarInfoboxCustom = "<p>Selecione uma infobox para seu artigo</p>"+
+		'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
+		'<button data-resp="s">Pronto</button>';
+		updateModalBody(selecionarInfoboxCustom);
+		//Tratar erro
+		$.get("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) { errorHandler(function() {
+			var infoboxes = data.split("\n{{")
+			for (var i=1; i<infoboxes.length; i++)
+			{
+				$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
+			}
+			var chooseInfoboxTypeController = false;
+			$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
+				var infoboxName = $("#selecionarInfoboxCustom").val();
+				if (infoboxName == '' || chooseInfoboxTypeController ==  true)
+					return;
+				chooseInfoboxTypeController = true;
+				userActions.infoboxType = infoboxName;
+				var infoboxUrl = encodarURL(infoboxName);
+				if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
+				{
+					//Batalha, Missão and Guerra infoboxes are special
+					var numParticipantes = '';
+					while (numParticipantes != '4' && numParticipantes != '3' && numParticipantes != '2')
+						numParticipantes = prompt("Quantos participantes? (2, 3 ou 4)")
+					if (infoboxName == "Batalha")
+						infoboxUrl = "Battle";
+					else if (infoboxName == "Guerra")
+						infoboxUrl = "War";
+					else
+						infoboxUrl = "Mission";
+					if (numParticipantes == '2')
+						infoboxUrl += '300';
+					else if (numParticipantes == '3')
+						infoboxUrl += '350';
+					else
+						infoboxUrl += '400';
+				}
+				console.log('Obtendo "'+infoboxName+'"');
+				//Tratar erro
+				$.get("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) { errorHandler(function() {
+					//Figuring out whether this is an in-universe or out-of-universe article based on infobox category
+					var categoryName = $($(data).find("cl")[0]).attr('title');
+					console.log(categoryName);
+					if (typeof(categoryName) != "undefined")
+						if (categoryName == "Categoria:Infoboxes de mídia")
+							foraDeUniverso = 1; //1 means out-of-universe article that needs Step1
+						if (categoryName == "Categoria:Infoboxes fora do universo")
+							foraDeUniverso = 2; //2 means out-of-universe article that does not need Step1
+					dfd.resolve(infoboxName, infoboxUrl);
+				})});
+			})});
+		})});
+		return dfd.promise();
 	}
 	
 	//Step1: Insert Eras template
 	var inserirEras = function(infoboxName, infoboxUrl)
 	{
-		$("#CuratedContentToolModal header h3").text("Passo 1: Universo");
+		var dfd = $.Deferred();
+		updateModalTitle("Passo 1: Universo");
 		var passo1, txtBotaoSim, txtBotaoNao;
 		userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
 		if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
@@ -236,7 +288,7 @@ var SWWICP = (function($) {
 				artigoTexto += "{{Eras|real}}\n";
 				userActions.passo1DT = 0;
 				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-					errorHandler(function () { infoboxParser(data, infoboxName); });
+					errorHandler(function () { dfd.resolve(data, infoboxName); });
 				});
 			}
 			else
@@ -245,14 +297,14 @@ var SWWICP = (function($) {
 				passo1 += '<p><button data-resp="canon"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" /></button>'+
 				'<button data-resp="legends"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" /></button>'+
 				'<button data-resp="none" style="vertical-align: top">Nenhum</button></p>';
-				$("#CuratedContentToolModal section").html(passo1);
+				updateModalBody(passo1);
 				deltaTime = new Date().getTime();
 				$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
 					artigoTexto += "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
 					userActions.passo1DT = (new Date().getTime() - deltaTime);
 					userActions.erasAnswer = $(esse).attr('data-resp');
 					$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-						errorHandler(function () { infoboxParser(data, infoboxName); });
+						errorHandler(function () { dfd.resolve(data, infoboxName); });
 					});
 				})});
 			}
@@ -280,7 +332,7 @@ var SWWICP = (function($) {
 			}
 			passo1 += '</span>. Ele existe também no outro universo?</p>';
 			passo1 += '<p><button data-resp="s">'+txtBotaoSim+'</button><button data-resp="n">'+txtBotaoNao+'</button>';
-			$("#CuratedContentToolModal section").html(passo1);
+			updateModalBody(passo1);
 			deltaTime = new Date().getTime();
 			$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
 				if ($(esse).attr('data-resp') == "s")
@@ -292,18 +344,20 @@ var SWWICP = (function($) {
 				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
 				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
 				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-					errorHandler(function () { infoboxParser(data, infoboxName); });
+					errorHandler(function () { dfd.resolve(data, infoboxName); });
 				});
 			})});
 		}
+		return dfd.promise();
 	}
 	
 	//Step2: Filling in infobox
 	var infoboxParser = function (txt, nome)
 	{
+		var dfd = $.Deferred();
 		var infoboxContent = txt.split("</infobox>")[0] + "</infobox>"; //Tratar erro
 		var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
-		$("#CuratedContentToolModal header h3").text("Passo 2: Infobox");
+		updateModalTitle("Passo 2: Infobox");
 		var titleTagParam = $($(infoboxObj).find("title")[0]).attr('source');
 		var passo2 = '<div style="position:relative"><div style="position:fixed;"><p>Preencha a infobox para o artigo</p>'+
 		'<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
@@ -343,12 +397,35 @@ var SWWICP = (function($) {
 		}
 		artigoTexto += "}}\n";
 		passo2 += '</aside>';
-		$("#CuratedContentToolModal section").html(passo2);
+		updateModalBody(passo2);
 		$("aside textarea").first().focus();
 		$("aside textarea").first().blur();
 		setTimeout(function () {$("aside textarea").first().focus(); }, 50); //Simple trick to force focus on the first textarea
 		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section").css('overflow-y', 'auto');
+		infoboxButtonsCallbacks();
+		$("#CuratedContentToolModal section button").one("click", function() { errorHandler(function() {
+			userActions.passo2DT = (new Date().getTime()) - deltaTime;
+			var infTxts = $("#CuratedContentToolModal section aside textarea");
+			var subArtTxt = artigoTexto.split("=");
+			artigoTexto = subArtTxt[0].replace("|nome-", "|"+titleTagParam+" = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
+			for (var i=0; i<infTxts.length; i++)
+			{
+				artigoTexto += ' = '+$(infTxts[i]).val();
+				artigoTexto += subArtTxt[i+1];
+			}
+			if (foraDeUniverso)
+				artigoTexto += "'''"+artigoTitulo+"''' é um...";
+			else
+				artigoTexto += "'''"+artigoTitulo+"''' foi um...";
+			console.log(artigoTexto);
+			dfd.resolve();
+		})});
+		return dfd.promise();
+	}
+
+	//Step2 helper: buttons and callbacks
+	var infoboxButtonsCallbacks = function() {
 		userActions.usageOfNewButtons = 0;
 		if (typeof mw.toolbar === "undefined") //For VE
 			importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
@@ -387,35 +464,19 @@ var SWWICP = (function($) {
 			});
 			$("#CuratedContentToolModal aside").addClass("pi-theme-"+type.replace(/ /g, "-"));
 		});
-		$("#CuratedContentToolModal section button").one("click", function() { errorHandler(function() {
-			userActions.passo2DT = (new Date().getTime()) - deltaTime;
-			var infTxts = $("#CuratedContentToolModal section aside textarea");
-			var subArtTxt = artigoTexto.split("=");
-			artigoTexto = subArtTxt[0].replace("|nome-", "|"+titleTagParam+" = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
-			for (var i=0; i<infTxts.length; i++)
-			{
-				artigoTexto += ' = '+$(infTxts[i]).val();
-				artigoTexto += subArtTxt[i+1];
-			}
-			if (foraDeUniverso)
-				artigoTexto += "'''"+artigoTitulo+"''' é um...";
-			else
-				artigoTexto += "'''"+artigoTitulo+"''' foi um...";
-			console.log(artigoTexto);
-			inserirInterlink();
-		})});
 	}
 	
 	//Step3: Insert interlang links
 	var inserirInterlink = function ()
 	{
-		$("#CuratedContentToolModal header h3").text("Passo 3: Fontes e Aparições");
+		var dfd = $.Deferred();
+		updateModalTitle("Passo 3: Fontes e Aparições");
 		var passo3 = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 		passo3 += "<textarea id='wookieePage' name='wookieePage' >"
 		+((artigoTipo == "Personagem infobox" || artigoTipo == "Planeta" || artigoTipo == "Droide infobox") ? artigoNome.replace(/_/g, " ") : '')
 		+"</textarea><button data-interlink='true'>Enviar</button>"
 		+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
-		$("#CuratedContentToolModal section").html(passo3);
+		updateModalBody(passo3);
 		deltaTime = new Date().getTime();
 		$("#CuratedContentToolModal section button[data-interlink]").click(function() {
 			if ($("#wookieePage").val() == '')
@@ -423,7 +484,29 @@ var SWWICP = (function($) {
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			$("#CuratedContentToolModal section button").attr('disabled', '');
 			userActions.interlink = $("#wookieePage").val();
-			$.ajax({url:"https://www.99luca11.com/sww_helper?qm="+encodarURL($("#wookieePage").val()), jsonp: "jsonpCallback", dataType: "JSONP"}); //Tratar erro
+			 //Tratar erro
+			$.ajax({
+				url:"https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL($("#wookieePage").val()),
+				success: function(data) {
+					try {
+						data = JSON.parse(data);
+					} catch (e) {
+						data = false;
+					}
+					if (data === false)
+					{
+						alert("Página não encontrada!");
+						$("#CuratedContentToolModal section button").removeAttr('disabled');
+						return;
+					}
+					if (!redirectPageIfWookieeIsRedirect(data))
+						dfd.resolve(data);
+				},
+				error: function(jqXHR, textStatus, error) {
+					alert("Erro ao obter página da Wookieepedia");
+					console.warn(error);
+				}
+			});
 		});
 		$("#CuratedContentToolModal section button[data-prev]").click(function() {
 			window.open("https://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
@@ -431,33 +514,21 @@ var SWWICP = (function($) {
 		$("#CuratedContentToolModal section button[data-nope]").click(function() {
 			userActions.interlink = false;
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
-			errorHandler(categorizar);
+			dfd.resolve(false);
 		});
-	}
-	
-	//Because JSONP requires a global function, SWWICP returns a function to "recover" the flow
-	window.jsonpCallback = function(data)
-	{
-		SWWICP.jsonpReturn(data);
+		return dfd.promise();
 	}
 	
 	//Gets and translates Wookiee's reference sections
 	var wookieeData = function (data)
 	{
+		var dfd = $.Deferred();
+		if (data === false) {
+			dfd.resolve();
+			return dfd.promise();
+		}
 		var wookiee = {};
-		wookiee.page = data.content;
-		if (wookiee.page === false)
-		{
-			alert("Página não encontrada!");
-			$("#CuratedContentToolModal section button").removeAttr('disabled');
-			return;
-		}
-		if (wookiee.page.toLowerCase().substring(0, 9) == "#redirect")
-		{
-			$("#wookieePage").val(wookiee.page.split("[[")[1].split("]]")[0]);
-			$("#CuratedContentToolModal section button[data-interlink]").click();
-			return;
-		}
+		wookiee.page = data;
 		wookiee.page.replace("{{interlang", "{{Interlang");
 		wookiee.secoes = wookiee.page.split("==");
 		console.log(wookiee.secoes);
@@ -465,7 +536,7 @@ var SWWICP = (function($) {
 		wookiee.fontes = '';
 		wookiee.bibliografia = '';
 		wookiee.cast = '';
-		for (i=0; i<wookiee.secoes.length; i++)
+		for (var i=0; i<wookiee.secoes.length; i++)
 		{
 			if ($.trim(wookiee.secoes[i]) == "Appearances")
 			{
@@ -547,27 +618,40 @@ var SWWICP = (function($) {
 				var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
 				artigoTexto = artigoTexto.replace(txtRegEx, fixes.replacements[i][1]);
 			}
-			categorizar();
+			dfd.resolve();
 		})});
+		return dfd.promise();
+	}
+
+	//Step3 helper: wookiee page validator
+	var redirectPageIfWookieeIsRedirect = function(data) {
+		if (data.toLowerCase().substring(0, 9) == "#redirect")
+		{
+			$("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
+			$("#CuratedContentToolModal section button[data-interlink]").click();
+			return true;
+		}
+		return false;
 	}
 	
 	//Step4: Categorize
 	var categorizar = function ()
 	{
-		$("#CuratedContentToolModal header h3").text("Passo 4: Categorias");
+		var dfd = $.Deferred();
+		updateModalTitle("Passo 4: Categorias");
 		var passo4 = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
 		'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
 		userActions.categorias = true;
 		deltaTime = new Date().getTime();
 		if (window.wgAction == 'edit')
 		{
-			$("#CuratedContentToolModal section").html(passo4);
+			updateModalBody(passo4);
 			$("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
 			$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
 			$("#CuratedContentToolModal section button").click(function () {
 				$("div [data-id='categories']").insertAfter("div [data-id='insert']");
 				userActions.passo4DT = (new Date().getTime()) - deltaTime;
-				finalizarEdicao();
+				dfd.resolve();
 			});
 		}
 		else
@@ -575,8 +659,8 @@ var SWWICP = (function($) {
 			//For VE, we'll simply redirect user to VE's categories interface
 			passo4 += '<p>Para isso, clique em "Categorias" no Editor Visual conforme lhe é apresentado e preencha o campo '
 			+'com as categorias. Quando terminar, clique no botão "Aplicar mudanças".</p>';
-			$("#CuratedContentToolModal section").html(passo4);
-			$("#CuratedContentToolModal section").append("<p><button>Ok, vamos lá</button></p>");
+			passo4 += "<p><button>Ok, vamos lá</button></p>"
+			updateModalBody(passo4);
 			$("#CuratedContentToolModal section button").click(function () {
 				$("#blackout_CuratedContentToolModal").removeClass('visible');
 			});
@@ -588,12 +672,13 @@ var SWWICP = (function($) {
 						userActions.passo4DT = (new Date().getTime()) - deltaTime;
 						$("span.oo-ui-tool-name-categories").css('border', '0px solid');
 						$("#blackout_CuratedContentToolModal").addClass('visible');
-						finalizarEdicao();
+						dfd.resolve();
 					});
 				}, 1500);
 			});
 			$("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
 		}
+		return dfd.promise();
 	}
 	
 	//Wrapping up
@@ -663,31 +748,6 @@ var SWWICP = (function($) {
 		return encodeURI(qm.replace(/ /g, "_"))
 	}
 	
-	//Replaces VE's useless error message for abuse filter with custom message per filter
-	var corrigirMensagemFiltroAbuso = function() {
-		if ($(".oo-ui-processDialog-error").text() != 'The modification you tried to make was aborted by an extension hook')
-			return;
-		$(".oo-ui-processDialog-error").text("Carregando detalhes do erro...");
-		$.get("https://starwars.fandom.com/pt/api.php?action=query&list=abuselog&afluser="+encodarURL(window.wgUserName)+"&afltitle="+encodarURL(artigoNome)+"&aflprop=ids|user|title|action|result|timestamp|details&format=json", function (data) {
-			console.log(data);
-			var log = data; //JSON.parse(data);
-			try {
-				var abuseId = log.query.abuselog[0].filter_id;
-			}
-			catch(e) {
-				var abuseId = false;
-			}
-			if (abuseId == 3)
-			{
-				$(".oo-ui-processDialog-error").html("O artigo que enviou carece de elementos básicos necessários a todos os artigos do site."+
-				' Por favor, utilize a <a href="#" id="abuseFilterICPCaller">Interface de Criação de Páginas</a>.');
-				$("#abuseFilterICPCaller").click(function() { errorHandler(inserirBotaoNovaPagina); });
-			}
-			else
-				$(".oo-ui-processDialog-error").text("Sua edição não pôde ser salva. Tente novamente mais tarde.");
-		});
-	}
-	
 	var init = function() {
 		userActions.user = (window.wgTrackID || false);
 		userActions.page = window.wgPageName;
@@ -733,17 +793,17 @@ var SWWICP = (function($) {
 			if (opcoesICP.default_action == 0)
 			{
 				$("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-				$("#ICP_opener").click(function() { errorHandler(inserirBotaoNovaPagina); });
+				$("#ICP_opener").click(function() { errorHandler(controller); });
 			}
 			else
 			{
 				if (window.wgAction == 'edit')
-					errorHandler(inserirBotaoNovaPagina);
+					errorHandler(controller);
 				if (window.wgAction == 'view')
 					if (document.location.href.search("veaction=edit") >= 0)
-						errorHandler(inserirBotaoNovaPagina);
+						errorHandler(controller);
 					else
-						$("#ca-ve-edit").click(function () { errorHandler(inserirBotaoNovaPagina); });
+						$("#ca-ve-edit").click(function () { errorHandler(controller); });
 			}
 		}
 	 
@@ -751,7 +811,6 @@ var SWWICP = (function($) {
 	
 	$(document).ready(init);
 	return {
-		jsonpReturn: function(txt) { errorHandler(function () { wookieeData(txt); }); },
 		isAlt: false //Key control
 	}
 })(jQuery);
