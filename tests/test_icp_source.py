@@ -227,7 +227,7 @@ class TestICPSource(ICPTestSuite):
         self.assertEqual(chosen_textarea.get_attribute('value'), "[[Teste]]")
 
     def test_step_2_link_button_legends(self):
-        self.support.get_legends_article()
+        self.support.get_legends_article(self.icp_content)
         self.support.skip_step_0()
         self.support.skip_step_1()
         self.support.wait_for_step_2_ready()

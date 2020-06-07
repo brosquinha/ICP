@@ -22,6 +22,7 @@ class ICPTestSuite(TestCase):
     def set_up(self, url):
         self.driver.implicitly_wait(3)
         self.driver.get(url)
+        self.support.wait_for_icp()
         self.driver.execute_script(self.icp_content)
 
     @classmethod
@@ -35,8 +36,15 @@ class Support():
     def __init__(self, driver):
         self.driver = driver
     
-    def get_legends_article(self):
+    def wait_for_icp(self):
+        WebDriverWait(self.driver, 5).until(
+            lambda d: len(d.find_elements_by_css_selector("#blackout_CuratedContentToolModal")) > 0
+        )
+    
+    def get_legends_article(self, icp_content):
         self.driver.get("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
+        self.wait_for_icp()
+        self.driver.execute_script(icp_content)
     
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
