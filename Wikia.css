@@ -5,25 +5,25 @@
     height: 100px;
     margin: 0 auto;
 }
-td[data-tipo="personagem"] .infoboxIcon, .infoboxIcon.personagem {
+div[data-tipo="personagem"] .infoboxIcon, .infoboxIcon.personagem {
     background-position: 0px 100px;
 }
-td[data-tipo="planeta"] .infoboxIcon, .infoboxIcon.planeta {
+div[data-tipo="planeta"] .infoboxIcon, .infoboxIcon.planeta {
     background-position: -100px 100px;
 }
-td[data-tipo="droide"] .infoboxIcon, .infoboxIcon.droide {
+div[data-tipo="droide"] .infoboxIcon, .infoboxIcon.droide {
     background-position: 0 0;
 }
-td[data-tipo="espaçonave"] .infoboxIcon, .infoboxIcon.nave {
+div[data-tipo="espaçonave"] .infoboxIcon, .infoboxIcon.nave {
     background-position: 200px 0px;
 }
-td[data-tipo="evento"] .infoboxIcon, .infoboxIcon.evento {
+div[data-tipo="evento"] .infoboxIcon, .infoboxIcon.evento {
     background-position: 100px 0px;
 }
-td[data-tipo="tecnologia"] .infoboxIcon, .infoboxIcon.tecnologia {
+div[data-tipo="tecnologia"] .infoboxIcon, .infoboxIcon.tecnologia {
     background-position: 100px 100px;
 }
-td[data-tipo="outro"] {
+div[data-tipo="outro"] {
     font-size: 15px;
     padding: 15px;
 }
@@ -54,7 +54,7 @@ td[data-tipo="outro"] {
 }
 #refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
-#NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
+#NovaPaginaTipoDeArtigo>div:hover { background-color: lightgray; }
 #CuratedContentToolModal p {
     font-size: 14px;
     margin: 10px 0;

@@ -139,18 +139,57 @@ var SWWICP = (function($) {
 		$("#CuratedContentToolModal").css('width', size);
 	}
 
-	var buildArticleTypeTable = function() {
-		return '<p style="margin-top:0" id="NovaPaginaIntroParagraph">Selecione um tipo de artigo:</p>'
-		+'<table style="width:100%;border-spacing:3px;text-align:center;" id="NovaPaginaTipoDeArtigo">'
-			+'<tr><td style="width:50%" data-tipo="Personagem infobox"><div class="infoboxIcon personagem"></div>Personagem</td>'
-			+'<td data-tipo="Planeta"><div class="infoboxIcon planeta"></div>Planeta</td></tr>'
-			+'<tr><td style="width:50%" data-tipo="Droide infobox"><div class="infoboxIcon droide"></div>Droide</td>'
-			+'<td data-tipo="Nave"><div class="infoboxIcon nave"></div>Espaçonave</td></tr>'
-			+'<tr><td style="width:50%" data-tipo="Evento"><div class="infoboxIcon evento"></div>Evento</td>'
-			+'<td data-tipo="Dispositivo infobox"><div class="infoboxIcon tecnologia"></div>Tecnologia</td></tr>'
-			+'<tr><td colspan="2" data-tipo="outro">Outro tipo de artigo</td></tr>'
-		+'</table>';
+	/**
+	 * Inserts an article type selection table into modal
+	 * 
+	 * @param {Object[]} articleTypes List of articleTypes
+	 * @param {string} articleTypes[].name Template name
+	 * @param {string} articleTypes[].class CSS class name
+	 * @param {string} articleTypes[].label Type label
+	 * @param {Object} options Display options
+	 * @param {Number} options.numColumns Number of columns to display data
+	 * @param {Boolean} options.hasOther Whether to display "Other infoboxes" option
+	 * @returns {Promise} Callback for user selection
+	 */
+	var insertArticleTypeTable = function(articleTypes, options = {}) {
+		var dfd = $.Deferred();
+		var rootDiv = document.createElement("div");
+		var introParagraph = document.createElement("p");
+		introParagraph.style.marginTop = "0";
+		introParagraph.id = "NovaPaginaIntroParagraph";
+		introParagraph.textContent = "Selecione um tipo de artigo:";
+		rootDiv.appendChild(introParagraph);
 
+		var flexBasisFromOptions = {1: "100%", 2: "50%", 3: "33%", 4: "25%", 5: "20%", 6: "12%"};
+		var parentDiv = document.createElement("div");
+		parentDiv.style.display = "flex";
+		parentDiv.style.justifyContent = "space-around";
+		parentDiv.style.textAlign = "center";
+		parentDiv.style.flexWrap = "wrap";
+		parentDiv.id = "NovaPaginaTipoDeArtigo";
+		articleTypes.forEach(function(type) {
+			var typeElem = document.createElement("div");
+			typeElem.style.flexGrow = "1";
+			typeElem.style.flexBasis = flexBasisFromOptions[options.numColumns] || "auto";
+			typeElem.setAttribute("data-tipo", type.name);
+			typeElem.innerHTML = '<div class="infoboxIcon '+type.class+'"></div>'+type.label;
+			parentDiv.appendChild(typeElem);
+		});
+		if (options.hasOther) {
+			var typeElem = document.createElement("div");
+			typeElem.style.flexGrow = "1";
+			typeElem.style.flexBasis = "100%";
+			typeElem.setAttribute("data-tipo", "outro");
+			typeElem.textContent = "Outro tipo de artigo";
+			parentDiv.appendChild(typeElem);
+		}
+		rootDiv.appendChild(parentDiv);
+		updateModalBody(rootDiv.innerHTML);
+
+		$("#NovaPaginaTipoDeArtigo>div").one("click", function() {
+			dfd.resolve($(this).attr("data-tipo"));
+		});
+		return dfd.promise();
 	}
 
 	//Pre-Step0: Confirm anons intention on creating an article
@@ -174,16 +213,22 @@ var SWWICP = (function($) {
 		} else
 			dfd.resolve();
 		return dfd.promise();
+		//TODO write Selenium test for this
 	}
 	
 	//Step0: article type selection
 	var articleTypeSelection = function() {
 		var dfd = $.Deferred();
 		updateModalTitle("Criando um novo artigo");
-		var modalContent = buildArticleTypeTable();
-		updateModalBody(modalContent);
-		deltaTime = new Date().getTime();
-		$("#NovaPaginaTipoDeArtigo td").one("click", function() { articleType = $(this).attr("data-tipo"); errorHandler(function() {
+		var articleTypes = [
+			{name: "Personagem infobox", class: "personagem", label: "Personagem"},
+			{name: "Planeta", class: "planeta", label: "Planeta"},
+			{name: "Droide infobox", class: "droide", label: "Droide"},
+			{name: "Nave", class: "nave", label: "Espaçonave"},
+			{name: "Evento", class: "evento", label: "Evento"},
+			{name: "Dispositivo infobox", class: "tecnologia", label: "Tecnologia"},
+		];
+		insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(function(articleType) {
 			console.log("Carregando modelo para "+articleType);
 			deltaTime = (new Date().getTime()) - deltaTime;
 			userActions.passo0DT = deltaTime;
@@ -206,7 +251,8 @@ var SWWICP = (function($) {
 				infoboxUrl = encodarURL(infoboxName);
 				dfd.resolve(infoboxName, infoboxUrl);
 			}
-		})});
+		});
+		deltaTime = new Date().getTime();
 		return dfd.promise();
 	}
 

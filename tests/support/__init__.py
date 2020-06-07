@@ -48,7 +48,7 @@ class Support():
     
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
-            "#NovaPaginaTipoDeArtigo td[data-tipo='Personagem infobox']").click()
+            "#NovaPaginaTipoDeArtigo div[data-tipo='Personagem infobox']").click()
 
     def skip_step_1(self):
         self.driver.find_element_by_css_selector("button[data-resp]").click()
@@ -90,7 +90,7 @@ class Support():
     
     def choose_outros_step_0(self):
         self.driver.find_element_by_css_selector(
-            "#NovaPaginaTipoDeArtigo td[data-tipo='outro']").click()
+            "#NovaPaginaTipoDeArtigo div[data-tipo='outro']").click()
     
     def choose_infobox(self, infobox_name):
         self.choose_outros_step_0()
