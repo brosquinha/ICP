@@ -53,7 +53,7 @@ class TestICPSource(ICPTestSuite):
     def test_eras_only_canon(self):
         self.support.skip_step_0()
 
-        self.driver.find_element_by_css_selector("button[data-resp='n']").click()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(2)").click()
         
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -63,10 +63,14 @@ class TestICPSource(ICPTestSuite):
         textarea_value = self.support.get_source_textarea_value()
         self.assertIn("{{Eras|canon}}", textarea_value)
 
+    #TODO test_legends_article_canon_eras_option
+    #TODO test_legends_article_legends_only
+
     def test_out_universe_canon_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='canon']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(1)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -79,7 +83,8 @@ class TestICPSource(ICPTestSuite):
     def test_out_universe_legends_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='legends']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(2)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -92,7 +97,8 @@ class TestICPSource(ICPTestSuite):
     def test_out_universe_no_universe_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='none']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(3)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -168,10 +174,11 @@ class TestICPSource(ICPTestSuite):
         while chosen_infobox in blacklist:
             chosen_infobox = choice(available_infoboxes[1:]).get_attribute('value')
         infobox_select.select_by_value(chosen_infobox)
-        self.driver.find_element_by_css_selector("button[data-resp='s']").click()
+        self.driver.find_element_by_css_selector("section button").click()
         self.support.wait_for_infobox_type_gathering()
 
-        if self.driver.find_elements_by_css_selector("button[data-resp]"):
+        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
+        if "Passo 1" in h3.text:
             self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -187,16 +194,14 @@ class TestICPSource(ICPTestSuite):
     def test_media_infobox_proper_step_1(self):
         self.support.choose_infobox("Quadrinhos")
         self.support.wait_for_infobox_type_gathering()
-        buttons = self.driver.find_elements_by_css_selector("button[data-resp]")
+        buttons = self.driver.find_elements_by_css_selector("section button")
         self.assertEqual(len(buttons), 3)
-        self.assertEqual([x.get_attribute('data-resp') for x in buttons], ['canon', 'legends', 'none'])
 
     def test_in_universe_infobox_proper_step_1(self):
         self.support.choose_infobox("Lua")
         self.support.wait_for_infobox_type_gathering()
-        buttons = self.driver.find_elements_by_css_selector("button[data-resp]")
+        buttons = self.driver.find_elements_by_css_selector("section button")
         self.assertEqual(len(buttons), 2)
-        self.assertEqual([x.get_attribute('data-resp') for x in buttons], ['s', 'n'])
 
     def test_guerra_batalha_missao_infoboxes(self):
         self.support.choose_infobox(choice(['Batalha', 'Missão', 'Guerra']))
@@ -268,7 +273,7 @@ class TestICPSource(ICPTestSuite):
         self.driver.find_element_by_id("wookieePage").send_keys("")
         self.support.select_written_text()
         self.driver.find_element_by_id("wookieePage").send_keys("Alderaan")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.driver.find_element_by_css_selector("section button").click()
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
@@ -293,7 +298,7 @@ class TestICPSource(ICPTestSuite):
         self.driver.find_element_by_id("wookieePage").send_keys("")
         self.support.select_written_text()
         self.driver.find_element_by_id("wookieePage").send_keys("Darth Sidious")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.driver.find_element_by_css_selector("section button").click()
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
@@ -323,7 +328,7 @@ class TestICPSource(ICPTestSuite):
         self.driver.find_element_by_id("wookieePage").send_keys("")
         self.support.select_written_text()
         self.driver.find_element_by_id("wookieePage").send_keys("Dave Filoni")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.driver.find_element_by_css_selector("section button").click()
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()

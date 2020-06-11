@@ -42,7 +42,14 @@ var SWWICP = (function($) {
 		finishEdit();
 	}
 
-	var ajaxGet = function(url, successCallback) {
+	/**
+	 * Peforms a GET request on given URL
+	 * 
+	 * @param {String} url URL to be called
+	 * @param {Function} successCallback Success callback
+	 * @param {Function} [errorCallback] Error callback
+	 */
+	var ajaxGet = function(url, successCallback, errorCallback=false) {
 		showLoader();
 		$.ajax({
 			method: "GET",
@@ -51,7 +58,7 @@ var SWWICP = (function($) {
 				hideLoader();
 				errorHandler(function() { successCallback(data); });
 			},
-			error: retryAjax
+			error: errorCallback || retryAjax
 		});
 	}
 
@@ -76,7 +83,7 @@ var SWWICP = (function($) {
 		$.when(confirmAnon())
 			.then(articleTypeSelection)
 			.then(templateErasInsertion)
-			.then(infoboxParser)
+			.then(infoboxInsertion)
 			.then(interwikiInsertion)
 			.then(categoriesInsertion)
 			.then(finishEdit)
@@ -84,6 +91,9 @@ var SWWICP = (function($) {
 	}
 
 	//Helpers
+	/**
+	 * Builds ICP's modal
+	 */
 	var buildModal = function() {
 		if (document.getElementById("blackout_CuratedContentToolModal") != "null")
 			$("#blackout_CuratedContentToolModal").remove();
@@ -157,22 +167,68 @@ var SWWICP = (function($) {
 		});
 	}
 
+	/**
+	 * Updates modal's content
+	 * 
+	 * @param {String} content HTML content
+	 */
 	var updateModalBody = function(content) {
 		$("#CuratedContentToolModal section").html(content);
 	}
 
+	/**
+	 * Updates modal's title
+	 * 
+	 * @param {String} title Modal's title
+	 */
 	var updateModalTitle = function(title) {
 		$("#CuratedContentToolModal header h3").text(title);
 	}
 
+	/**
+	 * Appends a button to modal's body
+	 * 
+	 * @param {String} label Button label
+	 * @param {Object} [options] Button configuration
+	 * @param {Boolean} [options.secondary] Whether button is secondary
+	 * @param {String} [options.style] Button custom CSS style
+	 * @param {Function} [options.callback] Callback for every button click event
+	 * @returns {Promise} Callback for first user click
+	 */
+	var appendButtonToModalBody = function(label, options={}) {
+		var dfd = $.Deferred();
+		var button = document.createElement("button");
+		button.innerHTML = label;
+		button.className = (options.secondary) ? "secondary" : "";
+		button.style = options.style || "";
+		$(button).click(function() {
+			if (options.callback)
+				options.callback(button);
+			dfd.resolve(this);
+		});
+		$("#CuratedContentToolModal section").append(button);
+		return dfd.promise();
+	}
+
+	/**
+	 * Resizes modal's window
+	 * 
+	 * @param {String} size CSS width
+	 */
 	var resizeModal = function(size="") {
 		$("#CuratedContentToolModal").css('width', size);
 	}
 
+	/**
+	 * Shows modal's AJAX loader gif
+	 */
 	var showLoader = function() {
 		$("#CuratedContentToolModal header img").show();
 	}
 	
+	/**
+	 * Hides modal's AJAX loader gif
+	 */
 	var hideLoader = function() {
 		$("#CuratedContentToolModal header img").hide();
 	}
@@ -236,18 +292,20 @@ var SWWICP = (function($) {
 		if (userActions.user === false && document.location.href.search("redlink=1") >= 0)
 		{
 			//Many anons get here accidentally, so let's confirm they really intend to create a new article
-			var modalContent = '<span id="passo0Anon"><p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
-			'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>'+
-			'<div style="width:80%;margin:0px auto;"><button class="secondary" onclick="window.history.back();">Voltar</button>'+
-			'<button id="anonContinuar" style="float:right">Continuar</button></div></span>';
+			var modalContent = '<p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
+			'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>';
 			$("#configuracoesICP").hide();
 			resizeModal("500px");
 			updateModalBody(modalContent);
-			$("#anonContinuar").click(function() { errorHandler(function() {
+			updateModalTitle("Criando um novo artigo");
+			appendButtonToModalBody("Voltar", {secondary: true}).then(function(button) {
+				window.history.back();
+			});
+			appendButtonToModalBody("Continuar", {style: "float: right;"}).then(function(button) {
 				resizeModal();
 				$("#configuracoesICP").show();
 				dfd.resolve();
-			})});
+			});
 		} else
 			dfd.resolve();
 		return dfd.promise();
@@ -293,8 +351,7 @@ var SWWICP = (function($) {
 	var otherInfoboxes = function() {
 		var dfd = $.Deferred();
 		var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
-		'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>'+
-		'<button data-resp="s">Pronto</button>';
+		'<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
 		updateModalBody(modalContent);
 		ajaxGet("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
 			var infoboxes = data.split("\n{{")
@@ -303,7 +360,7 @@ var SWWICP = (function($) {
 				$("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
 			}
 			var chooseInfoboxTypeController = false;
-			$("#CuratedContentToolModal section button[data-resp='s']").click(function() { errorHandler(function() {
+			appendButtonToModalBody("Pronto").then(function(button) { errorHandler(function() {
 				infoboxName = $("#selecionarInfoboxCustom").val();
 				if (infoboxName == '' || chooseInfoboxTypeController ==  true)
 					return;
@@ -373,26 +430,30 @@ var SWWICP = (function($) {
 				//foraDeUniverso = 2 means we already know everything we need for Eras
 				articleWikitext += "{{Eras|real}}\n";
 				userActions.passo1DT = 0;
-				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-					errorHandler(function () { dfd.resolve(data, infoboxName); });
-				});
+				dfd.resolve();
 			}
 			else
 			{
 				modalContent = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
-				modalContent += '<p><button data-resp="canon"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" /></button>'+
-				'<button data-resp="legends"><img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" /></button>'+
-				'<button data-resp="none" style="vertical-align: top">Nenhum</button></p>';
 				updateModalBody(modalContent);
 				deltaTime = new Date().getTime();
-				$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
-					articleWikitext += "{{Eras|"+($(esse).attr('data-resp') == "none" ? "real" : $(esse).attr('data-resp') + "|real")+"}}\n";
+				var canonButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" />';
+				var legendsButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" />';
+				var solveEras = function(response) {
+					articleWikitext += "{{Eras|"+(response == "none" ? "real" : response + "|real")+"}}\n";
 					userActions.passo1DT = (new Date().getTime() - deltaTime);
-					userActions.erasAnswer = $(esse).attr('data-resp');
-					$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-						errorHandler(function () { dfd.resolve(data, infoboxName); });
-					});
-				})});
+					userActions.erasAnswer = response;
+					dfd.resolve();
+				}
+				appendButtonToModalBody(canonButton).then(function(button) {
+					solveEras("canon");
+				});
+				appendButtonToModalBody(legendsButton).then(function(button) {
+					solveEras("legends");
+				})
+				appendButtonToModalBody("Nenhum", {style: "vertical-align:top"}).then(function(button) {
+					solveEras("none");
+				});
 			}
 		}
 		else
@@ -417,27 +478,36 @@ var SWWICP = (function($) {
 				articleWikitext += "{{Eras|legends";
 			}
 			modalContent += '</span>. Ele existe também no outro universo?</p>';
-			modalContent += '<p><button data-resp="s">'+txtButtonYes+'</button><button data-resp="n">'+txtButtonNo+'</button>';
 			updateModalBody(modalContent);
 			deltaTime = new Date().getTime();
-			$("#CuratedContentToolModal section button[data-resp]").one("click", function() { var esse = this; errorHandler(function() {
-				if ($(esse).attr('data-resp') == "s")
-					articleWikitext += (isCanonNamespace) ? "|legends}}\n" : "|canon}}\n";
-				else
-					articleWikitext += "}}\n";
-				console.log("Obtendo infobox...");
+			appendButtonToModalBody(txtButtonYes).then(function(button) {
+				articleWikitext += (isCanonNamespace) ? "|legends}}\n" : "|canon}}\n";
 				userActions.passo1DT = (new Date().getTime() - deltaTime);
-				userActions.erasAnswer = ($(esse).attr('data-resp') == "s");
-				$("#CuratedContentToolModal section button[data-resp]").removeAttr("data-resp").attr('disabled');
-				$.get("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) { //Tratar erro
-					errorHandler(function () { dfd.resolve(data, infoboxName); });
-				});
-			})});
+				userActions.erasAnswer = true;
+				dfd.resolve();
+			});
+			appendButtonToModalBody(txtButtonNo).then(function(button) {
+				articleWikitext += "}}\n";
+				userActions.passo1DT = (new Date().getTime() - deltaTime);
+				userActions.erasAnswer = false;
+				dfd.resolve();
+			});
 		}
 		return dfd.promise();
 	}
 	
 	//Step2: Filling in infobox
+	var infoboxInsertion = function() {
+		var dfd = $.Deferred();
+		console.log("Obtendo infobox...");
+		ajaxGet("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) {
+			$.when(infoboxParser(data, infoboxName)).then(function() {
+				dfd.resolve();
+			})
+		});
+		return dfd.promise();
+	}
+
 	var infoboxParser = function (templateContent, templateName)
 	{
 		var dfd = $.Deferred();
@@ -560,48 +630,62 @@ var SWWICP = (function($) {
 		var modalContent = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
 		modalContent += "<textarea id='wookieePage' name='wookieePage' >"
 		+((articleType == "Personagem infobox" || articleType == "Planeta" || articleType == "Droide infobox") ? articleName.replace(/_/g, " ") : '')
-		+"</textarea><button data-interlink='true'>Enviar</button>"
-		+"<button data-prev='true'>Visualizar</button><button data-nope='true'>Não sei / não existe</button></p>";
+		+"</textarea>";
 		updateModalBody(modalContent);
 		deltaTime = new Date().getTime();
-		$("#CuratedContentToolModal section button[data-interlink]").click(function() {
+		appendButtonToModalBody("Enviar", {callback: function(button) {
 			if ($("#wookieePage").val() == '')
 				return;
+			$(button).attr('disabled', '');
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
-			$("#CuratedContentToolModal section button").attr('disabled', '');
 			userActions.interlink = $("#wookieePage").val();
-			 //Tratar erro
-			$.ajax({
-				url:"https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL($("#wookieePage").val()),
-				success: function(data) {
-					try {
-						data = JSON.parse(data);
-					} catch (e) {
-						data = false;
-					}
-					$.when(wookieeData(data)).then(function() {
-						dfd.resolve();
-					});
-				},
-				error: function(jqXHR, textStatus, error) {
-					alert("Erro ao obter página da Wookieepedia");
-					console.warn(error);
-				}
-			});
-		});
-		$("#CuratedContentToolModal section button[data-prev]").click(function() {
+			getWookieeData($("#wookieePage").val())
+				.then(function() {
+					dfd.resolve();
+				})
+				.fail(function() {
+					$(button).removeAttr('disabled');
+					//TODO testar várias tentativas de envio aqui
+				});
+		}});
+		appendButtonToModalBody("Visualizar", {callback: function() {
 			window.open("https://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
-		});
-		$("#CuratedContentToolModal section button[data-nope]").click(function() {
+		}});
+		appendButtonToModalBody("Não sei / não existe").then(function() {
 			userActions.interlink = false;
 			userActions.passo3DT = (new Date().getTime()) - deltaTime;
 			dfd.resolve(false);
 		});
 		return dfd.promise();
 	}
+
+	var getWookieeData = function(wookieePagename) {
+		var dfd = $.Deferred();
+		var success = function(data) {
+			try {
+				data = JSON.parse(data);
+			} catch (e) {
+				data = false;
+			}
+			$.when(translateWookiee(data))
+				.then(function() {
+					dfd.resolve();
+				})
+				.fail(function() {
+					dfd.fail();
+				});
+		};
+		var error = function(jqXHR, textStatus, error) {
+			alert("Erro ao obter página "+wookieePagename+" da Wookieepedia");
+			console.warn(error);
+			dfd.fail();
+		}
+		ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL(wookieePagename), success, error);
+		return dfd.promise();
+	}
 	
 	//Gets and translates Wookiee's reference sections
-	var wookieeData = function (data)
+	var translateWookiee = function (data)
 	{
 		var dfd = $.Deferred();
 		if (data === false)
@@ -697,8 +781,7 @@ var SWWICP = (function($) {
 		if (wookiee.bibliography != '' && outOfUniverse)
 			articleWikitext += "== Bibliografia =="+wookiee.bibliography;
 		articleWikitext += wookieeInterlang;
-		//Tratar erro
-		$.get("https://starwars.fandom.com/pt/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) { errorHandler(function() {
+		ajaxGet("https://starwars.fandom.com/pt/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
 			var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
 			console.log("Apêndice de obras obtido.");
 			for (var i=0; i<fixes.replacements.length; i++) {
@@ -706,7 +789,7 @@ var SWWICP = (function($) {
 				articleWikitext = articleWikitext.replace(txtRegEx, fixes.replacements[i][1]);
 			}
 			dfd.resolve();
-		})});
+		});
 		return dfd.promise();
 	}
 
@@ -715,7 +798,7 @@ var SWWICP = (function($) {
 		if (data.toLowerCase().substring(0, 9) == "#redirect")
 		{
 			$("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
-			$("#CuratedContentToolModal section button[data-interlink]").click();
+			getWookieeData($("#wookieePage").val());
 			return true;
 		}
 		return false;
@@ -734,8 +817,7 @@ var SWWICP = (function($) {
 		{
 			updateModalBody(modalContent);
 			$("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
-			$("#CuratedContentToolModal section").append("<p><button>Terminei</button></p>");
-			$("#CuratedContentToolModal section button").click(function () {
+			appendButtonToModalBody("Terminei").then(function(button) {
 				$("div [data-id='categories']").insertAfter("div [data-id='insert']");
 				userActions.passo4DT = (new Date().getTime()) - deltaTime;
 				dfd.resolve();
@@ -746,9 +828,8 @@ var SWWICP = (function($) {
 			//For VE, we'll simply redirect user to VE's categories interface
 			modalContent += '<p>Para isso, clique em "Categorias" no Editor Visual conforme lhe é apresentado e preencha o campo '
 			+'com as categorias. Quando terminar, clique no botão "Aplicar mudanças".</p>';
-			modalContent += "<p><button>Ok, vamos lá</button></p>"
 			updateModalBody(modalContent);
-			$("#CuratedContentToolModal section button").click(function () {
+			appendButtonToModalBody("Ok, vamos lá").then(function(button) {
 				$("#blackout_CuratedContentToolModal").removeClass('visible');
 			});
 			$($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');

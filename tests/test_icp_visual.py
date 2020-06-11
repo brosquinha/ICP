@@ -42,7 +42,7 @@ class TestICPVisual(ICPTestSuite):
         self.support.skip_step_3()
         h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
         self.assertEqual(h3.text, "Passo 4: Categorias")
-        self.assertEqual(len(self.driver.find_elements_by_css_selector("#blackout_CuratedContentToolModal section p")), 3)
+        self.assertEqual(len(self.driver.find_elements_by_css_selector("#blackout_CuratedContentToolModal section p")), 2)
 
         self.support.skip_step_4()
         icp_div = self.driver.find_element_by_id("blackout_CuratedContentToolModal")

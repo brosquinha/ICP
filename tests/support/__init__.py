@@ -51,13 +51,13 @@ class Support():
             "#NovaPaginaTipoDeArtigo div[data-tipo='Personagem infobox']").click()
 
     def skip_step_1(self):
-        self.driver.find_element_by_css_selector("button[data-resp]").click()
+        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button").click()
 
     def skip_step_2(self):
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal button").click()
 
     def skip_step_3(self):
-        self.driver.find_element_by_css_selector("button[data-nope='true']").click()
+        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button:nth-of-type(3)").click()
 
     def skip_step_4(self):
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal button").click()
@@ -97,7 +97,7 @@ class Support():
         self.wait_for_all_infoboxes_ready()
         Select(self.driver.find_element_by_css_selector(
             "#blackout_CuratedContentToolModal select")).select_by_value(infobox_name)
-        self.driver.find_element_by_css_selector("button[data-resp='s']").click()
+        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button").click()
 
     def select_written_text(self):
         ActionChains(self.driver).key_down(Keys.LEFT_SHIFT).send_keys(Keys.HOME).key_up(Keys.LEFT_SHIFT).perform()
