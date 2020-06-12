@@ -17,6 +17,7 @@ var SWWICP = (function($) {
   var outOfUniverse;
   var isCanonNamespace;
   var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
+  var wikiBaseURL = window.location.origin + mw.config.get("wgArticlePath").replace("$1", "");
 
   //In case there's an unexpected error, send details to server for analysis
   var errorHandler = function(funcao) {
@@ -353,7 +354,7 @@ var SWWICP = (function($) {
     var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
     '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
     updateModalBody(modalContent);
-    ajaxGet("https://starwars.fandom.com/pt/wiki/Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
+    ajaxGet(wikiBaseURL+"Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
       var infoboxes = data.split("\n{{")
       for (var i=1; i<infoboxes.length; i++)
       {
@@ -500,10 +501,14 @@ var SWWICP = (function($) {
   var infoboxInsertion = function() {
     var dfd = $.Deferred();
     console.log("Obtendo infobox...");
-    ajaxGet("https://starwars.fandom.com/pt/wiki/Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) {
-      $.when(infoboxParser(data, infoboxName)).then(function() {
-        dfd.resolve();
-      })
+    ajaxGet(wikiBaseURL+"Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) {
+      $.when(infoboxParser(data, infoboxName))
+        .then(function() {
+          dfd.resolve();
+        })
+        .fail(function(msg) {
+          dfd.reject(msg);
+        });
     });
     return dfd.promise();
   }
@@ -511,8 +516,13 @@ var SWWICP = (function($) {
   var infoboxParser = function (templateContent, templateName)
   {
     var dfd = $.Deferred();
-    var infoboxContent = templateContent.split("</infobox>")[0] + "</infobox>"; //Tratar erro
-    var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
+    try {
+      var infoboxContent = templateContent.split("</infobox>")[0] + "</infobox>"; //Tratar erro
+      var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
+    } catch (e) {
+      dfd.reject(e.toString());
+      return dfd.promise();
+    }
     updateModalTitle("Passo 2: Infobox");
     var titleTagParam = $($(infoboxObj).find("title")[0]).attr('source');
     var modalContent = '<div style="position:relative"><div style="position:fixed;"><p>Preencha a infobox para o artigo</p>'+
@@ -781,7 +791,7 @@ var SWWICP = (function($) {
     if (wookiee.bibliography != '' && outOfUniverse)
       articleWikitext += "== Bibliografia =="+wookiee.bibliography;
     articleWikitext += wookieeInterlang;
-    ajaxGet("https://starwars.fandom.com/pt/wiki/Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
+    ajaxGet(wikiBaseURL+"Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
       console.log("Apêndice de obras obtido.");
       for (var i=0; i<fixes.replacements.length; i++) {
