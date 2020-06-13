@@ -18,6 +18,7 @@ var SWWICP = (function($) {
   var isCanonNamespace;
   var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
   var wikiBaseURL = window.location.origin + mw.config.get("wgArticlePath").replace("$1", "");
+  var mwApi = null;
 
   //In case there's an unexpected error, send details to server for analysis
   var errorHandler = function(funcao) {
@@ -61,6 +62,43 @@ var SWWICP = (function($) {
       },
       error: errorCallback || retryAjax
     });
+  }
+  
+  /**
+   * Peforms a MediaWiki API get request with given parameters
+   * 
+   * @param {Object} options MediaWiki API options
+   * @param {Function} successCallback Success callback
+   * @param {Function} [errorCallback] Error callback
+   */
+  var apiGet = function(options, successCallback, errorCallback=false) {
+    if (mwApi === null) {
+      console.warn('ICP: mwApi null, forcing its load');
+      forceMwApiLoad();
+      mw.loader.using('mediawiki.api', function() {
+        console.debug('ICP: mediawiki.api loaded');
+        mwApi = new mw.Api();
+        apiGet(options, successCallback, errorCallback);
+      });
+      return;
+    }
+    showLoader();
+    mwApi.get(options).then(function(data) {
+      hideLoader();
+      errorHandler(function() { successCallback(data) });
+    }).fail(errorCallback || retryAjax);
+  }
+
+  /**
+   * Forces mediawiki.api module to load
+   * 
+   * During Selenium test suite runs, some random tests would consistently break
+   * because mediawiki.api would get stuck at "loading" status. This forces mw.Api
+   * to load by calling it directly, bypassing any cache or mw.loader controll.
+   * With any luck, this should not happen in production
+   */
+  var forceMwApiLoad = function() {
+    mw.loader.load("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1591798434636-20200610T140000Z/mediawiki.api");
   }
 
   var retryAjax = function(xhr, textStatus, error) {
@@ -109,6 +147,7 @@ var SWWICP = (function($) {
         +'<section></section>'
         +'<footer>'
           +'<button id="configuracoesICP" class="secondary">Configurações</button>'
+          +'<span id="ICPVersion" style="display:none">'+ICPversion+'</span>'
         +'</footer>'
       +'</div>'
     +'</div>');
@@ -388,16 +427,23 @@ var SWWICP = (function($) {
             infoboxUrl += '400';
         }
         console.log('Obtendo "'+infoboxName+'"');
-        ajaxGet("https://starwars.fandom.com/pt/api.php?action=query&prop=categories&titles=Predefinição:"+infoboxUrl+"&format=xml", function(data) {
+        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxUrl, format: 'json'};
+        apiGet(apiParams, function(data) {
           //Figuring out whether this is an in-universe or out-of-universe article based on infobox category
-          var categoryName = $($(data).find("cl")[0]).attr('title');
-          console.log(categoryName);
           outOfUniverse = false; //false means it's an in-universe article
-          if (typeof(categoryName) != "undefined")
-            if (categoryName == "Categoria:Infoboxes de mídia")
-              outOfUniverse = 1; //1 means out-of-universe article that needs Step1
-            if (categoryName == "Categoria:Infoboxes fora do universo")
-              outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
+          try {
+            var templateId = Object.keys(data.query.pages)[0];
+            var categoryName = data.query.pages[templateId].categories[0].title;
+            console.log(categoryName);
+            if (typeof(categoryName) != "undefined")
+              if (categoryName == "Categoria:Infoboxes de mídia")
+                outOfUniverse = 1; //1 means out-of-universe article that needs Step1
+              if (categoryName == "Categoria:Infoboxes fora do universo")
+                outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
+          } catch (e) {
+            console.warn(e);
+            //TODO send this to server for analysis
+          }
           dfd.resolve();
         });
       })});
@@ -691,6 +737,7 @@ var SWWICP = (function($) {
       dfd.fail();
     }
     ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL(wookieePagename), success, error);
+    // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
     return dfd.promise();
   }
 
@@ -927,6 +974,11 @@ var SWWICP = (function($) {
   }
 
   var init = function() {
+    console.info('ICP init v'+ICPversion);
+    mw.loader.using('mediawiki.api', function() {
+      console.debug('ICP: mediawiki.api loaded');
+      mwApi = new mw.Api();
+    });
     userActions.user = (window.wgTrackID || false);
     userActions.page = window.wgPageName;
     userActions.date = window.wgNow;

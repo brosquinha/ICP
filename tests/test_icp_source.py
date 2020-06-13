@@ -1,4 +1,3 @@
-import re
 import textwrap
 from random import choice
 
@@ -369,10 +368,11 @@ class TestICPSource(ICPTestSuite):
 
     def test_config_version(self):
         self.driver.find_element_by_id("configuracoesICP").click()
-        icp_version = re.findall(r"var ICPversion = \'(.*)\'\;", self.icp_content)[0]
+        icp_version = self.support.get_new_icp_version(self.icp_content)
         self.assertIn(icp_version, self.driver.find_element_by_css_selector(".modalContent div>p").text)
     
     def tearDown(self):
+        # print(list(filter(lambda x: 'ICP' in x['message'], self.driver.get_log('browser'))))
         self.driver.execute_script("window.localStorage.clear();")
         self.driver.refresh()
 

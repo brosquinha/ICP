@@ -1,4 +1,5 @@
 import os
+import re
 from unittest import TestCase
 
 from selenium import webdriver
@@ -24,6 +25,7 @@ class ICPTestSuite(TestCase):
         self.driver.get(url)
         self.support.wait_for_icp()
         self.driver.execute_script(self.icp_content)
+        self.support.wait_for_new_icp(self.icp_content)
 
     @classmethod
     def tearDownClass(cls):
@@ -36,9 +38,17 @@ class Support():
     def __init__(self, driver):
         self.driver = driver
     
+    def get_new_icp_version(self, icp_content):
+        return re.findall(r"var ICPversion = \'(.*)\'\;", icp_content)[0]
+    
     def wait_for_icp(self):
         WebDriverWait(self.driver, 5).until(
             lambda d: len(d.find_elements_by_css_selector("#blackout_CuratedContentToolModal")) > 0
+        )
+    
+    def wait_for_new_icp(self, icp_content):
+        WebDriverWait(self.driver, 5).until(
+            lambda d: d.find_element_by_css_selector("#ICPVersion").get_attribute('textContent') == self.get_new_icp_version(icp_content)
         )
     
     def get_legends_article(self, icp_content):
