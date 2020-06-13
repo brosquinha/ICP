@@ -17,7 +17,6 @@ var SWWICP = (function($) {
   var outOfUniverse;
   var isCanonNamespace;
   var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
-  var wikiBaseURL = window.location.origin + mw.config.get("wgArticlePath").replace("$1", "");
   var mwApi = null;
 
   //In case there's an unexpected error, send details to server for analysis
@@ -87,6 +86,22 @@ var SWWICP = (function($) {
       hideLoader();
       errorHandler(function() { successCallback(data) });
     }).fail(errorCallback || retryAjax);
+  }
+
+  /**
+   * Gets given article's wikitext content
+   * 
+   * @param {String} pagename Wiki article title
+   * @returns {Promise} Success callback or rejected when page is not found
+   */
+  var apiGetPageContents = function(pagename) {
+    var dfd = $.Deferred();
+    apiGet({action: 'query', prop: 'revisions', titles: pagename, rvprop: 'content'}, function(data) {
+      var pageId = Object.keys(data.query.pages)[0];
+      if (pageId == '-1') dfd.reject();
+      dfd.resolve(data.query.pages[pageId].revisions[0]['*']);
+    });
+    return dfd.promise();
   }
 
   /**
@@ -393,7 +408,7 @@ var SWWICP = (function($) {
     var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
     '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
     updateModalBody(modalContent);
-    ajaxGet(wikiBaseURL+"Ajuda:Predefini%C3%A7%C3%B5es/Infobox?action=raw", function(data) {
+    apiGetPageContents("Ajuda:Predefinições/Infobox").then(function(data) {
       var infoboxes = data.split("\n{{")
       for (var i=1; i<infoboxes.length; i++)
       {
@@ -547,7 +562,7 @@ var SWWICP = (function($) {
   var infoboxInsertion = function() {
     var dfd = $.Deferred();
     console.log("Obtendo infobox...");
-    ajaxGet(wikiBaseURL+"Predefini%C3%A7%C3%A3o:"+infoboxUrl+"?action=raw", function(data) {
+    apiGetPageContents("Predefinição:"+infoboxUrl).then(function(data) {
       $.when(infoboxParser(data, infoboxName))
         .then(function() {
           dfd.resolve();
@@ -838,7 +853,7 @@ var SWWICP = (function($) {
     if (wookiee.bibliography != '' && outOfUniverse)
       articleWikitext += "== Bibliografia =="+wookiee.bibliography;
     articleWikitext += wookieeInterlang;
-    ajaxGet(wikiBaseURL+"Star_Wars_Wiki:Ap%C3%AAndice_de_Tradu%C3%A7%C3%A3o_de_obras/JSON?action=raw", function(data) {
+    apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
       console.log("Apêndice de obras obtido.");
       for (var i=0; i<fixes.replacements.length; i++) {
