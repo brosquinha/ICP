@@ -1031,73 +1031,74 @@ var SWWICP = (function($) {
     }
   }
 
+  var collectInitialMetrics = function() {
+    userActions.user = (mw.config.get("wgUserId") || false);
+    userActions.page = mw.config.get("wgPageName");
+    userActions.date = new Date();
+    userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
+    userActions.version = ICPversion;
+    userActions.errors = [];
+  }
+
+  var getICPSettings = function() {
+    var settings = {};
+    if (localStorage.ICPsettings) {
+      settings = JSON.parse(localStorage.ICPsettings);
+      userActions.ICPconfig = localStorage.ICPsettings;
+    } else {
+      settings.default_action = 1;
+      userActions.ICPconfig = false;
+    }
+    return settings;
+  }
+
   var init = function() {
     console.info('ICP init v'+ICPversion);
     mw.loader.using('mediawiki.api', function() {
       console.debug('ICP: mediawiki.api loaded');
       mwApi = new mw.Api();
     });
-    userActions.user = (window.wgTrackID || false);
-    userActions.page = window.wgPageName;
-    userActions.date = window.wgNow;
-    userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
-    userActions.version = ICPversion;
-    userActions.errors = []
-    if (window.wgArticleId === 0 && (window.wgNamespaceNumber == 114 || window.wgNamespaceNumber === 0) || (window.wgNamespaceNumber == -1 && window.wgTitle == "CreatePage"))
-    {
-      if (window.wgNamespaceNumber == -1)
-      {
-        $("#ok").click(function () {errorHandler(function () {
-          if (typeof document.editform.wpTitle === "undefined")
-            return;
-          userActions.page = document.editform.wpTitle.value;
-          articleName = document.editform.wpTitle.value;
-          if (articleName.substr(0, 8) == "Legends:")
-          {
-            articleTitle = articleName.substr(8);
-            isCanonNamespace = false;
-          }
-          else
-          {
-            articleTitle = articleName;
-            isCanonNamespace = true;
-          }
-        })});
-      }
-      else
-      {
-        articleName = window.wgPageName;
-        articleTitle = window.wgTitle;
-        if (window.wgNamespaceNumber == 0)
-          isCanonNamespace = true;
-        else
+    collectInitialMetrics();
+    isCanonNamespace = mw.config.get("wgNamespaceNumber") === 0;
+    var isNewArticle = mw.config.get("wgArticleId") === 0;
+    var isLegendsNamespace = mw.config.get("wgNamespaceNumber") == 114;
+    var isSpecialCreatePage = mw.config.get("wgNamespaceNumber") == -1 && mw.config.get("wgTitle") == "CreatePage";
+    if (!((isNewArticle && (isLegendsNamespace || isCanonNamespace)) || isSpecialCreatePage)) return;
+    if (isSpecialCreatePage) {
+      //TODO write Selenium tests for CreatePage entry point
+      $("#ok").click(function () {errorHandler(function () {
+        if (typeof document.editform.wpTitle === "undefined")
+          return;
+        userActions.page = document.editform.wpTitle.value;
+        articleName = document.editform.wpTitle.value;
+        if (articleName.substr(0, 8) == "Legends:") {
+          articleTitle = articleName.substr(8);
           isCanonNamespace = false;
-      }
-      var opcoesICP = {}
-      if (localStorage.ICPsettings) {
-        opcoesICP = JSON.parse(localStorage.ICPsettings);
-        userActions.ICPconfig = localStorage.ICPsettings;
-      } else {
-        opcoesICP.default_action = 1;
-        userActions.ICPconfig = false;
-      }
-      if (opcoesICP.default_action == 0)
-      {
-        $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-        $("#ICP_opener").click(function() { errorHandler(controller); });
-      }
-      else
-      {
-        if (window.wgAction == 'edit')
-          errorHandler(controller);
-        if (window.wgAction == 'view')
-          if (document.location.href.search("veaction=edit") >= 0)
-            errorHandler(controller);
-          else
-            $("#ca-ve-edit").click(function () { errorHandler(controller); });
-      }
+        } else {
+          articleTitle = articleName;
+          isCanonNamespace = true;
+        }
+      })});
+    } else {
+      articleName = mw.config.get("wgPageName");
+      articleTitle = mw.config.get("wgTitle");
     }
-
+    var ICPsettings = getICPSettings();
+    if (ICPsettings.default_action == 0)
+    {
+      $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
+      $("#ICP_opener").click(function() { errorHandler(controller); });
+    }
+    else
+    {
+      if (mw.config.get("wgAction") == 'edit')
+        errorHandler(controller);
+      if (mw.config.get("wgAction") == 'view')
+        if (document.location.href.search("veaction=edit") >= 0)
+          errorHandler(controller);
+        else
+          $("#ca-ve-edit").click(function () { errorHandler(controller); });
+    }
   }
 
   $(document).ready(init);
