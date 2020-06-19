@@ -760,9 +760,11 @@ var SWWICP = (function($) {
       window.open("https://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
     }});
     appendButtonToModalBody("Não sei / não existe").then(function() {
+      var wikitext = new StepWikitext(2);
       userActions.interlink = false;
       userActions.passo3DT = (new Date().getTime()) - deltaTime;
-      dfd.resolve(false);
+      wikitext.append("\n\n== Notas e referências ==\n{{Reflist}}\n");
+      dfd.resolve();
     });
     return dfd.promise();
   }
@@ -891,6 +893,8 @@ var SWWICP = (function($) {
       wookieeWikitext += "== Fontes =="+wookiee.sources;
     if (wookiee.bibliography != '' && outOfUniverse)
       wookieeWikitext += "== Bibliografia =="+wookiee.bibliography;
+    wookieeWikitext = wookieeWikitext.trimEnd();
+    wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
     wookieeWikitext += wookieeInterlang;
     apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
@@ -966,14 +970,6 @@ var SWWICP = (function($) {
   {
     console.log(articleWikitext);
     articleWikitext = articleWikitext.join("");
-    // TODO move ICPDisclaimer insertion to wookiee step
-    if ((articleWikitext.match(/\{\{Interlang/g) || []).length == 1) {
-      var hasDisclaimer = articleWikitext.search("{{ICPDisclaimer}}") > -1;
-      articleWikitext = articleWikitext.replace("{{ICPDisclaimer}}", "");
-      articleWikitext = articleWikitext.split("{{Interlang")[0] + "== Notas e referências ==\n{{Reflist}}\n\n" +
-      (hasDisclaimer ? "{{ICPDisclaimer}}" : "")  + "{{Interlang" + articleWikitext.split("{{Interlang")[1];
-    } else
-      articleWikitext += "\n\n== Notas e referências ==\n{{Reflist}}";
     articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
     if (window.wgAction == "view")
     {
