@@ -506,13 +506,6 @@ var SWWICP = (function($) {
     var wikitext = new StepWikitext(0);
     updateModalTitle("Passo 1: Universo");
     var modalContent, txtButtonYes, txtButtonNo;
-    userActions.editor = (window.wgAction == 'edit') ? "source" : "VE";
-    if (window.wgAction == 'edit' && $("#cke_21_label").length == 1)
-    {
-      window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
-      ICP_wys = true;
-      userActions.editor = "WYSIWYG";
-    }
     //Title template insertion
     if (infoboxesForTitle.indexOf(infoboxName) > -1)
       wikitext.append("{{Title|''"+articleTitle+"''}}\n");
@@ -589,6 +582,7 @@ var SWWICP = (function($) {
         dfd.resolve();
       });
     }
+    changeWysToSource();
     return dfd.promise();
   }
 
@@ -1025,6 +1019,16 @@ var SWWICP = (function($) {
 
   var encodarURL = function(qm) {
     return encodeURI(qm.replace(/ /g, "_"))
+  }
+
+  var changeWysToSource = function() {
+    userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
+    if (mw.config.get("wgAction") == 'edit' && $("#cke_21_label").length == 1)
+    {
+      window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
+      ICP_wys = true;
+      userActions.editor = "WYSIWYG";
+    }
   }
 
   var init = function() {
