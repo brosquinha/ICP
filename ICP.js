@@ -258,7 +258,7 @@ var SWWICP = (function($) {
   /**
    * Updates modal's content
    *
-   * @param {String} content HTML content
+   * @param {String|HTMLElement} content HTML content
    */
   var updateModalBody = function(content) {
     $("#CuratedContentToolModal section").html(content);
@@ -296,6 +296,113 @@ var SWWICP = (function($) {
     });
     $("#CuratedContentToolModal section").append(button);
     return dfd.promise();
+  }
+
+  /**
+   * Manager for building infobox inside ICP modal
+   * 
+   * @param {String} content HTML content for description
+   * @param {Object} [options] Options
+   * @param {String} [options.title] Infobox title
+   * @param {String} [options.infoboxClassList] Infobox class list
+   */
+  var ModalInfobox = function(content, options={}) {
+    var container = document.createElement("div");
+    container.style.position = "relative";
+    var contentDiv = document.createElement("div");
+    contentDiv.style.position = "fixed";
+    contentDiv.innerHTML = content;
+    container.appendChild(contentDiv);
+    var infoboxRoot = document.createElement("aside");
+    infoboxRoot.classList = options.infoboxClassList || "portable-infobox pi-background pi-theme-Media pi-layout-default";
+    var infoboxTitle = document.createElement("h2");
+    infoboxTitle.classList = "pi-item pi-item-spacing pi-title";
+    infoboxTitle.innerText = options.title || articleTitle;
+    infoboxRoot.appendChild(infoboxTitle);
+    container.appendChild(infoboxRoot);
+    this.container = container;
+    this.infoboxRoot = infoboxRoot;
+    this.textareaValues = {};
+  }
+
+  /**
+   * Adds a infobox field with textarea for user to write
+   * 
+   * @param {String} label Infobox field label
+   * @param {String} source Infobox field source name
+   * @param {HTMLElement|Boolean} [value] Infobox field value (defaults to textarea)
+   */
+  ModalInfobox.prototype.addInfoboxField = function(label, source, value=false) {
+    var infoboxField = document.createElement("div");
+    infoboxField.classList = "pi-item pi-data pi-item-spacing pi-border-color";
+    var infoboxFieldLabel = document.createElement("h3");
+    infoboxFieldLabel.classList = "pi-data-label pi-secondary-font";
+    infoboxFieldLabel.textContent = label;
+    var infoboxFieldValue = document.createElement("div");
+    infoboxFieldValue.classList = "pi-data-value pi-font";
+    if (value) {
+      infoboxFieldValue.appendChild(value);
+    } else {
+      var textarea = document.createElement("textarea");
+      textarea.placeholder = "Preencher";
+      infoboxFieldValue.appendChild(textarea);
+      this.textareaValues[source] = textarea;
+    }
+    infoboxField.appendChild(infoboxFieldLabel);
+    infoboxField.appendChild(infoboxFieldValue);
+    this.infoboxRoot.appendChild(infoboxField);
+  }
+
+  /**
+   * 
+   * @param {String} label Infobox field label
+   * @param {Object} selectOptions Select options
+   * @param {String} selectOptions.id Select id
+   * @param {Function} selectOptions.callback Select callback for change event
+   * @param {Object[]} selectOptions.options Select options for select's options
+   * @param {String} selectOptions.options[].value Select element value
+   * @param {String} selectOptions.options[].label Select element label
+   */
+  ModalInfobox.prototype.addInfoboxFieldSelect = function(label, selectOptions) {
+    var select = document.createElement("select");
+    if (selectOptions.id) select.id = selectOptions.id;
+    selectOptions.options.forEach(function(option) {
+      var optionElem = document.createElement("option");
+      optionElem.value = option.value;
+      optionElem.textContent = option.label;
+      select.appendChild(optionElem);
+    });
+    if (selectOptions.callback) $(select).change(selectOptions.callback);
+    this.addInfoboxField(label, '', select);
+  }
+
+  /**
+   * Returns infobox root element
+   * 
+   * @returns {HTMLElement} Aside element
+   */
+  ModalInfobox.prototype.getInfoboxRoot = function() {
+    return this.infoboxRoot;
+  }
+
+  /**
+   * Inserts infobox content into modal
+   */
+  ModalInfobox.prototype.insert = function() {
+    updateModalBody(this.container);
+  }
+
+  /**
+   * Returns all user input on all textareas by source field name
+   * 
+   * @returns {Object} User input by field
+   */
+  ModalInfobox.prototype.getValues = function() {
+    var values = {}
+    for (var source in this.textareaValues) {
+      values[source] = this.textareaValues[source].value;
+    }
+    return values;
   }
 
   /**
@@ -606,81 +713,96 @@ var SWWICP = (function($) {
   {
     var dfd = $.Deferred();
     var wikitext = new StepWikitext(1);
+    var infoboxObj = {};
     var infoboxWikitext = '';
     try {
-      var infoboxContent = templateContent.split("</infobox>")[0] + "</infobox>"; //Tratar erro
-      var infoboxObj = $.parseXML(infoboxContent); //Tratar erro
+      var infoboxContent = templateContent.split("</infobox>")[0] + "</infobox>";
+      var infoboxDom = $.parseXML(infoboxContent);
     } catch (e) {
       dfd.reject(e.toString());
       return dfd.promise();
     }
+
     updateModalTitle("Passo 2: Infobox");
-    var titleTagParam = $($(infoboxObj).find("title")[0]).attr('source');
-    var modalContent = '<div style="position:relative"><div style="position:fixed;"><p>Preencha a infobox para o artigo</p>'+
+    var modalToolbox = '<p>Preencha a infobox para o artigo</p>'+
     '<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
     '<br /><button>Pronto</button></div>';
-    modalContent += '<aside class="portable-infobox pi-background pi-theme-Media pi-layout-default">'+
-    '<h2 class="pi-item pi-item-spacing pi-title">'+articleTitle+'</h2>';
-    infoboxWikitext += "{{"+templateName+"\n";
-    infoboxWikitext += "|nome-"+articleTitle+"\n";
-    infoboxWikitext += "|imagem-\n";
+    var modalContent = new ModalInfobox(modalToolbox);
+    modalContent.textareaValues.nome = '';
+    modalContent.textareaValues.imagem = '';
+
     if (templateName == "Personagem infobox")
     {
       //Personagem infobox has a special "type" parameter
+      var selectOptions = {
+        id: "personagemTypes",
+        callback: function() {
+          var type = $(this).val();
+          var infobox = modalContent.getInfoboxRoot();
+          $(infobox).removeClass(function (index, className) {
+            return (className.match(/(^|\s)pi-theme-\S+/g) || []).join(" ");
+          });
+          $(infobox).addClass("pi-theme-"+type.replace(/ /g, "-"));
+        },
+        options: []
+      }
       var personagemTypes = templateContent.split("\n*");
       personagemTypes[personagemTypes.length-1] = personagemTypes[personagemTypes.length-1].split("\n")[0];
-      modalContent += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
-      '<h3 class="pi-data-label pi-secondary-font">Tipo de personagem</h3>'+
-      '<div class="pi-data-value pi-font"><select id="personagemTypes">';
       for (var i=1; i<personagemTypes.length; i++)
       {
-        modalContent += '<option value="'+personagemTypes[i]+'">'+personagemTypes[i]+'</option>';
+        selectOptions.options.push({value: personagemTypes[i], label: personagemTypes[i]})
       }
-      modalContent += "</select></div></div>";
-      infoboxWikitext += "|type-\n";
+      modalContent.addInfoboxFieldSelect("Tipo de personagem", selectOptions);
+      modalContent.textareaValues.type = '';
     }
-    for (var i=0; i<$(infoboxObj).find("data").length; i++)
+
+    for (var i=0; i<$(infoboxDom).find("data").length; i++)
     {
-      var dataTag, labelTagText;
-      dataTag = $(infoboxObj).find("data")[i];
+      var dataTag, labelTagText, sourceText;
+      dataTag = $(infoboxDom).find("data")[i];
+      sourceText = $(dataTag).attr('source');
       if (typeof $(dataTag).children()[0] === "undefined")
-        labelTagText = $(dataTag).attr('source');
+        labelTagText = sourceText;
       else
         labelTagText = $(dataTag).children()[0].innerHTML;
-      modalContent += '<div class="pi-item pi-data pi-item-spacing pi-border-color">'+
-      '<h3 class="pi-data-label pi-secondary-font">'+labelTagText+'</h3>'+
-      '<div class="pi-data-value pi-font"><textarea placeholder="Preencher"></textarea></div></div>';
-      infoboxWikitext += "|"+($(dataTag).attr('source'))+"=\n";
+      modalContent.addInfoboxField(labelTagText, sourceText);
     }
-    infoboxWikitext += "}}\n";
-    modalContent += '</aside>';
-    updateModalBody(modalContent);
+    modalContent.insert();
+
     $("aside textarea").first().focus();
     $("aside textarea").first().blur();
     setTimeout(function () {$("aside textarea").first().focus(); }, 50); //Simple trick to force focus on the first textarea
     deltaTime = new Date().getTime();
     $("#CuratedContentToolModal section").css('overflow-y', 'auto');
     infoboxButtonsCallbacks();
+
     $("#CuratedContentToolModal section button").one("click", function() { errorHandler(function() {
       userActions.passo2DT = (new Date().getTime()) - deltaTime;
-      var infoboxTextareas = $("#CuratedContentToolModal section aside textarea");
-      var subArtTxt = infoboxWikitext.split("=");
-      infoboxWikitext = subArtTxt[0].replace("|nome-", "|"+titleTagParam+" = ").replace("|imagem-", "|imagem = ").replace("|type-", "|type = "+$("#personagemTypes").val());
-      for (var i=0; i<infoboxTextareas.length; i++)
-      {
-        infoboxWikitext += ' = '+$(infoboxTextareas[i]).val();
-        infoboxWikitext += subArtTxt[i+1];
-      }
+      infoboxObj = modalContent.getValues();
+      if ("type" in infoboxObj) infoboxObj.type = $("#personagemTypes").val();
+      infoboxObj.nome = articleTitle;
+      infoboxObj.imagem = '';
+      console.log(infoboxObj);
+      infoboxWikitext = buildInfoboxWikitext(templateName, infoboxObj);
       wikitext.append(infoboxWikitext);
       if (outOfUniverse)
-        wikitext.append("'''"+articleTitle+"''' é um...");
+        wikitext.append("\n'''"+articleTitle+"''' é um...");
       else
-        wikitext.append("'''"+articleTitle+"''' foi um...");
-      console.log(wikitext.get());
+        wikitext.append("\n'''"+articleTitle+"''' foi um...");
       dfd.resolve();
     })});
     return dfd.promise();
   }
+
+  //Step2 helper: wikitext builder from infobox object
+  var buildInfoboxWikitext = function(templateName, infoboxObj) {
+    var wikitext = '{{' + templateName + "\n";
+    for (var fieldName in infoboxObj) {
+      wikitext += '|' + fieldName + ' = ' + infoboxObj[fieldName] + "\n";
+    }
+    wikitext += "}}";
+    return wikitext;
+  };
 
   //Step2 helper: buttons and callbacks
   var infoboxButtonsCallbacks = function() {
@@ -714,13 +836,6 @@ var SWWICP = (function($) {
         mw.toolbar.insertTags('{{'+'SUBST:L|', "}}", "Exemplo", 0);
         return false;
       }
-    });
-    $("#personagemTypes").change(function() {
-      var type = $(this).val();
-      $("#CuratedContentToolModal aside").removeClass(function (index, className) {
-        return (className.match(/(^|\s)pi-theme-\S+/g) || []).join(" ");
-      });
-      $("#CuratedContentToolModal aside").addClass("pi-theme-"+type.replace(/ /g, "-"));
     });
   }
 
