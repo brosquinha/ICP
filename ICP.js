@@ -891,13 +891,13 @@ var SWWICP = (function($) {
           dfd.resolve();
         })
         .fail(function() {
-          dfd.fail();
+          dfd.reject();
         });
     };
     var error = function(jqXHR, textStatus, error) {
       alert("Erro ao obter página "+wookieePagename+" da Wookieepedia");
       console.warn(error);
-      dfd.fail();
+      dfd.reject();
     }
     ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL(wookieePagename), success, error);
     // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
@@ -910,90 +910,29 @@ var SWWICP = (function($) {
     var dfd = $.Deferred();
     var wikitext = new StepWikitext(2);
     var wookieeWikitext = '';
-    if (data === false)
-    {
+    if (data == false) {
       alert("Página não encontrada!");
-      $("#CuratedContentToolModal section button").removeAttr('disabled');
       dfd.reject();
       return dfd.promise();
     }
-    if (redirectPageIfWookieeIsRedirect(data)) {
-      dfd.reject();
-      return dfd.promise();
-    }
-    var wookiee = {};
-    wookiee.page = data;
-    wookiee.page.replace("{{interlang", "{{Interlang");
-    wookiee.sections = wookiee.page.split("==");
-    console.log(wookiee.sections);
-    wookiee.appearances = '';
-    wookiee.sources = '';
-    wookiee.bibliography = '';
-    wookiee.cast = '';
-    for (var i=0; i<wookiee.sections.length; i++)
-    {
-      if ($.trim(wookiee.sections[i]) == "Appearances")
-      {
-        wookiee.appearances = wookiee.sections[i+1];
-        //TODO: Verficar por aparições não canônicas
-      }
-      else if ($.trim(wookiee.sections[i]) == "Sources")
-      {
-        wookiee.sources = wookiee.sections[i+1];
-        break;
-      }
-      else if ($.trim(wookiee.sections[i]) == "Bibliography")
-      {
-        wookiee.bibliography = wookiee.sections[i+1];
-      }
-      else if ($.trim(wookiee.sections[i]) == "Cast")
-      {
-        wookiee.cast = wookiee.sections[i+1];
-      }
-    }
+    var isRedirect = data.toLowerCase().substring(0, 9) == "#redirect";
+    if (isRedirect) return redirectPage(data);
+
+    var wookiee = buildWookieeData(data.replace("{{interlang", "{{Interlang"));
     wikitext.append("\n\n");
-    var addDisclaimer = (wookiee.appearances || wookiee.bibliography || wookiee.cast || wookiee.sources) ? ["{{ICPDisclaimer}}", "|icp=1"] : ["", ''];
-    var successionBoxText;
-    if (wookiee.appearances.search(/\{\{Start(_| )box\}\}/) >= 0)
-      successionBoxText = "appearances";
-    else if (wookiee.sources.search(/\{\{Start(_| )box\}\}/) >= 0)
-      successionBoxText = "sources";
+
+    wookiee.disclaimer = (wookiee.appearances || wookiee.bibliography || wookiee.cast || wookiee.sources) ? ["{{ICPDisclaimer}}", "|icp=1"] : ["", ''];
+    
+    var successionBoxSection;
+    var successionBoxStartRegex = /\{\{Start(_| )box\}\}/;
+    if (wookiee.appearances.search(successionBoxStartRegex) >= 0)
+      successionBoxSection = "appearances";
+    else if (wookiee.sources.search(successionBoxStartRegex) >= 0)
+      successionBoxSection = "sources";
     else
-      successionBoxText = false;
-    if (wookiee.sources.search("{{Interlang") >= 0)
-      wookiee.sources = wookiee.sources.split("{{Interlang")[0]; //Tratar erro
-    if (wookiee.page.search("{{Interlang") >= 0)
-    {
-      var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+wookiee.page.split("{{Interlang")[1].split("}}")[0]+addDisclaimer[1]+"}}"; //Tratar erro
-      //Adding HotCat data
-      var hotcatInterlinks = wookiee.page.split("{{Interlang")[1].split("}}")[0].split("|");
-      for (i=0; i<hotcatInterlinks.length; i++)
-        hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/g, ''); //Yep, only the first "="
-      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName+hotcatInterlinks.join("|"));
-    }
-    else
-    {
-      var wookieeInterlang = addDisclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+addDisclaimer[1]+"\n}}";
-      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName);
-    }
-    if (successionBoxText)
-    {
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\{\{Start(_| )box\}\}/g, '{{Traduzir}}{{Caixa inicio}}');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\{\{Succession(_| )box\s*\|/g, '{{Caixa de sucessão\n|');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*title\s*\=\s*/g, '|titulo = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*years\s*\=\s*/g, '|anos = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*before\s*\=\s*/g, '|antes = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*before\-years\s*\=\s*/g, '|antes-anos = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*after\s*\=\s*/g, '|depois = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\|\s*after\-years\s*\=\s*/g, '|depois-anos = ');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\{\{End(_| )box\}\}/g, '{{Caixa fim}}');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\[\[(\d+) ABY(\]\]|\|)/g, '[[$1 DBY$2');
-      wookiee[successionBoxText] = wookiee[successionBoxText].replace(/\[\[(\d+) BBY(\]\]|\|)/g, '[[$1 ABY$2');
-      console.log(wookiee[successionBoxText]);
-      userActions.successionBox = true;
-    }
-    else
-      userActions.successionBox = false;
+      successionBoxSection = false;
+    wookiee = translateSuccessionBox(wookiee, successionBoxSection);
+
     if (wookiee.cast != '' && outOfUniverse == 1)
       wookieeWikitext += "== Elenco =="+wookiee.cast;
     if (wookiee.appearances != '' && outOfUniverse == false)
@@ -1004,10 +943,10 @@ var SWWICP = (function($) {
       wookieeWikitext += "== Bibliografia =="+wookiee.bibliography;
     wookieeWikitext = wookieeWikitext.trimEnd();
     wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
-    wookieeWikitext += wookieeInterlang;
+    wookieeWikitext += addInterlang(wookiee);
+
     apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
-      console.log("Apêndice de obras obtido.");
       for (var i=0; i<fixes.replacements.length; i++) {
         var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
         wookieeWikitext = wookieeWikitext.replace(txtRegEx, fixes.replacements[i][1]);
@@ -1018,15 +957,75 @@ var SWWICP = (function($) {
     return dfd.promise();
   }
 
-  //Step3 helper: wookiee page validator
-  var redirectPageIfWookieeIsRedirect = function(data) {
-    if (data.toLowerCase().substring(0, 9) == "#redirect")
-    {
-      $("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
-      getWookieeData($("#wookieePage").val());
-      return true;
+  var buildWookieeData = function(wookieeText) {
+    var wookiee = {
+      page: wookieeText,
+      appearances: '',
+      sources: '',
+      bibliography: '',
+      cast: '',
+      sections: wookieeText.split("==")
+    };
+    for (var i=0; i<wookiee.sections.length; i++) {
+      if ($.trim(wookiee.sections[i]) == "Appearances") {
+        wookiee.appearances = wookiee.sections[i+1]; //TODO Verficar por aparições não canônicas
+      } else if ($.trim(wookiee.sections[i]) == "Bibliography") {
+        wookiee.bibliography = wookiee.sections[i+1];
+      } else if ($.trim(wookiee.sections[i]) == "Cast") {
+        wookiee.cast = wookiee.sections[i+1];
+      } else if ($.trim(wookiee.sections[i]) == "Sources") {
+        wookiee.sources = wookiee.sections[i+1];
+        if (wookiee.sources.search("{{Interlang") >= 0)
+          wookiee.sources = wookiee.sources.split("{{Interlang")[0];
+      }
     }
-    return false;
+    return wookiee;
+  }
+
+  var translateSuccessionBox = function(wookiee, section) {
+    if (section === false) {
+      userActions.successionBox = false;
+      return wookiee;
+    }
+    var translationRegexs = [
+      [/\{\{Start(_| )box\}\}/g, '{{Traduzir}}{{Caixa inicio}}'],
+      [/\{\{Succession(_| )box\s*\|/g, '{{Caixa de sucessão\n|'],
+      [/\|\s*title\s*\=\s*/g, '|titulo = '],
+      [/\|\s*years\s*\=\s*/g, '|anos = '],
+      [/\|\s*before\s*\=\s*/g, '|antes = '],
+      [/\|\s*before\-years\s*\=\s*/g, '|antes-anos = '],
+      [/\|\s*after\s*\=\s*/g, '|depois = '],
+      [/\|\s*after\-years\s*\=\s*/g, '|depois-anos = '],
+      [/\{\{End(_| )box\}\}/g, '{{Caixa fim}}'],
+      [/\[\[(\d+) ABY(\]\]|\|)/g, '[[$1 DBY$2'],
+      [/\[\[(\d+) BBY(\]\]|\|)/g, '[[$1 ABY$2'],
+    ];
+    translationRegexs.forEach(function(regex) {
+      wookiee[section] = wookiee[section].replace(regex[0], regex[1]);
+    });
+    userActions.successionBox = true;
+    return wookiee;
+  }
+
+  var addInterlang = function(wookiee) {
+    if (wookiee.page.search("{{Interlang") >= 0) {
+      //Adding HotCat data
+      var hotcatInterlinks = wookiee.page.split("{{Interlang")[1].split("}}")[0].split("|");
+      for (i=0; i<hotcatInterlinks.length; i++)
+        hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/g, ''); //Yep, only the first "="
+      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName+hotcatInterlinks.join("|"));
+      return (wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+
+        wookiee.page.split("{{Interlang")[1].split("}}")[0]+wookiee.disclaimer[1]+"}}"); //Tratar erro
+    } else {
+      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName);
+      return wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+wookiee.disclaimer[1]+"\n}}";
+    }
+  }
+
+  //Step3 helper: wookiee page validator
+  var redirectPage = function(data) {
+    $("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
+    return getWookieeData($("#wookieePage").val());
   }
 
   //Step4: Categorize
