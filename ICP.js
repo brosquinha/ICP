@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
   "use strict";
-  var ICPversion = '2.8.0-beta.1';
+  var ICPversion = '2.7.6-beta.0';
   var articleName, articleTitle;
   var infoboxName, infoboxUrl;
   var articleWikitext = new Array(5);
@@ -1079,6 +1079,7 @@ var SWWICP = (function($) {
     console.log(articleWikitext);
     articleWikitext = articleWikitext.join("");
     articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+    articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
     if (window.wgAction == "view")
     {
       //Visual Editor
