@@ -582,7 +582,7 @@ var SWWICP = (function($) {
             infoboxUrl += '400';
         }
         console.log('Obtendo "'+infoboxName+'"');
-        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxUrl, format: 'json'};
+        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxName, format: 'json'};
         apiGet(apiParams, function(data) {
           //Figuring out whether this is an in-universe or out-of-universe article based on infobox category
           outOfUniverse = false; //false means it's an in-universe article
@@ -697,7 +697,7 @@ var SWWICP = (function($) {
   var infoboxInsertion = function() {
     var dfd = $.Deferred();
     console.log("Obtendo infobox...");
-    apiGetPageContents("Predefinição:"+infoboxUrl).then(function(data) {
+    apiGetPageContents("Predefinição:"+infoboxName).then(function(data) {
       $.when(infoboxParser(data, infoboxName))
         .then(function() {
           dfd.resolve();
