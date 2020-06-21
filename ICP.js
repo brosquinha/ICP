@@ -519,12 +519,13 @@ var SWWICP = (function($) {
       {name: "Evento", class: "evento", label: "Evento"},
       {name: "Dispositivo infobox", class: "tecnologia", label: "Tecnologia"},
     ];
-    insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(function(articleType) {
-      console.log("Carregando modelo para "+articleType);
+    insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(function(type) {
+      articleType = type;
+      console.log("Carregando modelo para "+type);
       deltaTime = (new Date().getTime()) - deltaTime;
       userActions.passo0DT = deltaTime;
-      userActions.infoboxType = articleType;
-      if (articleType == 'outro')
+      userActions.infoboxType = type;
+      if (type == 'outro')
       {
         $.when(otherInfoboxes()).then(function() {
           dfd.resolve();
@@ -533,8 +534,8 @@ var SWWICP = (function($) {
       else
       {
         outOfUniverse = false; //false means it's an in-universe article
-        infoboxName = articleType;
-        infoboxUrl = encodarURL(infoboxName);
+        infoboxName = type;
+        infoboxUrl = infoboxName;
         dfd.resolve();
       }
     });
@@ -561,7 +562,7 @@ var SWWICP = (function($) {
           return;
         chooseInfoboxTypeController = true;
         userActions.infoboxType = infoboxName;
-        infoboxUrl = encodarURL(infoboxName);
+        infoboxUrl = infoboxName;
         if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
         {
           //Batalha, Missão and Guerra infoboxes are special
@@ -582,7 +583,7 @@ var SWWICP = (function($) {
             infoboxUrl += '400';
         }
         console.log('Obtendo "'+infoboxName+'"');
-        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxName, format: 'json'};
+        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxUrl, format: 'json'};
         apiGet(apiParams, function(data) {
           //Figuring out whether this is an in-universe or out-of-universe article based on infobox category
           outOfUniverse = false; //false means it's an in-universe article
@@ -697,7 +698,7 @@ var SWWICP = (function($) {
   var infoboxInsertion = function() {
     var dfd = $.Deferred();
     console.log("Obtendo infobox...");
-    apiGetPageContents("Predefinição:"+infoboxName).then(function(data) {
+    apiGetPageContents("Predefinição:"+infoboxUrl).then(function(data) {
       $.when(infoboxParser(data, infoboxName))
         .then(function() {
           dfd.resolve();

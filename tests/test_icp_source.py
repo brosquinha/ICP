@@ -213,6 +213,8 @@ class TestICPSource(ICPTestSuite):
         prompt.send_keys(choice(['2', '3', '4']))
         prompt.accept()
         self.support.wait_for_infobox_type_gathering()
+        self.support.skip_step_1()
+        self.support.wait_for_step_2_ready()
 
     def test_step_2_link_button_canon(self):
         self.support.skip_step_0()
