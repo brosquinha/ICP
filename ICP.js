@@ -6,7 +6,7 @@
 
 var SWWICP = (function($) {
   "use strict";
-  var ICPversion = '2.7.6-beta.1';
+  var ICPversion = '2.7.6-beta.2';
   var articleName, articleTitle;
   var infoboxName, infoboxUrl;
   var articleWikitext = new Array(5);
@@ -141,18 +141,26 @@ var SWWICP = (function($) {
     }
   }
 
-  //Controller
-  var controller = function() {
+  /**
+   * ICP logic flow manager
+   * 
+   * @param {Function[]} steps ICP steps functions
+   * @param {Object} [options] ICP flow options
+   * @param {Boolean} [options.anon] Whether to confirm anons intention before proceeding
+   */
+  var controller = function(steps, options={anon: true}) {
     buildModal();
-    $.when(confirmAnon())
-      .then(articleTypeSelection.__errorHandler__)
-      .then(templateErasInsertion.__errorHandler__)
-      .then(infoboxInsertion.__errorHandler__)
-      .then(interwikiInsertion.__errorHandler__)
-      .then(categoriesInsertion.__errorHandler__)
-      .then(finishEdit)
-      .fail(treatError)
+    if (options.anon) steps.unshift(confirmAnon);
+    steps.push(finishEdit);
+    _controller(steps);
   }
+
+  var _controller = function(steps) {
+    if (steps.length === 0) return;
+    $.when(errorHandler(steps.shift())()).then(function() {
+      _controller(steps);
+    });
+  };
 
   //Helpers
   /**
@@ -1201,18 +1209,26 @@ var SWWICP = (function($) {
       articleName = mw.config.get("wgPageName");
       articleTitle = mw.config.get("wgTitle");
     }
+
     var ICPsettings = getICPSettings();
+    var SWWSteps = [
+      articleTypeSelection,
+      templateErasInsertion,
+      infoboxInsertion,
+      interwikiInsertion,
+      categoriesInsertion
+    ];
     if (ICPsettings.default_action == 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-      $("#ICP_opener").click(controller);
+      $("#ICP_opener").click(function() {controller(SWWSteps) });
     } else {
       if (mw.config.get("wgAction") == 'edit')
-        controller();
+        controller(SWWSteps);
       if (mw.config.get("wgAction") == 'view')
         if (document.location.href.search("veaction=edit") >= 0)
-          controller();
+          controller(SWWSteps);
         else
-          $("#ca-ve-edit").click(controller);
+          $("#ca-ve-edit").click(function() {controller(SWWSteps) });
     }
   }
 
