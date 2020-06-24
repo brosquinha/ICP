@@ -6,18 +6,14 @@
 
 var SWWICP = (function($) {
   "use strict";
-  var ICPversion = '2.7.6-beta.2';
+  var ICPversion = '2.7.6-beta.3';
   var articleName, articleTitle;
-  var infoboxName, infoboxUrl;
   var articleWikitext = new Array(5);
-  var articleType = '';
   var ICP_wys = false;
-  var deltaTime;
   var userActions = {};
-  var outOfUniverse;
   var isCanonNamespace;
-  var infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
   var mwApi = null;
+  var wikiInstance;
 
   /**
    * Wraps a given function in order to handle any untreated exceptions
@@ -157,12 +153,39 @@ var SWWICP = (function($) {
 
   var _controller = function(steps) {
     if (steps.length === 0) return;
-    $.when(errorHandler(steps.shift())()).then(function() {
+    $.when(errorHandler(steps.shift()).apply(wikiInstance)).then(function() {
       _controller(steps);
     });
   };
 
   //Helpers
+  /**
+   * Checks if current page is Special:CreatePage
+   * 
+   * @returns {Boolean} True if current page is Special:CreatePage
+   */
+  var isSpecialCreatePage = function() {
+    return mw.config.get("wgNamespaceNumber") == -1 && mw.config.get("wgTitle") == "CreatePage";
+  }
+
+  /**
+   * Checks if current page belongs to main namespace (ns 0)
+   * 
+   * @returns {Boolean} True if current namespace is 0
+   */
+  var isMainNamespace = function() {
+    return mw.config.get("wgNamespaceNumber") === 0;
+  }
+
+  /**
+   * Checks if current page is a new article
+   * 
+   * @returns {Boolean} True if current article is new
+   */
+  var isNewArticle = function() {
+    return mw.config.get("wgArticleId") === 0;
+  }
+
   /**
    * Article wikitext manager
    * 
@@ -525,9 +548,35 @@ var SWWICP = (function($) {
     //TODO write Selenium test for this whole step (not currently covered)
   }
 
+  var StarWarsWiki = function() {
+    this.articleType = '';
+    this.infoboxName;
+    this.infoboxUrl;
+    this.deltaTime;
+    this.outOfUniverse;
+    this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"]; //SWW
+  }
+
+  StarWarsWiki.prototype.getSteps = function() {
+    return [
+      this.articleTypeSelection,
+      this.templateErasInsertion,
+      this.infoboxInsertion,
+      this.interwikiInsertion,
+      this.categoriesInsertion
+    ]
+  }
+
+  StarWarsWiki.prototype.shouldOpenICP = function() {
+    isCanonNamespace = isMainNamespace();
+    var isLegendsNamespace = mw.config.get("wgNamespaceNumber") == 114;
+    return ((isNewArticle() && (isLegendsNamespace || isCanonNamespace)) || isSpecialCreatePage())
+  }
+
   //Step0: article type selection
-  var articleTypeSelection = function() {
+  StarWarsWiki.prototype.articleTypeSelection = function() {
     var dfd = $.Deferred();
+    var instance = this;
     updateModalTitle("Criando um novo artigo");
     var articleTypes = [
       {name: "Personagem infobox", class: "personagem", label: "Personagem"},
@@ -538,30 +587,31 @@ var SWWICP = (function($) {
       {name: "Dispositivo infobox", class: "tecnologia", label: "Tecnologia"},
     ];
     insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(errorHandler(function(type) {
-      articleType = type;
+      instance.articleType = type;
       console.log("Carregando modelo para "+type);
-      deltaTime = (new Date().getTime()) - deltaTime;
-      userActions.passo0DT = deltaTime;
+      instance.deltaTime = (new Date().getTime()) - instance.deltaTime;
+      userActions.passo0DT = instance.deltaTime;
       userActions.infoboxType = type;
       if (type == 'outro') {
-        otherInfoboxes().then(function() {
+        instance._otherInfoboxes().then(function() {
           dfd.resolve();
         })
       } else {
-        outOfUniverse = false; //false means it's an in-universe article
-        infoboxName = type;
-        infoboxUrl = infoboxName;
+        instance.outOfUniverse = false; //false means it's an in-universe article
+        instance.infoboxName = type;
+        instance.infoboxUrl = instance.infoboxName;
+        console.log(instance.infoboxUrl);
         dfd.resolve();
       }
     }));
-    deltaTime = new Date().getTime();
+    this.deltaTime = new Date().getTime();
     return dfd.promise();
   }
-  errorHandler(articleTypeSelection);
 
   //Step0 helper: Select "Other"
-  var otherInfoboxes = function() {
+  StarWarsWiki.prototype._otherInfoboxes = function() {
     var dfd = $.Deferred();
+    var instance = this;
     var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
     '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
     updateModalBody(modalContent);
@@ -573,45 +623,45 @@ var SWWICP = (function($) {
       }
       var chooseInfoboxTypeController = false;
       appendButtonToModalBody("Pronto").then(errorHandler(function(button) {
-        infoboxName = $("#selecionarInfoboxCustom").val();
-        if (infoboxName == '' || chooseInfoboxTypeController ==  true)
+        instance.infoboxName = $("#selecionarInfoboxCustom").val();
+        if (instance.infoboxName == '' || chooseInfoboxTypeController ==  true)
           return;
         chooseInfoboxTypeController = true;
-        userActions.infoboxType = infoboxName;
-        infoboxUrl = infoboxName;
-        if (infoboxName == "Batalha" || infoboxName == "Guerra" || infoboxName == "Missão")
+        userActions.infoboxType = instance.infoboxName;
+        instance.infoboxUrl = instance.infoboxName;
+        if (instance.infoboxName == "Batalha" || instance.infoboxName == "Guerra" || instance.infoboxName == "Missão")
         {
           //Batalha, Missão and Guerra infoboxes are special
           var numParticipants = '';
           while (numParticipants != '4' && numParticipants != '3' && numParticipants != '2')
             numParticipants = prompt("Quantos participantes? (2, 3 ou 4)")
-          if (infoboxName == "Batalha")
-            infoboxUrl = "Battle";
-          else if (infoboxName == "Guerra")
-            infoboxUrl = "War";
+          if (instance.infoboxName == "Batalha")
+            instance.infoboxUrl = "Battle";
+          else if (instance.infoboxName == "Guerra")
+            instance.infoboxUrl = "War";
           else
-            infoboxUrl = "Mission";
+            instance.infoboxUrl = "Mission";
           if (numParticipants == '2')
-            infoboxUrl += '300';
+            instance.infoboxUrl += '300';
           else if (numParticipants == '3')
-            infoboxUrl += '350';
+            instance.infoboxUrl += '350';
           else
-            infoboxUrl += '400';
+            instance.infoboxUrl += '400';
         }
-        console.log('Obtendo "'+infoboxName+'"');
-        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+infoboxUrl, format: 'json'};
+        console.log('Obtendo "'+instance.infoboxName+'"');
+        var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+instance.infoboxUrl, format: 'json'};
         apiGet(apiParams, function(data) {
           //Figuring out whether this is an in-universe or out-of-universe article based on infobox category
-          outOfUniverse = false; //false means it's an in-universe article
+          instance.outOfUniverse = false; //false means it's an in-universe article
           try {
             var templateId = Object.keys(data.query.pages)[0];
             var categoryName = data.query.pages[templateId].categories[0].title;
             console.log(categoryName);
             if (typeof(categoryName) != "undefined")
               if (categoryName == "Categoria:Infoboxes de mídia")
-                outOfUniverse = 1; //1 means out-of-universe article that needs Step1
+                instance.outOfUniverse = 1; //1 means out-of-universe article that needs Step1
               if (categoryName == "Categoria:Infoboxes fora do universo")
-                outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
+                instance.outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
           } catch (e) {
             console.warn(e);
             //TODO send this to server for analysis
@@ -622,23 +672,22 @@ var SWWICP = (function($) {
     }));
     return dfd.promise();
   }
-  errorHandler(otherInfoboxes);
 
   //Step1: Insert Eras template
-  var templateErasInsertion = function() {
+  StarWarsWiki.prototype.templateErasInsertion = function() {
     var dfd = $.Deferred();
     var wikitext = new StepWikitext(0);
     updateModalTitle("Passo 1: Universo");
     var modalContent, txtButtonYes, txtButtonNo;
     //Title template insertion
-    if (infoboxesForTitle.indexOf(infoboxName) > -1)
+    if (this.infoboxesForTitle.indexOf(this.infoboxName) > -1)
       wikitext.append("{{Title|''"+articleTitle+"''}}\n");
     else
       wikitext.append("");
-    if (outOfUniverse)
+    if (this.outOfUniverse)
     {
       //Out-of-universe article, defining Eras questions properly
-      if (outOfUniverse == 2)
+      if (this.outOfUniverse == 2)
       {
         //foraDeUniverso = 2 means we already know everything we need for Eras
         wikitext.append("{{Eras|real}}\n");
@@ -649,12 +698,12 @@ var SWWICP = (function($) {
       {
         modalContent = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
         updateModalBody(modalContent);
-        deltaTime = new Date().getTime();
+        this.deltaTime = new Date().getTime();
         var canonButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" />';
         var legendsButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" />';
         var solveEras = errorHandler(function(response) {
           wikitext.append("{{Eras|"+(response == "none" ? "real" : response + "|real")+"}}\n");
-          userActions.passo1DT = (new Date().getTime() - deltaTime);
+          userActions.passo1DT = (new Date().getTime() - this.deltaTime);
           userActions.erasAnswer = response;
           dfd.resolve();
         })
@@ -692,16 +741,17 @@ var SWWICP = (function($) {
       }
       modalContent += '</span>. Ele existe também no outro universo?</p>';
       updateModalBody(modalContent);
-      deltaTime = new Date().getTime();
+      this.deltaTime = new Date().getTime();
+      var instance = this;
       appendButtonToModalBody(txtButtonYes).then(errorHandler(function(button) {
         wikitext.append((isCanonNamespace) ? "|legends}}\n" : "|canon}}\n");
-        userActions.passo1DT = (new Date().getTime() - deltaTime);
+        userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
         userActions.erasAnswer = true;
         dfd.resolve();
       }));
       appendButtonToModalBody(txtButtonNo).then(errorHandler(function(button) {
         wikitext.append("}}\n");
-        userActions.passo1DT = (new Date().getTime() - deltaTime);
+        userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
         userActions.erasAnswer = false;
         dfd.resolve();
       }));
@@ -709,14 +759,14 @@ var SWWICP = (function($) {
     changeWysToSource();
     return dfd.promise();
   }
-  errorHandler(templateErasInsertion);
 
   //Step2: Filling in infobox
-  var infoboxInsertion = function() {
+  StarWarsWiki.prototype.infoboxInsertion = function() {
     var dfd = $.Deferred();
+    var instance = this;
     console.log("Obtendo infobox...");
-    apiGetPageContents("Predefinição:"+infoboxUrl).then(errorHandler(function(data) {
-      infoboxParser(data, infoboxName)
+    apiGetPageContents("Predefinição:"+this.infoboxUrl).then(errorHandler(function(data) {
+      instance._infoboxParser(data, instance.infoboxName)
         .then(function() {
           dfd.resolve();
         })
@@ -726,9 +776,8 @@ var SWWICP = (function($) {
     }));
     return dfd.promise();
   }
-  errorHandler(infoboxInsertion);
 
-  var infoboxParser = function(templateContent, templateName) {
+  StarWarsWiki.prototype._infoboxParser = function(templateContent, templateName) {
     var dfd = $.Deferred();
     var wikitext = new StepWikitext(1);
     var infoboxObj = {};
@@ -790,20 +839,21 @@ var SWWICP = (function($) {
     $("aside textarea").first().focus();
     $("aside textarea").first().blur();
     setTimeout(function () {$("aside textarea").first().focus(); }, 50); //Simple trick to force focus on the first textarea
-    deltaTime = new Date().getTime();
+    this.deltaTime = new Date().getTime();
     $("#CuratedContentToolModal section").css('overflow-y', 'auto');
-    infoboxButtonsCallbacks();
+    this._infoboxButtonsCallbacks();
 
+    var instance = this;
     $("#CuratedContentToolModal section button").one("click", errorHandler(function() {
-      userActions.passo2DT = (new Date().getTime()) - deltaTime;
+      userActions.passo2DT = (new Date().getTime()) - instance.deltaTime;
       infoboxObj = modalContent.getValues();
       if ("type" in infoboxObj) infoboxObj.type = $("#personagemTypes").val();
       infoboxObj.nome = articleTitle;
       infoboxObj.imagem = '';
       console.log(infoboxObj);
-      infoboxWikitext = buildInfoboxWikitext(templateName, infoboxObj);
+      infoboxWikitext = instance._buildInfoboxWikitext(templateName, infoboxObj);
       wikitext.append(infoboxWikitext);
-      if (outOfUniverse)
+      if (instance.outOfUniverse)
         wikitext.append("\n'''"+articleTitle+"''' é um...");
       else
         wikitext.append("\n'''"+articleTitle+"''' foi um...");
@@ -811,10 +861,9 @@ var SWWICP = (function($) {
     }));
     return dfd.promise();
   }
-  errorHandler(infoboxParser);
 
   //Step2 helper: wikitext builder from infobox object
-  var buildInfoboxWikitext = function(templateName, infoboxObj) {
+  StarWarsWiki.prototype._buildInfoboxWikitext = function(templateName, infoboxObj) {
     var wikitext = '{{' + templateName + "\n";
     for (var fieldName in infoboxObj) {
       wikitext += '|' + fieldName + ' = ' + infoboxObj[fieldName] + "\n";
@@ -824,7 +873,7 @@ var SWWICP = (function($) {
   };
 
   //Step2 helper: buttons and callbacks
-  var infoboxButtonsCallbacks = function() {
+  StarWarsWiki.prototype._infoboxButtonsCallbacks = function() {
     userActions.usageOfNewButtons = 0;
     if (typeof mw.toolbar === "undefined") //For VE
       importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
@@ -859,22 +908,23 @@ var SWWICP = (function($) {
   }
 
   //Step3: Insert interlang links
-  var interwikiInsertion = function() {
+  StarWarsWiki.prototype.interwikiInsertion = function() {
     var dfd = $.Deferred();
     updateModalTitle("Passo 3: Fontes e Aparições");
     var modalContent = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
     modalContent += "<textarea id='wookieePage' name='wookieePage' >"
-    +((articleType == "Personagem infobox" || articleType == "Planeta" || articleType == "Droide infobox") ? articleName.replace(/_/g, " ") : '')
+    +((this.articleType == "Personagem infobox" || this.articleType == "Planeta" || this.articleType == "Droide infobox") ? articleName.replace(/_/g, " ") : '')
     +"</textarea>";
     updateModalBody(modalContent);
-    deltaTime = new Date().getTime();
+    this.deltaTime = new Date().getTime();
+    var instance = this;
     appendButtonToModalBody("Enviar", {callback: errorHandler(function(button) {
       if ($("#wookieePage").val() == '')
         return;
       $(button).attr('disabled', '');
-      userActions.passo3DT = (new Date().getTime()) - deltaTime;
+      userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
       userActions.interlink = $("#wookieePage").val();
-      getWookieeData($("#wookieePage").val())
+      instance._getWookieeData($("#wookieePage").val())
         .then(function() {
           dfd.resolve();
         })
@@ -889,23 +939,23 @@ var SWWICP = (function($) {
     appendButtonToModalBody("Não sei / não existe").then(errorHandler(function() {
       var wikitext = new StepWikitext(2);
       userActions.interlink = false;
-      userActions.passo3DT = (new Date().getTime()) - deltaTime;
+      userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
       wikitext.append("\n\n== Notas e referências ==\n{{Reflist}}\n");
       dfd.resolve();
     }));
     return dfd.promise();
   }
-  errorHandler(interwikiInsertion);
 
-  var getWookieeData = function(wookieePagename) {
+  StarWarsWiki.prototype._getWookieeData = function(wookieePagename) {
     var dfd = $.Deferred();
+    var instance = this;
     var success = errorHandler(function(data) {
       try {
         data = JSON.parse(data);
       } catch (e) {
         data = false;
       }
-      translateWookiee(data)
+      instance._translateWookiee(data)
         .then(function() {
           dfd.resolve();
         })
@@ -924,7 +974,7 @@ var SWWICP = (function($) {
   }
 
   //Gets and translates Wookiee's reference sections
-  var translateWookiee = function (data) {
+  StarWarsWiki.prototype._translateWookiee = function (data) {
     var dfd = $.Deferred();
     var wikitext = new StepWikitext(2);
     var wookieeWikitext = '';
@@ -934,9 +984,9 @@ var SWWICP = (function($) {
       return dfd.promise();
     }
     var isRedirect = data.toLowerCase().substring(0, 9) == "#redirect";
-    if (isRedirect) return redirectPage(data);
+    if (isRedirect) return this._redirectPage(data);
 
-    var wookiee = buildWookieeData(data.replace("{{interlang", "{{Interlang"));
+    var wookiee = this._buildWookieeData(data.replace("{{interlang", "{{Interlang"));
     wikitext.append("\n\n");
 
     wookiee.disclaimer = (wookiee.appearances || wookiee.bibliography || wookiee.cast || wookiee.sources) ? ["{{ICPDisclaimer}}", "|icp=1"] : ["", ''];
@@ -949,19 +999,19 @@ var SWWICP = (function($) {
       successionBoxSection = "sources";
     else
       successionBoxSection = false;
-    wookiee = translateSuccessionBox(wookiee, successionBoxSection);
+    wookiee = this._translateSuccessionBox(wookiee, successionBoxSection);
 
-    if (wookiee.cast != '' && outOfUniverse == 1)
+    if (wookiee.cast != '' && this.outOfUniverse == 1)
       wookieeWikitext += "== Elenco =="+wookiee.cast;
-    if (wookiee.appearances != '' && outOfUniverse == false)
+    if (wookiee.appearances != '' && this.outOfUniverse == false)
       wookieeWikitext += "== Aparições =="+wookiee.appearances;
     if (wookiee.sources != '')
       wookieeWikitext += "== Fontes =="+wookiee.sources;
-    if (wookiee.bibliography != '' && outOfUniverse)
+    if (wookiee.bibliography != '' && this.outOfUniverse)
       wookieeWikitext += "== Bibliografia =="+wookiee.bibliography;
     wookieeWikitext = wookieeWikitext.trimEnd();
     wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
-    wookieeWikitext += addInterlang(wookiee);
+    wookieeWikitext += this._addInterlang(wookiee);
 
     apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(errorHandler(function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
@@ -975,7 +1025,7 @@ var SWWICP = (function($) {
     return dfd.promise();
   }
 
-  var buildWookieeData = function(wookieeText) {
+  StarWarsWiki.prototype._buildWookieeData = function(wookieeText) {
     var wookiee = {
       page: wookieeText,
       appearances: '',
@@ -1000,7 +1050,7 @@ var SWWICP = (function($) {
     return wookiee;
   }
 
-  var translateSuccessionBox = function(wookiee, section) {
+  StarWarsWiki.prototype._translateSuccessionBox = function(wookiee, section) {
     if (section === false) {
       userActions.successionBox = false;
       return wookiee;
@@ -1025,7 +1075,7 @@ var SWWICP = (function($) {
     return wookiee;
   }
 
-  var addInterlang = function(wookiee) {
+  StarWarsWiki.prototype._addInterlang = function(wookiee) {
     if (wookiee.page.search("{{Interlang") >= 0) {
       //Adding HotCat data
       var hotcatInterlinks = wookiee.page.split("{{Interlang")[1].split("}}")[0].split("|");
@@ -1041,25 +1091,26 @@ var SWWICP = (function($) {
   }
 
   //Step3 helper: wookiee page validator
-  var redirectPage = function(data) {
+  StarWarsWiki.prototype._redirectPage = function(data) {
     $("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
-    return getWookieeData($("#wookieePage").val());
+    return this._getWookieeData($("#wookieePage").val());
   }
 
   //Step4: Categorize
-  var categoriesInsertion = function() {
+  StarWarsWiki.prototype.categoriesInsertion = function() {
     var dfd = $.Deferred();
+    var instance = this;
     updateModalTitle("Passo 4: Categorias");
     var modalContent = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
     'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
     userActions.categorias = true;
-    deltaTime = new Date().getTime();
+    this.deltaTime = new Date().getTime();
     if (window.wgAction == 'edit') {
       updateModalBody(modalContent);
       $("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
       appendButtonToModalBody("Terminei").then(function(button) {
         $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-        userActions.passo4DT = (new Date().getTime()) - deltaTime;
+        userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
         dfd.resolve();
       });
     } else {
@@ -1075,7 +1126,7 @@ var SWWICP = (function($) {
       $("span.oo-ui-tool-name-categories a").click(function() {
         setTimeout(function() {
           $("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click(function () {
-            userActions.passo4DT = (new Date().getTime()) - deltaTime;
+            userActions.passo4DT = (new Date().getTime()) - instance.deltaTime;
             $("span.oo-ui-tool-name-categories").css('border', '0px solid');
             $("#blackout_CuratedContentToolModal").addClass('visible');
             dfd.resolve();
@@ -1086,7 +1137,6 @@ var SWWICP = (function($) {
     }
     return dfd.promise();
   }
-  errorHandler(categoriesInsertion);
 
   //Wrapping up
   var finishEdit = function() {
@@ -1179,18 +1229,15 @@ var SWWICP = (function($) {
   }
 
   var init = function() {
+    wikiInstance = new StarWarsWiki();
     console.info('ICP init v'+ICPversion);
     mw.loader.using('mediawiki.api', function() {
       console.debug('ICP: mediawiki.api loaded');
       mwApi = new mw.Api();
     });
     collectInitialMetrics();
-    isCanonNamespace = mw.config.get("wgNamespaceNumber") === 0;
-    var isNewArticle = mw.config.get("wgArticleId") === 0;
-    var isLegendsNamespace = mw.config.get("wgNamespaceNumber") == 114;
-    var isSpecialCreatePage = mw.config.get("wgNamespaceNumber") == -1 && mw.config.get("wgTitle") == "CreatePage";
-    if (!((isNewArticle && (isLegendsNamespace || isCanonNamespace)) || isSpecialCreatePage)) return;
-    if (isSpecialCreatePage) {
+    if (!(wikiInstance.shouldOpenICP())) return;
+    if (isSpecialCreatePage()) {
       //TODO write Selenium tests for CreatePage entry point
       $("#ok").click(errorHandler(function () {
         if (typeof document.editform.wpTitle === "undefined")
@@ -1211,13 +1258,7 @@ var SWWICP = (function($) {
     }
 
     var ICPsettings = getICPSettings();
-    var SWWSteps = [
-      articleTypeSelection,
-      templateErasInsertion,
-      infoboxInsertion,
-      interwikiInsertion,
-      categoriesInsertion
-    ];
+    var SWWSteps = wikiInstance.getSteps();
     if (ICPsettings.default_action == 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
       $("#ICP_opener").click(function() {controller(SWWSteps) });
