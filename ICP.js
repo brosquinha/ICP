@@ -6,14 +6,19 @@
 
 var SWWICP = (function($) {
   "use strict";
-  var ICPversion = '2.7.6-beta.3';
-  var articleName, articleTitle;
-  var articleWikitext = new Array(5);
-  var ICP_wys = false;
-  var userActions = {};
-  var isCanonNamespace;
-  var mwApi = null;
-  var wikiInstance;
+  var ICPversion = '2.7.6-beta.4';
+
+  /**
+   * ICP framework class
+   */
+  var ICP = function() {
+    this.articleName;
+    this.articleTitle;
+    this.articleWikitext = new Array(5);
+    this.wysiwyg = false;
+    this.userActions = {};
+    this.mwApi = null;
+  };
 
   /**
    * Wraps a given function in order to handle any untreated exceptions
@@ -23,30 +28,31 @@ var SWWICP = (function($) {
    * @param {Function} fn Function to be wrapped
    * @returns {Function} Wrapped function
    */
-  var errorHandler = function(fn) {
+  ICP.prototype.errorHandler = function(fn) {
+    var instance = this;
     fn.__errorHandler__ = function() {
       try {
-        return fn.apply(this, arguments);
+        return fn.apply(instance, arguments);
       }
       catch(e) {
         console.error(e.toString());
         var erroTxt = e.name + ": " + e.message
         erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
-        userActions.errors.push(erroTxt);
-        userActions.userAgent = window.navigator.userAgent;
+        instance.userActions.errors.push(erroTxt);
+        instance.userActions.userAgent = window.navigator.userAgent;
         alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
-        finishEdit();
+        instance.finishEdit();
       }
     }
     return fn.__errorHandler__;
   }
 
-  var treatError = function(msg) {
+  ICP.prototype.treatError = function(msg) {
     console.warn(msg);
-    userActions.errors.push(msg);
-    userActions.userAgent = window.navigator.userAgent;
+    this.userActions.errors.push(msg);
+    this.userActions.userAgent = window.navigator.userAgent;
     alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
-    finishEdit();
+    this.finishEdit();
   }
 
   /**
@@ -56,16 +62,17 @@ var SWWICP = (function($) {
    * @param {Function} successCallback Success callback
    * @param {Function} [errorCallback] Error callback
    */
-  var ajaxGet = function(url, successCallback, errorCallback=false) {
-    showLoader();
+  ICP.prototype.ajaxGet = function(url, successCallback, errorCallback=false) {
+    this.showLoader();
+    var instance = this;
     $.ajax({
       method: "GET",
       url: url,
-      success: errorHandler(function(data) {
-        hideLoader();
+      success: this.errorHandler(function(data) {
+        instance.hideLoader();
         successCallback(data);
       }),
-      error: errorCallback || retryAjax
+      error: errorCallback || this.retryAjax
     });
   }
   
@@ -76,22 +83,23 @@ var SWWICP = (function($) {
    * @param {Function} successCallback Success callback
    * @param {Function} [errorCallback] Error callback
    */
-  var apiGet = function(options, successCallback, errorCallback=false) {
-    if (mwApi === null) {
+  ICP.prototype.apiGet = function(options, successCallback, errorCallback=false) {
+    var instance = this;
+    if (this.mwApi === null) {
       console.warn('ICP: mwApi null, forcing its load');
-      forceMwApiLoad();
+      this.forceMwApiLoad();
       mw.loader.using('mediawiki.api', function() {
         console.debug('ICP: mediawiki.api loaded');
-        mwApi = new mw.Api();
-        apiGet(options, successCallback, errorCallback);
+        instance.mwApi = new mw.Api();
+        this.apiGet(options, successCallback, errorCallback);
       });
       return;
     }
-    showLoader();
-    mwApi.get(options).then(errorHandler(function(data) {
-      hideLoader();
+    this.showLoader();
+    this.mwApi.get(options).then(this.errorHandler(function(data) {
+      instance.hideLoader();
       successCallback(data);
-    })).fail(errorCallback || retryAjax);
+    })).fail(errorCallback || this.retryAjax);
   }
 
   /**
@@ -100,9 +108,9 @@ var SWWICP = (function($) {
    * @param {String} pagename Wiki article title
    * @returns {Promise} Success callback or rejected when page is not found
    */
-  var apiGetPageContents = function(pagename) {
+  ICP.prototype.apiGetPageContents = function(pagename) {
     var dfd = $.Deferred();
-    apiGet({action: 'query', prop: 'revisions', titles: pagename, rvprop: 'content'}, function(data) {
+    this.apiGet({action: 'query', prop: 'revisions', titles: pagename, rvprop: 'content'}, function(data) {
       var pageId = Object.keys(data.query.pages)[0];
       if (pageId == '-1') dfd.reject();
       dfd.resolve(data.query.pages[pageId].revisions[0]['*']);
@@ -118,20 +126,20 @@ var SWWICP = (function($) {
    * to load by calling it directly, bypassing any cache or mw.loader controll.
    * With any luck, this should not happen in production
    */
-  var forceMwApiLoad = function() {
+  ICP.prototype.forceMwApiLoad = function() {
     mw.loader.load("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1591798434636-20200610T140000Z/mediawiki.api");
   }
 
-  var retryAjax = function(xhr, textStatus, error) {
-    hideLoader();
+  ICP.prototype.retryAjax = function(xhr, textStatus, error) {
+    this.hideLoader();
     if (xhr.status >= 400 && xhr.status < 500) {
-      treatError(xhr.toString());
+      this.treatError(xhr.toString());
     } else {
       alert("Erro ao carregar informações da wiki. Tentando novamente em 30 segundos...");
       var ajaxSettings = this;
       console.log(this);
       setTimeout(function() {
-        showLoader();
+        this.showLoader();
         $.ajax(ajaxSettings);
       }, 30000);
     }
@@ -144,17 +152,18 @@ var SWWICP = (function($) {
    * @param {Object} [options] ICP flow options
    * @param {Boolean} [options.anon] Whether to confirm anons intention before proceeding
    */
-  var controller = function(steps, options={anon: true}) {
-    buildModal();
-    if (options.anon) steps.unshift(confirmAnon);
-    steps.push(finishEdit);
-    _controller(steps);
+  ICP.prototype.controller = function(steps, options={anon: true}) {
+    this.buildModal();
+    if (options.anon) steps.unshift(this.confirmAnon);
+    steps.push(this.finishEdit);
+    this._controller(steps);
   }
 
-  var _controller = function(steps) {
+  ICP.prototype._controller = function(steps) {
     if (steps.length === 0) return;
-    $.when(errorHandler(steps.shift()).apply(wikiInstance)).then(function() {
-      _controller(steps);
+    var instance = this;
+    $.when(this.errorHandler(steps.shift()).apply(this)).then(function() {
+      instance._controller(steps);
     });
   };
 
@@ -164,7 +173,7 @@ var SWWICP = (function($) {
    * 
    * @returns {Boolean} True if current page is Special:CreatePage
    */
-  var isSpecialCreatePage = function() {
+  ICP.prototype.isSpecialCreatePage = function() {
     return mw.config.get("wgNamespaceNumber") == -1 && mw.config.get("wgTitle") == "CreatePage";
   }
 
@@ -173,7 +182,7 @@ var SWWICP = (function($) {
    * 
    * @returns {Boolean} True if current namespace is 0
    */
-  var isMainNamespace = function() {
+  ICP.prototype.isMainNamespace = function() {
     return mw.config.get("wgNamespaceNumber") === 0;
   }
 
@@ -182,7 +191,7 @@ var SWWICP = (function($) {
    * 
    * @returns {Boolean} True if current article is new
    */
-  var isNewArticle = function() {
+  ICP.prototype.isNewArticle = function() {
     return mw.config.get("wgArticleId") === 0;
   }
 
@@ -194,11 +203,14 @@ var SWWICP = (function($) {
    * step's funcions should use this class to correctly and
    * independently manage its wikitext
    * 
+   * @param {ICP} icp ICP instance
    * @param {Number} stepIndex Step index number
    */
-  var StepWikitext = function(stepIndex) {
+  var StepWikitext = function(icp, stepIndex) {
+    this.icp = icp;
+    console.log(this.icp)
     this.index = stepIndex;
-    if (articleWikitext[this.index] === undefined) articleWikitext[this.index] = "";
+    if (this.icp.articleWikitext[this.index] === undefined) this.icp.articleWikitext[this.index] = "";
   }
 
   /**
@@ -207,7 +219,7 @@ var SWWICP = (function($) {
    * @param {String} text Wikitext code
    */
   StepWikitext.prototype.append = function(text) {
-    articleWikitext[this.index] += text;
+    this.icp.articleWikitext[this.index] += text;
   }
 
   /**
@@ -216,13 +228,13 @@ var SWWICP = (function($) {
    * @returns {String} Wikitext code
    */
   StepWikitext.prototype.get = function() {
-    return articleWikitext[this.index];
+    return this.icp.articleWikitext[this.index];
   }
 
   /**
    * Builds ICP's modal
    */
-  var buildModal = function() {
+  ICP.prototype.buildModal = function() {
     if (document.getElementById("blackout_CuratedContentToolModal") != "null")
       $("#blackout_CuratedContentToolModal").remove();
     $(document.head).append('<link rel="stylesheet" href="https://slot1-images.wikia.nocookie.net/__am/7900017900012/sass/background-dynamic%3Dtrue%26background-image%3Dhttps%253A%252F%252Fvignette.wikia.nocookie.net%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%252Frevision%252Flatest%253Fcb%253D20180407180604%26background-image-height%3D820%26background-image-width%3D1920%26color-body%3D%2523ddedfd%26color-body-middle%3D%2523ddedfd%26color-buttons%3D%25232f8f9d%26color-community-header%3D%25232f8f9d%26color-header%3D%25232f8f9d%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
@@ -240,16 +252,17 @@ var SWWICP = (function($) {
         +'</footer>'
       +'</div>'
     +'</div>');
-    setModalButtonsCallbacks();
+    this._setModalButtonsCallbacks();
   }
 
-  var setModalButtonsCallbacks = function() {
+  ICP.prototype._setModalButtonsCallbacks = function() {
+    var instance = this;
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
-      if (typeof(userActions.passo0DT) != "undefined" && typeof(userActions.passo4DT) == "undefined" && typeof(userActions.errors[0]) == 'undefined')
-        userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
+      if (typeof(instance.userActions.passo0DT) != "undefined" && typeof(instance.userActions.passo4DT) == "undefined" && typeof(instance.userActions.errors[0]) == 'undefined')
+        instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
       $("#blackout_CuratedContentToolModal").removeClass('visible');
-      sendFeedback();
+      instance.sendFeedback();
     });
     $("#configuracoesICP").click(function () {
       //Config modal
@@ -266,8 +279,8 @@ var SWWICP = (function($) {
             var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
             if (feedbackTxt)
             {
-              userActions.msgFeedback = feedbackTxt
-              sendFeedback();
+              instance.userActions.msgFeedback = feedbackTxt
+              instance.sendFeedback();
               alert("Obrigado!");
             }
           }
@@ -292,7 +305,7 @@ var SWWICP = (function($) {
       });
     });
     $("#finalizarEdicao").click(function () {
-      finishEdit();
+      this.finishEdit();
     });
   }
 
@@ -301,7 +314,7 @@ var SWWICP = (function($) {
    *
    * @param {String|HTMLElement} content HTML content
    */
-  var updateModalBody = function(content) {
+  ICP.prototype.updateModalBody = function(content) {
     $("#CuratedContentToolModal section").html(content);
   }
 
@@ -310,7 +323,7 @@ var SWWICP = (function($) {
    *
    * @param {String} title Modal's title
    */
-  var updateModalTitle = function(title) {
+  ICP.prototype.updateModalTitle = function(title) {
     $("#CuratedContentToolModal header h3").text(title);
   }
 
@@ -324,7 +337,7 @@ var SWWICP = (function($) {
    * @param {Function} [options.callback] Callback for every button click event
    * @returns {Promise} Callback for first user click
    */
-  var appendButtonToModalBody = function(label, options={}) {
+  ICP.prototype.appendButtonToModalBody = function(label, options={}) {
     var dfd = $.Deferred();
     var button = document.createElement("button");
     button.innerHTML = label;
@@ -343,11 +356,11 @@ var SWWICP = (function($) {
    * Manager for building infobox inside ICP modal
    * 
    * @param {String} content HTML content for description
+   * @param {String} title Infobox's title
    * @param {Object} [options] Options
-   * @param {String} [options.title] Infobox title
    * @param {String} [options.infoboxClassList] Infobox class list
    */
-  var ModalInfobox = function(content, options={}) {
+  var ModalInfobox = function(content, title, options={}) {
     var container = document.createElement("div");
     container.style.position = "relative";
     var contentDiv = document.createElement("div");
@@ -358,7 +371,7 @@ var SWWICP = (function($) {
     infoboxRoot.classList = options.infoboxClassList || "portable-infobox pi-background pi-theme-Media pi-layout-default";
     var infoboxTitle = document.createElement("h2");
     infoboxTitle.classList = "pi-item pi-item-spacing pi-title";
-    infoboxTitle.innerText = options.title || articleTitle;
+    infoboxTitle.innerText = title;
     infoboxRoot.appendChild(infoboxTitle);
     container.appendChild(infoboxRoot);
     this.container = container;
@@ -429,8 +442,8 @@ var SWWICP = (function($) {
   /**
    * Inserts infobox content into modal
    */
-  ModalInfobox.prototype.insert = function() {
-    updateModalBody(this.container);
+  ModalInfobox.prototype.getContent = function() {
+    return this.container;
   }
 
   /**
@@ -451,21 +464,21 @@ var SWWICP = (function($) {
    *
    * @param {String} size CSS width
    */
-  var resizeModal = function(size="") {
+  ICP.prototype.resizeModal = function(size="") {
     $("#CuratedContentToolModal").css('width', size);
   }
 
   /**
    * Shows modal's AJAX loader gif
    */
-  var showLoader = function() {
+  ICP.prototype.showLoader = function() {
     $("#CuratedContentToolModal header img").show();
   }
 
   /**
    * Hides modal's AJAX loader gif
    */
-  var hideLoader = function() {
+  ICP.prototype.hideLoader = function() {
     $("#CuratedContentToolModal header img").hide();
   }
 
@@ -481,7 +494,7 @@ var SWWICP = (function($) {
    * @param {Boolean} options.hasOther Whether to display "Other infoboxes" option
    * @returns {Promise} Callback for user selection
    */
-  var insertArticleTypeTable = function(articleTypes, options = {}) {
+  ICP.prototype.insertArticleTypeTable = function(articleTypes, options = {}) {
     var dfd = $.Deferred();
     var rootDiv = document.createElement("div");
     var introParagraph = document.createElement("p");
@@ -514,7 +527,7 @@ var SWWICP = (function($) {
       parentDiv.appendChild(typeElem);
     }
     rootDiv.appendChild(parentDiv);
-    updateModalBody(rootDiv.innerHTML);
+    this.updateModalBody(rootDiv.innerHTML);
 
     $("#NovaPaginaTipoDeArtigo>div").one("click", function() {
       dfd.resolve($(this).attr("data-tipo"));
@@ -523,22 +536,22 @@ var SWWICP = (function($) {
   }
 
   //Pre-Step0: Confirm anons intention on creating an article
-  var confirmAnon = function() {
+  ICP.prototype.confirmAnon = function() {
     var dfd = $.Deferred();
-    if (userActions.user === false && document.location.href.search("redlink=1") >= 0)
+    if (this.userActions.user === false && document.location.href.search("redlink=1") >= 0)
     {
       //Many anons get here accidentally, so let's confirm they really intend to create a new article
       var modalContent = '<p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
       'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>';
       $("#configuracoesICP").hide();
-      resizeModal("500px");
-      updateModalBody(modalContent);
-      updateModalTitle("Criando um novo artigo");
-      appendButtonToModalBody("Voltar", {secondary: true}).then(function(button) {
+      this.resizeModal("500px");
+      this.updateModalBody(modalContent);
+      this.updateModalTitle("Criando um novo artigo");
+      this.appendButtonToModalBody("Voltar", {secondary: true}).then(function(button) {
         window.history.back();
       });
-      appendButtonToModalBody("Continuar", {style: "float: right;"}).then(function(button) {
-        resizeModal();
+      this.appendButtonToModalBody("Continuar", {style: "float: right;"}).then(function(button) {
+        this.resizeModal();
         $("#configuracoesICP").show();
         dfd.resolve();
       });
@@ -549,13 +562,22 @@ var SWWICP = (function($) {
   }
 
   var StarWarsWiki = function() {
-    this.articleType = '';
+    ICP.call(this);
+    
     this.infoboxName;
     this.infoboxUrl;
     this.deltaTime;
     this.outOfUniverse;
+    this.articleType = '';
+    this.isCanonNamespace = false;
     this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"]; //SWW
   }
+  StarWarsWiki.prototype = Object.create(ICP.prototype);
+  Object.defineProperty(StarWarsWiki.prototype, 'constructor', {
+    value: StarWarsWiki,
+    enumerable: false,
+    writable: true
+  });
 
   StarWarsWiki.prototype.getSteps = function() {
     return [
@@ -568,16 +590,26 @@ var SWWICP = (function($) {
   }
 
   StarWarsWiki.prototype.shouldOpenICP = function() {
-    isCanonNamespace = isMainNamespace();
+    this.isCanonNamespace = this.isMainNamespace();
     var isLegendsNamespace = mw.config.get("wgNamespaceNumber") == 114;
-    return ((isNewArticle() && (isLegendsNamespace || isCanonNamespace)) || isSpecialCreatePage())
+    return ((this.isNewArticle() && (isLegendsNamespace || this.isCanonNamespace)) || this.isSpecialCreatePage())
+  }
+
+  StarWarsWiki.prototype.setArticleTitle = function(articleTitle) {
+    if (articleTitle.substr(0, 8) == "Legends:" && this.isSpecialCreatePage()) {
+      this.articleTitle = articleTitle.substr(8);
+      this.isCanonNamespace = false;
+    } else {
+      this.articleTitle = articleTitle;
+      this.isCanonNamespace = true;
+    }
   }
 
   //Step0: article type selection
   StarWarsWiki.prototype.articleTypeSelection = function() {
     var dfd = $.Deferred();
     var instance = this;
-    updateModalTitle("Criando um novo artigo");
+    this.updateModalTitle("Criando um novo artigo");
     var articleTypes = [
       {name: "Personagem infobox", class: "personagem", label: "Personagem"},
       {name: "Planeta", class: "planeta", label: "Planeta"},
@@ -586,12 +618,12 @@ var SWWICP = (function($) {
       {name: "Evento", class: "evento", label: "Evento"},
       {name: "Dispositivo infobox", class: "tecnologia", label: "Tecnologia"},
     ];
-    insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(errorHandler(function(type) {
+    this.insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(this.errorHandler(function(type) {
       instance.articleType = type;
       console.log("Carregando modelo para "+type);
       instance.deltaTime = (new Date().getTime()) - instance.deltaTime;
-      userActions.passo0DT = instance.deltaTime;
-      userActions.infoboxType = type;
+      instance.userActions.passo0DT = instance.deltaTime;
+      instance.userActions.infoboxType = type;
       if (type == 'outro') {
         instance._otherInfoboxes().then(function() {
           dfd.resolve();
@@ -600,7 +632,6 @@ var SWWICP = (function($) {
         instance.outOfUniverse = false; //false means it's an in-universe article
         instance.infoboxName = type;
         instance.infoboxUrl = instance.infoboxName;
-        console.log(instance.infoboxUrl);
         dfd.resolve();
       }
     }));
@@ -614,20 +645,20 @@ var SWWICP = (function($) {
     var instance = this;
     var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
     '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
-    updateModalBody(modalContent);
-    apiGetPageContents("Ajuda:Predefinições/Infobox").then(errorHandler(function(data) {
+    this.updateModalBody(modalContent);
+    this.apiGetPageContents("Ajuda:Predefinições/Infobox").then(this.errorHandler(function(data) {
       var infoboxes = data.split("\n{{")
       for (var i=1; i<infoboxes.length; i++)
       {
         $("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
       }
       var chooseInfoboxTypeController = false;
-      appendButtonToModalBody("Pronto").then(errorHandler(function(button) {
+      this.appendButtonToModalBody("Pronto").then(this.errorHandler(function(button) {
         instance.infoboxName = $("#selecionarInfoboxCustom").val();
         if (instance.infoboxName == '' || chooseInfoboxTypeController ==  true)
           return;
         chooseInfoboxTypeController = true;
-        userActions.infoboxType = instance.infoboxName;
+        instance.userActions.infoboxType = instance.infoboxName;
         instance.infoboxUrl = instance.infoboxName;
         if (instance.infoboxName == "Batalha" || instance.infoboxName == "Guerra" || instance.infoboxName == "Missão")
         {
@@ -650,7 +681,7 @@ var SWWICP = (function($) {
         }
         console.log('Obtendo "'+instance.infoboxName+'"');
         var apiParams = {action: 'query', prop: 'categories', titles: 'Predefinição:'+instance.infoboxUrl, format: 'json'};
-        apiGet(apiParams, function(data) {
+        this.apiGet(apiParams, function(data) {
           //Figuring out whether this is an in-universe or out-of-universe article based on infobox category
           instance.outOfUniverse = false; //false means it's an in-universe article
           try {
@@ -676,12 +707,13 @@ var SWWICP = (function($) {
   //Step1: Insert Eras template
   StarWarsWiki.prototype.templateErasInsertion = function() {
     var dfd = $.Deferred();
-    var wikitext = new StepWikitext(0);
-    updateModalTitle("Passo 1: Universo");
+    var wikitext = new StepWikitext(this, 0);
+    this.updateModalTitle("Passo 1: Universo");
     var modalContent, txtButtonYes, txtButtonNo;
+    var instance = this;
     //Title template insertion
     if (this.infoboxesForTitle.indexOf(this.infoboxName) > -1)
-      wikitext.append("{{Title|''"+articleTitle+"''}}\n");
+      wikitext.append("{{Title|''"+this.articleTitle+"''}}\n");
     else
       wikitext.append("");
     if (this.outOfUniverse)
@@ -691,29 +723,29 @@ var SWWICP = (function($) {
       {
         //foraDeUniverso = 2 means we already know everything we need for Eras
         wikitext.append("{{Eras|real}}\n");
-        userActions.passo1DT = 0;
+        this.userActions.passo1DT = 0;
         dfd.resolve();
       }
       else
       {
         modalContent = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
-        updateModalBody(modalContent);
+        this.updateModalBody(modalContent);
         this.deltaTime = new Date().getTime();
         var canonButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" />';
         var legendsButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" />';
-        var solveEras = errorHandler(function(response) {
+        var solveEras = this.errorHandler(function(response) {
           wikitext.append("{{Eras|"+(response == "none" ? "real" : response + "|real")+"}}\n");
-          userActions.passo1DT = (new Date().getTime() - this.deltaTime);
-          userActions.erasAnswer = response;
+          instance.userActions.passo1DT = (new Date().getTime() - this.deltaTime);
+          instance.userActions.erasAnswer = response;
           dfd.resolve();
         })
-        appendButtonToModalBody(canonButton).then(function(button) {
+        this.appendButtonToModalBody(canonButton).then(function(button) {
           solveEras("canon");
         });
-        appendButtonToModalBody(legendsButton).then(function(button) {
+        this.appendButtonToModalBody(legendsButton).then(function(button) {
           solveEras("legends");
         })
-        appendButtonToModalBody("Nenhum", {style: "vertical-align:top"}).then(function(button) {
+        this.appendButtonToModalBody("Nenhum", {style: "vertical-align:top"}).then(function(button) {
           solveEras("none");
         });
       }
@@ -722,10 +754,10 @@ var SWWICP = (function($) {
     {
       //In-universe article
       modalContent = '<img src="';
-      modalContent += (isCanonNamespace) ? "https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+      modalContent += (this.isCanonNamespace) ? "https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
       modalContent += '" style="width:150px;float:right;" />';
       modalContent += '<p style="font-size:14px">Esse artigo existe no universo <span style="font-weight:bold">';
-      if (isCanonNamespace)
+      if (this.isCanonNamespace)
       {
         modalContent += 'Cânon';
         txtButtonYes = 'Sim, também existe no <i>Legends</i>';
@@ -740,23 +772,22 @@ var SWWICP = (function($) {
         wikitext.append("{{Eras|legends");
       }
       modalContent += '</span>. Ele existe também no outro universo?</p>';
-      updateModalBody(modalContent);
+      this.updateModalBody(modalContent);
       this.deltaTime = new Date().getTime();
-      var instance = this;
-      appendButtonToModalBody(txtButtonYes).then(errorHandler(function(button) {
-        wikitext.append((isCanonNamespace) ? "|legends}}\n" : "|canon}}\n");
-        userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
-        userActions.erasAnswer = true;
+      this.appendButtonToModalBody(txtButtonYes).then(this.errorHandler(function(button) {
+        wikitext.append((instance.isCanonNamespace) ? "|legends}}\n" : "|canon}}\n");
+        instance.userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
+        instance.userActions.erasAnswer = true;
         dfd.resolve();
       }));
-      appendButtonToModalBody(txtButtonNo).then(errorHandler(function(button) {
+      this.appendButtonToModalBody(txtButtonNo).then(this.errorHandler(function(button) {
         wikitext.append("}}\n");
-        userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
-        userActions.erasAnswer = false;
+        instance.userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
+        instance.userActions.erasAnswer = false;
         dfd.resolve();
       }));
     }
-    changeWysToSource();
+    this.changeWysToSource();
     return dfd.promise();
   }
 
@@ -765,7 +796,7 @@ var SWWICP = (function($) {
     var dfd = $.Deferred();
     var instance = this;
     console.log("Obtendo infobox...");
-    apiGetPageContents("Predefinição:"+this.infoboxUrl).then(errorHandler(function(data) {
+    this.apiGetPageContents("Predefinição:"+this.infoboxUrl).then(this.errorHandler(function(data) {
       instance._infoboxParser(data, instance.infoboxName)
         .then(function() {
           dfd.resolve();
@@ -779,7 +810,7 @@ var SWWICP = (function($) {
 
   StarWarsWiki.prototype._infoboxParser = function(templateContent, templateName) {
     var dfd = $.Deferred();
-    var wikitext = new StepWikitext(1);
+    var wikitext = new StepWikitext(this, 1);
     var infoboxObj = {};
     var infoboxWikitext = '';
     try {
@@ -790,11 +821,11 @@ var SWWICP = (function($) {
       return dfd.promise();
     }
 
-    updateModalTitle("Passo 2: Infobox");
+    this.updateModalTitle("Passo 2: Infobox");
     var modalToolbox = '<p>Preencha a infobox para o artigo</p>'+
     '<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
     '<br /><button>Pronto</button></div>';
-    var modalContent = new ModalInfobox(modalToolbox);
+    var modalContent = new ModalInfobox(modalToolbox, this.articleTitle);
     modalContent.textareaValues.nome = '';
     modalContent.textareaValues.imagem = '';
 
@@ -834,7 +865,7 @@ var SWWICP = (function($) {
         labelTagText = $(dataTag).children()[0].innerHTML;
       modalContent.addInfoboxField(labelTagText, sourceText);
     }
-    modalContent.insert();
+    this.updateModalBody(modalContent.getContent());
 
     $("aside textarea").first().focus();
     $("aside textarea").first().blur();
@@ -844,19 +875,19 @@ var SWWICP = (function($) {
     this._infoboxButtonsCallbacks();
 
     var instance = this;
-    $("#CuratedContentToolModal section button").one("click", errorHandler(function() {
-      userActions.passo2DT = (new Date().getTime()) - instance.deltaTime;
+    $("#CuratedContentToolModal section button").one("click", this.errorHandler(function() {
+      instance.userActions.passo2DT = (new Date().getTime()) - instance.deltaTime;
       infoboxObj = modalContent.getValues();
       if ("type" in infoboxObj) infoboxObj.type = $("#personagemTypes").val();
-      infoboxObj.nome = articleTitle;
+      infoboxObj.nome = instance.articleTitle;
       infoboxObj.imagem = '';
       console.log(infoboxObj);
       infoboxWikitext = instance._buildInfoboxWikitext(templateName, infoboxObj);
       wikitext.append(infoboxWikitext);
       if (instance.outOfUniverse)
-        wikitext.append("\n'''"+articleTitle+"''' é um...");
+        wikitext.append("\n'''"+instance.articleTitle+"''' é um...");
       else
-        wikitext.append("\n'''"+articleTitle+"''' foi um...");
+        wikitext.append("\n'''"+instance.articleTitle+"''' foi um...");
       dfd.resolve();
     }));
     return dfd.promise();
@@ -874,26 +905,27 @@ var SWWICP = (function($) {
 
   //Step2 helper: buttons and callbacks
   StarWarsWiki.prototype._infoboxButtonsCallbacks = function() {
-    userActions.usageOfNewButtons = 0;
+    var instance = this;
+    this.userActions.usageOfNewButtons = 0;
     if (typeof mw.toolbar === "undefined") //For VE
       importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
-    if (isCanonNamespace)
+    if (this.isCanonNamespace)
     {
       $("#linkButton").click(function() {
         mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
-        userActions.usageOfNewButtons += 1;
+        this.userActions.usageOfNewButtons += 1;
       });
     }
     else
     {
       $("#linkButton").click(function() {
         mw.toolbar.insertTags("{{"+"SUBST:L|", "}}", "Exemplo", 0);
-        userActions.usageOfNewButtons += 1;
+        instance.userActions.usageOfNewButtons += 1;
       });
     }
     $("#refButton").click(function() {
       mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
-      userActions.usageOfNewButtons += 1;
+      instance.userActions.usageOfNewButtons += 1;
     });
     $("img.mw-toolbar-editbutton[title='Legends link']").attr('accesskey', '');
     $("#CuratedContentToolModal").keyup(function (e) {
@@ -910,20 +942,20 @@ var SWWICP = (function($) {
   //Step3: Insert interlang links
   StarWarsWiki.prototype.interwikiInsertion = function() {
     var dfd = $.Deferred();
-    updateModalTitle("Passo 3: Fontes e Aparições");
+    this.updateModalTitle("Passo 3: Fontes e Aparições");
     var modalContent = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
     modalContent += "<textarea id='wookieePage' name='wookieePage' >"
-    +((this.articleType == "Personagem infobox" || this.articleType == "Planeta" || this.articleType == "Droide infobox") ? articleName.replace(/_/g, " ") : '')
+    +((this.articleType == "Personagem infobox" || this.articleType == "Planeta" || this.articleType == "Droide infobox") ? this.articleName.replace(/_/g, " ") : '')
     +"</textarea>";
-    updateModalBody(modalContent);
+    this.updateModalBody(modalContent);
     this.deltaTime = new Date().getTime();
     var instance = this;
-    appendButtonToModalBody("Enviar", {callback: errorHandler(function(button) {
+    this.appendButtonToModalBody("Enviar", {callback: this.errorHandler(function(button) {
       if ($("#wookieePage").val() == '')
         return;
       $(button).attr('disabled', '');
-      userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
-      userActions.interlink = $("#wookieePage").val();
+      instance.userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
+      instance.userActions.interlink = $("#wookieePage").val();
       instance._getWookieeData($("#wookieePage").val())
         .then(function() {
           dfd.resolve();
@@ -933,13 +965,13 @@ var SWWICP = (function($) {
           //TODO testar várias tentativas de envio aqui
         });
     })});
-    appendButtonToModalBody("Visualizar", {callback: errorHandler(function() {
-      window.open("https://starwars.wikia.com/wiki/"+encodarURL($("#wookieePage").val()))
+    this.appendButtonToModalBody("Visualizar", {callback: this.errorHandler(function() {
+      window.open("https://starwars.wikia.com/wiki/"+instance.encodarURL($("#wookieePage").val()))
     })});
-    appendButtonToModalBody("Não sei / não existe").then(errorHandler(function() {
-      var wikitext = new StepWikitext(2);
-      userActions.interlink = false;
-      userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
+    this.appendButtonToModalBody("Não sei / não existe").then(this.errorHandler(function() {
+      var wikitext = new StepWikitext(instance, 2);
+      instance.userActions.interlink = false;
+      instance.userActions.passo3DT = (new Date().getTime()) - instance.deltaTime;
       wikitext.append("\n\n== Notas e referências ==\n{{Reflist}}\n");
       dfd.resolve();
     }));
@@ -949,7 +981,7 @@ var SWWICP = (function($) {
   StarWarsWiki.prototype._getWookieeData = function(wookieePagename) {
     var dfd = $.Deferred();
     var instance = this;
-    var success = errorHandler(function(data) {
+    var success = this.errorHandler(function(data) {
       try {
         data = JSON.parse(data);
       } catch (e) {
@@ -968,7 +1000,7 @@ var SWWICP = (function($) {
       console.warn(error);
       dfd.reject();
     }
-    ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+encodarURL(wookieePagename), success, error);
+    this.ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+this.encodarURL(wookieePagename), success, error);
     // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
     return dfd.promise();
   }
@@ -976,7 +1008,7 @@ var SWWICP = (function($) {
   //Gets and translates Wookiee's reference sections
   StarWarsWiki.prototype._translateWookiee = function (data) {
     var dfd = $.Deferred();
-    var wikitext = new StepWikitext(2);
+    var wikitext = new StepWikitext(this, 2);
     var wookieeWikitext = '';
     if (data == false) {
       alert("Página não encontrada!");
@@ -1013,7 +1045,7 @@ var SWWICP = (function($) {
     wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
     wookieeWikitext += this._addInterlang(wookiee);
 
-    apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(errorHandler(function(data) {
+    this.apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(this.errorHandler(function(data) {
       var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
       for (var i=0; i<fixes.replacements.length; i++) {
         var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
@@ -1052,7 +1084,7 @@ var SWWICP = (function($) {
 
   StarWarsWiki.prototype._translateSuccessionBox = function(wookiee, section) {
     if (section === false) {
-      userActions.successionBox = false;
+      this.userActions.successionBox = false;
       return wookiee;
     }
     var translationRegexs = [
@@ -1071,7 +1103,7 @@ var SWWICP = (function($) {
     translationRegexs.forEach(function(regex) {
       wookiee[section] = wookiee[section].replace(regex[0], regex[1]);
     });
-    userActions.successionBox = true;
+    this.userActions.successionBox = true;
     return wookiee;
   }
 
@@ -1081,11 +1113,11 @@ var SWWICP = (function($) {
       var hotcatInterlinks = wookiee.page.split("{{Interlang")[1].split("}}")[0].split("|");
       for (i=0; i<hotcatInterlinks.length; i++)
         hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/g, ''); //Yep, only the first "="
-      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName+hotcatInterlinks.join("|"));
+      this.userActions.hotCatData = 'pt:'+encodeURIComponent(this.articleName+hotcatInterlinks.join("|"));
       return (wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+
         wookiee.page.split("{{Interlang")[1].split("}}")[0]+wookiee.disclaimer[1]+"}}"); //Tratar erro
     } else {
-      userActions.hotCatData = 'pt:'+encodeURIComponent(articleName);
+      this.userActions.hotCatData = 'pt:'+encodeURIComponent(this.articleName);
       return wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+wookiee.disclaimer[1]+"\n}}";
     }
   }
@@ -1100,25 +1132,25 @@ var SWWICP = (function($) {
   StarWarsWiki.prototype.categoriesInsertion = function() {
     var dfd = $.Deferred();
     var instance = this;
-    updateModalTitle("Passo 4: Categorias");
+    this.updateModalTitle("Passo 4: Categorias");
     var modalContent = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
     'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
-    userActions.categorias = true;
+    this.userActions.categorias = true;
     this.deltaTime = new Date().getTime();
     if (window.wgAction == 'edit') {
-      updateModalBody(modalContent);
+      this.updateModalBody(modalContent);
       $("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
-      appendButtonToModalBody("Terminei").then(function(button) {
+      this.appendButtonToModalBody("Terminei").then(function(button) {
         $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-        userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
+        instance.userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
         dfd.resolve();
       });
     } else {
       //For VE, we'll simply redirect user to VE's categories interface
       modalContent += '<p>Para isso, clique em "Categorias" no Editor Visual conforme lhe é apresentado e preencha o campo '
       +'com as categorias. Quando terminar, clique no botão "Aplicar mudanças".</p>';
-      updateModalBody(modalContent);
-      appendButtonToModalBody("Ok, vamos lá").then(function(button) {
+      this.updateModalBody(modalContent);
+      this.appendButtonToModalBody("Ok, vamos lá").then(function(button) {
         $("#blackout_CuratedContentToolModal").removeClass('visible');
       });
       $($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
@@ -1126,7 +1158,7 @@ var SWWICP = (function($) {
       $("span.oo-ui-tool-name-categories a").click(function() {
         setTimeout(function() {
           $("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click(function () {
-            userActions.passo4DT = (new Date().getTime()) - instance.deltaTime;
+            instance.userActions.passo4DT = (new Date().getTime()) - instance.deltaTime;
             $("span.oo-ui-tool-name-categories").css('border', '0px solid');
             $("#blackout_CuratedContentToolModal").addClass('visible');
             dfd.resolve();
@@ -1139,11 +1171,12 @@ var SWWICP = (function($) {
   }
 
   //Wrapping up
-  var finishEdit = function() {
-    console.log(articleWikitext);
-    articleWikitext = articleWikitext.join("");
-    articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-    articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+  ICP.prototype.finishEdit = function() {
+    console.log(this.articleWikitext);
+    this.articleWikitext = this.articleWikitext.join("");
+    this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+    this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+    var instance = this;
     if (window.wgAction == "view") {
       //Visual Editor
       var targetButtonText = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
@@ -1154,35 +1187,35 @@ var SWWICP = (function($) {
       $("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
         setTimeout(function() {
           if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
-            $("textarea.ui-autocomplete-input").val(articleWikitext+"\n\n"+$("textarea.ui-autocomplete-input").val());
+            $("textarea.ui-autocomplete-input").val(instance.articleWikitext+"\n\n"+$("textarea.ui-autocomplete-input").val());
           else
-            $("textarea.ui-autocomplete-input").val(articleWikitext);
+            $("textarea.ui-autocomplete-input").val(instance.articleWikitext);
           $("textarea.ui-autocomplete-input").change();
           setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
         }, 2000);
       });
     } else {
       //Source editor and WYSIWYG editor
-      if (ICP_wys && $("[id=wpTextbox1]").length > 1) //For now, since there are two textareas with id=wpTextbox1 (nice job, Fandom ¬¬)
+      if (this.wysiwyg && $("[id=wpTextbox1]").length > 1) //For now, since there are two textareas with id=wpTextbox1 (nice job, Fandom ¬¬)
         $('#wpTextbox1').attr('id', 'wpTextbox0');
       var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
       if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
-        theTextarea.value = articleWikitext;
+        theTextarea.value = this.articleWikitext;
       else
-        theTextarea.value += articleWikitext;
+        theTextarea.value += this.articleWikitext;
       $("#CuratedContentToolModal span.close").click();
-      if (ICP_wys == true)
+      if (this.wysiwyg == true)
         setTimeout(function() {window.CKEDITOR.tools.callFunction(59)}, 1500);
     }
   }
 
-  var sendFeedback = function() {
+  ICP.prototype.sendFeedback = function() {
     //This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know whether the data is from different people or not. This is also used to collect info when errors occur
     $.ajax({
       url:"https://www.99luca11.com/sww_helper",
       type: "POST",
       crossDomain: true,
-      data: userActions,
+      data: this.userActions,
       timeout: 7000,
       success: function(data) {
         console.log("Dados coletados: "+data);
@@ -1193,88 +1226,98 @@ var SWWICP = (function($) {
     })
   }
 
-  var encodarURL = function(qm) {
+  ICP.prototype.encodarURL = function(qm) {
     return encodeURI(qm.replace(/ /g, "_"))
   }
 
-  var changeWysToSource = function() {
-    userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
+  ICP.prototype.changeWysToSource = function() {
+    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
     if (mw.config.get("wgAction") == 'edit' && $("#cke_21_label").length == 1)
     {
       window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
-      ICP_wys = true;
-      userActions.editor = "WYSIWYG";
+      this.wysiwyg = true;
+      this.userActions.editor = "WYSIWYG";
     }
   }
 
-  var collectInitialMetrics = function() {
-    userActions.user = (mw.config.get("wgUserId") || false);
-    userActions.page = mw.config.get("wgPageName");
-    userActions.date = new Date();
-    userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
-    userActions.version = ICPversion;
-    userActions.errors = [];
+  ICP.prototype._collectInitialMetrics = function() {
+    this.userActions.user = (mw.config.get("wgUserId") || false);
+    this.userActions.page = mw.config.get("wgPageName");
+    this.userActions.date = new Date();
+    this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
+    this.userActions.version = ICPversion;
+    this.userActions.errors = [];
   }
 
-  var getICPSettings = function() {
+  ICP.prototype._getICPSettings = function() {
     var settings = {};
     if (localStorage.ICPsettings) {
       settings = JSON.parse(localStorage.ICPsettings);
-      userActions.ICPconfig = localStorage.ICPsettings;
+      this.userActions.ICPconfig = localStorage.ICPsettings;
     } else {
       settings.default_action = 1;
-      userActions.ICPconfig = false;
+      this.userActions.ICPconfig = false;
     }
     return settings;
   }
 
-  var init = function() {
-    wikiInstance = new StarWarsWiki();
+  ICP.prototype.shouldOpenICP = function() {
+    return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage())
+  }
+
+  ICP.prototype.setArticleTitle = function(articleTitle) {
+    this.articleTitle = articleTitle;
+  }
+
+  ICP.prototype.init = function() {
+    var instance = this;
     console.info('ICP init v'+ICPversion);
     mw.loader.using('mediawiki.api', function() {
       console.debug('ICP: mediawiki.api loaded');
-      mwApi = new mw.Api();
+      instance.mwApi = new mw.Api();
     });
-    collectInitialMetrics();
-    if (!(wikiInstance.shouldOpenICP())) return;
-    if (isSpecialCreatePage()) {
+    this._collectInitialMetrics();
+    if (!(this.shouldOpenICP())) return;
+    if (this.isSpecialCreatePage()) {
       //TODO write Selenium tests for CreatePage entry point
-      $("#ok").click(errorHandler(function () {
+      $("#ok").click(this.errorHandler(function () {
         if (typeof document.editform.wpTitle === "undefined")
           return;
-        userActions.page = document.editform.wpTitle.value;
-        articleName = document.editform.wpTitle.value;
-        if (articleName.substr(0, 8) == "Legends:") {
-          articleTitle = articleName.substr(8);
-          isCanonNamespace = false;
-        } else {
-          articleTitle = articleName;
-          isCanonNamespace = true;
-        }
+        instance.userActions.page = document.editform.wpTitle.value;
+        instance.articleName = document.editform.wpTitle.value;
+        instance.setArticleTitle(instance.articleName);
       }));
     } else {
-      articleName = mw.config.get("wgPageName");
-      articleTitle = mw.config.get("wgTitle");
+      this.articleName = mw.config.get("wgPageName");
+      this.articleTitle = mw.config.get("wgTitle");
     }
 
-    var ICPsettings = getICPSettings();
-    var SWWSteps = wikiInstance.getSteps();
+    var ICPsettings = this._getICPSettings();
+    var SWWSteps = this.getSteps();
     if (ICPsettings.default_action == 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-      $("#ICP_opener").click(function() {controller(SWWSteps) });
+      $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
     } else {
       if (mw.config.get("wgAction") == 'edit')
-        controller(SWWSteps);
+        this.controller(SWWSteps);
       if (mw.config.get("wgAction") == 'view')
         if (document.location.href.search("veaction=edit") >= 0)
-          controller(SWWSteps);
+          this.controller(SWWSteps);
         else
-          $("#ca-ve-edit").click(function() {controller(SWWSteps) });
+          $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
     }
   }
 
-  $(document).ready(errorHandler(init));
+  $(document).ready(function() {
+    var sww = new StarWarsWiki();
+    sww.errorHandler(sww.init);
+    sww.init.__errorHandler__();
+  });
+  
   return {
+    ICP: ICP,
+    ModalInfobox: ModalInfobox,
+    StepWikitext: StepWikitext,
     isAlt: false //Key control
   }
 })(jQuery);
