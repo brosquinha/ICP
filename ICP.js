@@ -4,20 +4,34 @@
 * GitHub repository: https://github.com/brosquinha/ICP
 */
 
-var SWWICP = (function($) {
+/**
+ * Page Creation Interface (ICP) is a framework for a helping tool for creating new articles.
+ * It has been running for years now at Star Wars Wiki em Português, helping new-comers to create
+ * new pages with appropriate structure and standards. It has since been extracted to provide a
+ * useful framework so that other communities can use it to build their own helping tool.
+ * 
+ * @author Thales César
+ * @version 0.1.0-beta.0
+ * @description Page Creation Interface framework
+ */
+var ICP = (function($) {
   "use strict";
-  var ICPversion = '2.7.6-beta.4';
+
+  var ICPversion = '0.1.0-beta.0';
 
   /**
    * ICP framework class
    */
   var ICP = function() {
+    this.version = ICPversion;
     this.articleName;
     this.articleTitle;
     this.articleWikitext = new Array(5);
     this.wysiwyg = false;
     this.userActions = {};
     this.mwApi = null;
+    this.sendFeedbackEnabled = false;
+    this.closeFeedbackEnabled = false;
   };
 
   /**
@@ -40,7 +54,7 @@ var SWWICP = (function($) {
         erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
         instance.userActions.errors.push(erroTxt);
         instance.userActions.userAgent = window.navigator.userAgent;
-        alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
+        alert("Ocorreu um erro. "+(instance.sendFeedbackEnabled ? "Um relatório sobre esse inconveniente está sendo enviado para os administradores." : "") + "Sua edição até aqui será salva.");
         instance.finishEdit();
       }
     }
@@ -51,7 +65,7 @@ var SWWICP = (function($) {
     console.warn(msg);
     this.userActions.errors.push(msg);
     this.userActions.userAgent = window.navigator.userAgent;
-    alert("Ocorreu um erro. Um relatório sobre esse inconveniente está sendo enviado para os administradores. Sua edição até aqui será salva.");
+    alert("Ocorreu um erro. "+(this.sendFeedbackEnabled ? "Um relatório sobre esse inconveniente está sendo enviado para os administradores." : "") + "Sua edição até aqui será salva.");
     this.finishEdit();
   }
 
@@ -208,7 +222,6 @@ var SWWICP = (function($) {
    */
   var StepWikitext = function(icp, stepIndex) {
     this.icp = icp;
-    console.log(this.icp)
     this.index = stepIndex;
     if (this.icp.articleWikitext[this.index] === undefined) this.icp.articleWikitext[this.index] = "";
   }
@@ -238,7 +251,7 @@ var SWWICP = (function($) {
     if (document.getElementById("blackout_CuratedContentToolModal") != "null")
       $("#blackout_CuratedContentToolModal").remove();
     $(document.head).append('<link rel="stylesheet" href="https://slot1-images.wikia.nocookie.net/__am/7900017900012/sass/background-dynamic%3Dtrue%26background-image%3Dhttps%253A%252F%252Fvignette.wikia.nocookie.net%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%252Frevision%252Flatest%253Fcb%253D20180407180604%26background-image-height%3D820%26background-image-width%3D1920%26color-body%3D%2523ddedfd%26color-body-middle%3D%2523ddedfd%26color-buttons%3D%25232f8f9d%26color-community-header%3D%25232f8f9d%26color-header%3D%25232f8f9d%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
-    $('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible" style="z-index:"5000105>'
+    $('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible">'
       +'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
         +'<header>'
           +'<span class="close">Close</span>'
@@ -259,32 +272,20 @@ var SWWICP = (function($) {
     var instance = this;
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
-      if (typeof(instance.userActions.passo0DT) != "undefined" && typeof(instance.userActions.passo4DT) == "undefined" && typeof(instance.userActions.errors[0]) == 'undefined')
-        instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
+      if (instance.closeFeedbackEnabled)
+        if (typeof(instance.userActions.passo0DT) != "undefined" && typeof(instance.userActions.passo4DT) == "undefined" && typeof(instance.userActions.errors[0]) == 'undefined')
+          instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
       $("#blackout_CuratedContentToolModal").removeClass('visible');
-      instance.sendFeedback();
+      if (instance.sendFeedbackEnabled) instance.sendFeedback();
     });
+
     $("#configuracoesICP").click(function () {
       //Config modal
       var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
       "<input type='checkbox' name='default_action' checked /></label></p></form>"+
-      '<p><a href="https://starwars.fandom.com/pt/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a> - versão '+ICPversion+'</p>';
-      $.showCustomModal('Configurações', configModal, {
-        id: 'ModalSettingsWindow',
-        width: 600,
-        height: 250,
-        buttons: [{
-          message: 'Enviar feedback',
-          handler: function() {
-            var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
-            if (feedbackTxt)
-            {
-              instance.userActions.msgFeedback = feedbackTxt
-              instance.sendFeedback();
-              alert("Obrigado!");
-            }
-          }
-        },{
+      '<p><a href="https://starwars.fandom.com/pt/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a> - versão '+instance.version+' ('+ICPversion+')</p>';
+      var buttons = [
+        {
           message: 'Resetar mudanças',
           handler: function() {
             $('#ModalSettingsWindow fieldset').replaceWith(configModal);
@@ -301,7 +302,27 @@ var SWWICP = (function($) {
             localStorage.ICPsettings = JSON.stringify(settingsObj);
             alert("Alterações salvas!");
           }
-        }]
+        }
+      ];
+      if (instance.sendFeedbackEnabled) { 
+        buttons.unshift({
+          message: 'Enviar feedback',
+          handler: function() {
+            var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
+            if (feedbackTxt)
+            {
+              instance.userActions.msgFeedback = feedbackTxt
+              instance.sendFeedback();
+              alert("Obrigado!");
+            }
+          }
+        })
+      }
+      $.showCustomModal('Configurações', configModal, {
+        id: 'ModalSettingsWindow',
+        width: 600,
+        height: 250,
+        buttons: buttons
       });
     });
     $("#finalizarEdicao").click(function () {
@@ -561,23 +582,177 @@ var SWWICP = (function($) {
     //TODO write Selenium test for this whole step (not currently covered)
   }
 
+  //Wrapping up
+  ICP.prototype.finishEdit = function() {
+    console.log(this.articleWikitext);
+    this.articleWikitext = this.articleWikitext.join("");
+    this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+    this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+    var instance = this;
+    if (window.wgAction == "view") {
+      //Visual Editor
+      var targetButtonText = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
+      alert("Por favor, clique em \""+targetButtonText+"\" e aguarde alguns segundos.");
+      $("#CuratedContentToolModal span.close").click();
+      $($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
+      $("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
+      $("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
+        setTimeout(function() {
+          if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
+            $("textarea.ui-autocomplete-input").val(instance.articleWikitext+"\n\n"+$("textarea.ui-autocomplete-input").val());
+          else
+            $("textarea.ui-autocomplete-input").val(instance.articleWikitext);
+          $("textarea.ui-autocomplete-input").change();
+          setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
+        }, 2000);
+      });
+    } else {
+      //Source editor and WYSIWYG editor
+      if (this.wysiwyg && $("[id=wpTextbox1]").length > 1) //For now, since there are two textareas with id=wpTextbox1
+        $('#wpTextbox1').attr('id', 'wpTextbox0');
+      var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
+      if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
+        theTextarea.value = this.articleWikitext;
+      else
+        theTextarea.value += this.articleWikitext;
+      $("#CuratedContentToolModal span.close").click();
+      if (this.wysiwyg == true)
+        setTimeout(function() {window.CKEDITOR.tools.callFunction(59)}, 1500);
+    }
+  }
+
+  ICP.prototype.encodeURL = function(txt) {
+    return encodeURI(txt.replace(/ /g, "_"))
+  }
+
+  ICP.prototype.changeWysToSource = function() {
+    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
+    if (mw.config.get("wgAction") == 'edit' && $("#cke_21_label").length == 1)
+    {
+      window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
+      this.wysiwyg = true;
+      this.userActions.editor = "WYSIWYG";
+    }
+  }
+
+  ICP.prototype._collectInitialMetrics = function() {
+    this.userActions.user = (mw.config.get("wgUserId") || false);
+    this.userActions.page = mw.config.get("wgPageName");
+    this.userActions.date = new Date();
+    this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
+    this.userActions.version = [ICPversion, this.version];
+    this.userActions.errors = [];
+  }
+
+  ICP.prototype._getICPSettings = function() {
+    var settings = {};
+    if (localStorage.ICPsettings) {
+      settings = JSON.parse(localStorage.ICPsettings);
+      this.userActions.ICPconfig = localStorage.ICPsettings;
+    } else {
+      settings.default_action = 1;
+      this.userActions.ICPconfig = false;
+    }
+    return settings;
+  }
+
+  ICP.prototype.shouldOpenICP = function() {
+    return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage())
+  }
+
+  ICP.prototype.setArticleTitle = function(articleTitle) {
+    this.articleTitle = articleTitle;
+  }
+
+  ICP.prototype.init = function() {
+    var instance = this;
+    console.info('ICP init v'+this.version+' with base v'+ICPversion);
+    mw.loader.using('mediawiki.api', function() {
+      console.debug('ICP: mediawiki.api loaded');
+      instance.mwApi = new mw.Api();
+    });
+    this._collectInitialMetrics();
+    if (!(this.shouldOpenICP())) return;
+    if (this.isSpecialCreatePage()) {
+      //TODO write Selenium tests for CreatePage entry point
+      $("#ok").click(this.errorHandler(function () {
+        if (typeof document.editform.wpTitle === "undefined")
+          return;
+        instance.userActions.page = document.editform.wpTitle.value;
+        instance.articleName = document.editform.wpTitle.value;
+        instance.setArticleTitle(instance.articleName);
+      }));
+    } else {
+      this.articleName = mw.config.get("wgPageName");
+      this.articleTitle = mw.config.get("wgTitle");
+    }
+
+    var ICPsettings = this._getICPSettings();
+    var SWWSteps = this.getSteps();
+    if (ICPsettings.default_action == 0) {
+      $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
+      $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
+    } else {
+      if (mw.config.get("wgAction") == 'edit')
+        this.controller(SWWSteps);
+      if (mw.config.get("wgAction") == 'view')
+        if (document.location.href.search("veaction=edit") >= 0)
+          this.controller(SWWSteps);
+        else
+          $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
+    }
+  }
+
+  /**
+   * Extends ICP subclass with its variables and functions
+   * 
+   * @param {ICP} module ICP subclass
+   */
+  var extend = function(module) {
+    module.prototype = $.extend({}, ICP.prototype, module.prototype);
+    Object.defineProperty(module.prototype, 'constructor', {
+      value: module,
+      enumerable: false,
+      writable: true
+    });
+  }
+
+  var exports = {
+    ICP: ICP,
+    ModalInfobox: ModalInfobox,
+    StepWikitext: StepWikitext,
+    extend: extend
+  }
+
+  $(document).ready(function() {
+    mw.hook("dev.icp").fire(exports);
+  });
+  
+  return exports
+})(jQuery);
+
+var SWWICP = (function($) {
+  "use strict";
+
+  var ICPversion = '2.7.6-beta.4';
+  var ICP;
+  var ModalInfobox;
+  var StepWikitext;
+
   var StarWarsWiki = function() {
     ICP.call(this);
     
+    this.version = ICPversion;
     this.infoboxName;
     this.infoboxUrl;
     this.deltaTime;
     this.outOfUniverse;
     this.articleType = '';
     this.isCanonNamespace = false;
-    this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"]; //SWW
+    this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
+    this.sendFeedbackEnabled = true;
+    this.closeFeedbackEnabled = true;
   }
-  StarWarsWiki.prototype = Object.create(ICP.prototype);
-  Object.defineProperty(StarWarsWiki.prototype, 'constructor', {
-    value: StarWarsWiki,
-    enumerable: false,
-    writable: true
-  });
 
   StarWarsWiki.prototype.getSteps = function() {
     return [
@@ -603,6 +778,23 @@ var SWWICP = (function($) {
       this.articleTitle = articleTitle;
       this.isCanonNamespace = true;
     }
+  }
+
+  StarWarsWiki.prototype.sendFeedback = function() {
+    //This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know whether the data is from different people or not. This is also used to collect info when errors occur
+    $.ajax({
+      url:"https://www.99luca11.com/sww_helper",
+      type: "POST",
+      crossDomain: true,
+      data: this.userActions,
+      timeout: 7000,
+      success: function(data) {
+        console.log("Dados coletados: "+data);
+      },
+      error: function(data) {
+        console.log("Envio malsucedido");
+      }
+    })
   }
 
   //Step0: article type selection
@@ -913,7 +1105,7 @@ var SWWICP = (function($) {
     {
       $("#linkButton").click(function() {
         mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
-        this.userActions.usageOfNewButtons += 1;
+        instance.userActions.usageOfNewButtons += 1;
       });
     }
     else
@@ -966,7 +1158,7 @@ var SWWICP = (function($) {
         });
     })});
     this.appendButtonToModalBody("Visualizar", {callback: this.errorHandler(function() {
-      window.open("https://starwars.wikia.com/wiki/"+instance.encodarURL($("#wookieePage").val()))
+      window.open("https://starwars.wikia.com/wiki/"+instance.encodeURL($("#wookieePage").val()))
     })});
     this.appendButtonToModalBody("Não sei / não existe").then(this.errorHandler(function() {
       var wikitext = new StepWikitext(instance, 2);
@@ -1000,7 +1192,7 @@ var SWWICP = (function($) {
       console.warn(error);
       dfd.reject();
     }
-    this.ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+this.encodarURL(wookieePagename), success, error);
+    this.ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+this.encodeURL(wookieePagename), success, error);
     // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
     return dfd.promise();
   }
@@ -1170,145 +1362,17 @@ var SWWICP = (function($) {
     return dfd.promise();
   }
 
-  //Wrapping up
-  ICP.prototype.finishEdit = function() {
-    console.log(this.articleWikitext);
-    this.articleWikitext = this.articleWikitext.join("");
-    this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-    this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
-    var instance = this;
-    if (window.wgAction == "view") {
-      //Visual Editor
-      var targetButtonText = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
-      alert("Por favor, clique em \""+targetButtonText+"\" e aguarde alguns segundos.");
-      $("#CuratedContentToolModal span.close").click();
-      $($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-      $("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
-      $("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-        setTimeout(function() {
-          if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
-            $("textarea.ui-autocomplete-input").val(instance.articleWikitext+"\n\n"+$("textarea.ui-autocomplete-input").val());
-          else
-            $("textarea.ui-autocomplete-input").val(instance.articleWikitext);
-          $("textarea.ui-autocomplete-input").change();
-          setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-        }, 2000);
-      });
-    } else {
-      //Source editor and WYSIWYG editor
-      if (this.wysiwyg && $("[id=wpTextbox1]").length > 1) //For now, since there are two textareas with id=wpTextbox1 (nice job, Fandom ¬¬)
-        $('#wpTextbox1').attr('id', 'wpTextbox0');
-      var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
-      if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
-        theTextarea.value = this.articleWikitext;
-      else
-        theTextarea.value += this.articleWikitext;
-      $("#CuratedContentToolModal span.close").click();
-      if (this.wysiwyg == true)
-        setTimeout(function() {window.CKEDITOR.tools.callFunction(59)}, 1500);
-    }
-  }
+  // importArticles({
+  //   type: 'script',
+  //   article: 'u:dev:MediaWiki:ICP.js'
+  // });
+  
+  mw.hook("dev.icp").add(function(icpModule) {
+    ICP = icpModule.ICP;
+    StepWikitext = icpModule.StepWikitext;
+    ModalInfobox = icpModule.ModalInfobox;
+    icpModule.extend(StarWarsWiki);
 
-  ICP.prototype.sendFeedback = function() {
-    //This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know whether the data is from different people or not. This is also used to collect info when errors occur
-    $.ajax({
-      url:"https://www.99luca11.com/sww_helper",
-      type: "POST",
-      crossDomain: true,
-      data: this.userActions,
-      timeout: 7000,
-      success: function(data) {
-        console.log("Dados coletados: "+data);
-      },
-      error: function(data) {
-        console.log("Envio malsucedido");
-      }
-    })
-  }
-
-  ICP.prototype.encodarURL = function(qm) {
-    return encodeURI(qm.replace(/ /g, "_"))
-  }
-
-  ICP.prototype.changeWysToSource = function() {
-    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
-    if (mw.config.get("wgAction") == 'edit' && $("#cke_21_label").length == 1)
-    {
-      window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
-      this.wysiwyg = true;
-      this.userActions.editor = "WYSIWYG";
-    }
-  }
-
-  ICP.prototype._collectInitialMetrics = function() {
-    this.userActions.user = (mw.config.get("wgUserId") || false);
-    this.userActions.page = mw.config.get("wgPageName");
-    this.userActions.date = new Date();
-    this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
-    this.userActions.version = ICPversion;
-    this.userActions.errors = [];
-  }
-
-  ICP.prototype._getICPSettings = function() {
-    var settings = {};
-    if (localStorage.ICPsettings) {
-      settings = JSON.parse(localStorage.ICPsettings);
-      this.userActions.ICPconfig = localStorage.ICPsettings;
-    } else {
-      settings.default_action = 1;
-      this.userActions.ICPconfig = false;
-    }
-    return settings;
-  }
-
-  ICP.prototype.shouldOpenICP = function() {
-    return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage())
-  }
-
-  ICP.prototype.setArticleTitle = function(articleTitle) {
-    this.articleTitle = articleTitle;
-  }
-
-  ICP.prototype.init = function() {
-    var instance = this;
-    console.info('ICP init v'+ICPversion);
-    mw.loader.using('mediawiki.api', function() {
-      console.debug('ICP: mediawiki.api loaded');
-      instance.mwApi = new mw.Api();
-    });
-    this._collectInitialMetrics();
-    if (!(this.shouldOpenICP())) return;
-    if (this.isSpecialCreatePage()) {
-      //TODO write Selenium tests for CreatePage entry point
-      $("#ok").click(this.errorHandler(function () {
-        if (typeof document.editform.wpTitle === "undefined")
-          return;
-        instance.userActions.page = document.editform.wpTitle.value;
-        instance.articleName = document.editform.wpTitle.value;
-        instance.setArticleTitle(instance.articleName);
-      }));
-    } else {
-      this.articleName = mw.config.get("wgPageName");
-      this.articleTitle = mw.config.get("wgTitle");
-    }
-
-    var ICPsettings = this._getICPSettings();
-    var SWWSteps = this.getSteps();
-    if (ICPsettings.default_action == 0) {
-      $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-      $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
-    } else {
-      if (mw.config.get("wgAction") == 'edit')
-        this.controller(SWWSteps);
-      if (mw.config.get("wgAction") == 'view')
-        if (document.location.href.search("veaction=edit") >= 0)
-          this.controller(SWWSteps);
-        else
-          $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
-    }
-  }
-
-  $(document).ready(function() {
     var sww = new StarWarsWiki();
     sww.errorHandler(sww.init);
     sww.init.__errorHandler__();
@@ -1316,8 +1380,7 @@ var SWWICP = (function($) {
   
   return {
     ICP: ICP,
-    ModalInfobox: ModalInfobox,
-    StepWikitext: StepWikitext,
+    StarWarsWiki: StarWarsWiki,
     isAlt: false //Key control
   }
 })(jQuery);
