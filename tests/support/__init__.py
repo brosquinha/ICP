@@ -16,6 +16,8 @@ class ICPTestSuite(TestCase):
         cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
         with open('ICP.js') as f:
             cls.icp_content = f.read()
+        with open('SWWICP.js') as f:
+            cls.icp_content += f.read()
 
     def setUp(self):
         self.support = Support(self.driver)
