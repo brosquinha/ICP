@@ -483,6 +483,7 @@ var ICP = (function($) {
   /**
    * 
    * @param {String} label Infobox field label
+   * @param {String} source Infobox field source name
    * @param {Object} selectOptions Select options
    * @param {String} selectOptions.id Select id
    * @param {Function} selectOptions.callback Select callback for change event
@@ -490,7 +491,7 @@ var ICP = (function($) {
    * @param {String} selectOptions.options[].value Select element value
    * @param {String} selectOptions.options[].label Select element label
    */
-  ModalInfobox.prototype.addInfoboxFieldSelect = function(label, selectOptions) {
+  ModalInfobox.prototype.addInfoboxFieldSelect = function(label, source, selectOptions) {
     var select = document.createElement("select");
     if (selectOptions.id) select.id = selectOptions.id;
     selectOptions.options.forEach(function(option) {
@@ -500,7 +501,8 @@ var ICP = (function($) {
       select.appendChild(optionElem);
     });
     if (selectOptions.callback) $(select).change(selectOptions.callback);
-    this.addInfoboxField(label, '', {element: select});
+    this.addInfoboxField(label, source, {element: select});
+    this.textareaValues[source] = select;
   }
 
   /**

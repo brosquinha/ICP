@@ -317,8 +317,7 @@ var SWWICP = (function($) {
         {
           selectOptions.options.push({value: personagemTypes[i], label: personagemTypes[i]})
         }
-        modalContent.addInfoboxFieldSelect("Tipo de personagem", selectOptions);
-        modalContent.textareaValues.type = '';
+        modalContent.addInfoboxFieldSelect("Tipo de personagem", "type", selectOptions);
       }
   
       for (var i=0; i<$(infoboxDom).find("data").length; i++)
@@ -347,7 +346,6 @@ var SWWICP = (function($) {
       $("#CuratedContentToolModal section button").one("click", this.errorHandler(function() {
         instance.userActions.passo2DT = (new Date().getTime()) - instance.deltaTime;
         infoboxObj = modalContent.getValues();
-        if ("type" in infoboxObj) infoboxObj.type = $("#personagemTypes").val();
         infoboxObj.nome = instance.articleTitle;
         infoboxObj.imagem = '';
         instance.infoboxObj.name = templateName;
