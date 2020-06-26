@@ -20,6 +20,7 @@ var SWWICP = (function($) {
       this.deltaTime;
       this.outOfUniverse;
       this.articleType = '';
+      this.infoboxObj = {};
       this.isCanonNamespace = false;
       this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
       this.sendFeedbackEnabled = true;
@@ -293,6 +294,7 @@ var SWWICP = (function($) {
       var modalContent = new ModalInfobox(modalToolbox, this.articleTitle);
       modalContent.textareaValues.nome = '';
       modalContent.textareaValues.imagem = '';
+      if (this.infoboxObj.name != templateName) this.infoboxObj = {parameters: {}};
   
       if (templateName == "Personagem infobox")
       {
@@ -321,14 +323,16 @@ var SWWICP = (function($) {
   
       for (var i=0; i<$(infoboxDom).find("data").length; i++)
       {
-        var dataTag, labelTagText, sourceText;
+        var dataTag, labelTagText, sourceText, opts;
         dataTag = $(infoboxDom).find("data")[i];
         sourceText = $(dataTag).attr('source');
         if (typeof $(dataTag).children()[0] === "undefined")
           labelTagText = sourceText;
         else
           labelTagText = $(dataTag).children()[0].innerHTML;
-        modalContent.addInfoboxField(labelTagText, sourceText);
+        if (sourceText in this.infoboxObj.parameters)
+          opts = {value: this.infoboxObj.parameters[sourceText]}
+        modalContent.addInfoboxField(labelTagText, sourceText, opts);
       }
       this.updateModalBody(modalContent.getContent());
   
@@ -346,6 +350,8 @@ var SWWICP = (function($) {
         if ("type" in infoboxObj) infoboxObj.type = $("#personagemTypes").val();
         infoboxObj.nome = instance.articleTitle;
         infoboxObj.imagem = '';
+        instance.infoboxObj.name = templateName;
+        instance.infoboxObj.parameters = infoboxObj;
         console.log(infoboxObj);
         infoboxWikitext = instance._buildInfoboxWikitext(templateName, infoboxObj);
         wikitext.append(infoboxWikitext);

@@ -454,9 +454,11 @@ var ICP = (function($) {
    * 
    * @param {String} label Infobox field label
    * @param {String} source Infobox field source name
-   * @param {HTMLElement|Boolean} [value] Infobox field value (defaults to textarea)
+   * @param {Object} [options] Field options
+   * @param {String} [options.value] Textarea initial value
+   * @param {HTMLElement} [options.element] Infobox field value (defaults to textarea)
    */
-  ModalInfobox.prototype.addInfoboxField = function(label, source, value=false) {
+  ModalInfobox.prototype.addInfoboxField = function(label, source, options={}) {
     var infoboxField = document.createElement("div");
     infoboxField.classList = "pi-item pi-data pi-item-spacing pi-border-color";
     var infoboxFieldLabel = document.createElement("h3");
@@ -464,11 +466,12 @@ var ICP = (function($) {
     infoboxFieldLabel.textContent = label;
     var infoboxFieldValue = document.createElement("div");
     infoboxFieldValue.classList = "pi-data-value pi-font";
-    if (value) {
-      infoboxFieldValue.appendChild(value);
+    if (options.element) {
+      infoboxFieldValue.appendChild(options.element);
     } else {
       var textarea = document.createElement("textarea");
       textarea.placeholder = "Preencher";
+      if (options.value) textarea.value = options.value;
       infoboxFieldValue.appendChild(textarea);
       this.textareaValues[source] = textarea;
     }
@@ -497,7 +500,7 @@ var ICP = (function($) {
       select.appendChild(optionElem);
     });
     if (selectOptions.callback) $(select).change(selectOptions.callback);
-    this.addInfoboxField(label, '', select);
+    this.addInfoboxField(label, '', {element: select});
   }
 
   /**
