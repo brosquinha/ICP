@@ -6,7 +6,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '2.7.6-beta.4';
+    var ICPversion = '2.8.0-beta.0';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -24,6 +24,7 @@ var SWWICP = (function($) {
       this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
       this.sendFeedbackEnabled = true;
       this.closeFeedbackEnabled = true;
+      this.wikitextAutoReset = true;
     }
   
     StarWarsWiki.prototype.getSteps = function() {

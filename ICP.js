@@ -26,6 +26,7 @@ var ICP = (function($) {
     this.mwApi = null;
     this.sendFeedbackEnabled = false;
     this.closeFeedbackEnabled = false;
+    this.wikitextAutoReset = true;
   };
 
   /**
@@ -162,15 +163,16 @@ var ICP = (function($) {
    */
   ICP.prototype.controller = function(steps, options={anon: true}) {
     this.buildModal();
+    this.buildProgressBar();
     if (options.anon) steps.unshift(this.confirmAnon);
-    steps.push(this.finishEdit);
     this._controller(steps);
   }
 
   ICP.prototype._controller = function(steps) {
-    if (steps.length === 0) return;
+    if (steps.length === 0) return this.finishEdit();
     var instance = this;
     $.when(this.errorHandler(steps.shift()).apply(this)).then(function() {
+      instance.updateProgressBar(steps);
       instance._controller(steps);
     });
   };
@@ -217,7 +219,15 @@ var ICP = (function($) {
   var StepWikitext = function(icp, stepIndex) {
     this.icp = icp;
     this.index = stepIndex;
-    if (this.icp.articleWikitext[this.index] === undefined) this.icp.articleWikitext[this.index] = "";
+    if (this.icp.articleWikitext[this.index] === undefined || this.icp.wikitextAutoReset)
+      this.icp.articleWikitext[this.index] = "";
+  }
+
+  /**
+   * Resets step's accumulated wikitext
+   */
+  StepWikitext.prototype.reset = function() {
+    this.icp.articleWikitext[this.index] = "";
   }
 
   /**
@@ -252,6 +262,7 @@ var ICP = (function($) {
             +'<img alt="Carregando" src="https://slot1-images.wikia.nocookie.net/__cb1591343180920/common/skins/common/images/ajax.gif" style="vertical-align: baseline; display: none; border: 0px;" />'
             +'<h3 style="display: inline;"></h3>'
         +'</header>'
+        +'<nav></nav>'
         +'<section></section>'
         +'<footer>'
           +'<button id="configuracoesICP" class="secondary">Configurações</button>'
@@ -322,6 +333,50 @@ var ICP = (function($) {
     $("#finalizarEdicao").click(function () {
       this.finishEdit();
     });
+  }
+
+  ICP.prototype.buildProgressBar = function() {
+    var instance = this;
+    var olElement = document.createElement("ol");
+    olElement.style.textAlign = "center";
+    olElement.style.padding = "5px 0";
+    var numSteps = this.getSteps().length;
+    for (var i = 0; i < numSteps; i++) {
+      var liElement = document.createElement("li")
+      liElement.style.width = 100 / numSteps + "%";
+      if (i === 0) liElement.className = "active";
+      else liElement.className = "disabled";
+      liElement.onclick = function() {
+        instance._handleProgressBarClick(this);
+      }
+      var divElement = document.createElement("div");
+      divElement.textContent = i+1;
+      liElement.appendChild(divElement);
+      olElement.appendChild(liElement);
+    }
+    $("#CuratedContentToolModal nav").html(olElement);
+  }
+
+  ICP.prototype.updateProgressBar = function(remainingSteps) {
+    var liElements = $("#CuratedContentToolModal nav ol li");
+    var numSteps = this.getSteps().length;
+    var numRemainingSteps = remainingSteps.length;
+    var stepIndex = numSteps - numRemainingSteps;
+    for (var i = 0; i < numSteps; i++) {
+      var liElement = liElements[i];
+      if (i < stepIndex) liElement.classList = "past";
+      else if (i > stepIndex) liElement.classList = "disabled";
+      else liElement.classList = "active";
+    }
+  }
+
+  ICP.prototype._handleProgressBarClick = function(item) {
+    if (item.className != "past") return;
+    var selectedIndex = item.textContent - 1;
+    var steps = this.getSteps();
+    var stepsSliced = steps.slice(selectedIndex);
+    this.updateProgressBar(stepsSliced);
+    this._controller(stepsSliced);
   }
 
   /**
