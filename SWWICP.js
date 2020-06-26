@@ -420,13 +420,14 @@ var SWWICP = (function($) {
       this.deltaTime = new Date().getTime();
       var instance = this;
       this.appendButtonToModalBody("Enviar", {callback: this.errorHandler(function(button) {
-        if ($("#wookieePage").val() == '')
-          return;
+        var wookieePage = $("#wookieePage").val();
+        if (wookieePage == '') return;
+        if (instance.userActions.interlink === wookieePage) return dfd.resolve();
         $(button).attr('disabled', '');
         instance.userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
-        instance.userActions.interlink = $("#wookieePage").val();
-        instance._getWookieeData($("#wookieePage").val())
-          .then(function() {
+        instance._getWookieeData(wookieePage)
+        .then(function() {
+            instance.userActions.interlink = wookieePage;
             dfd.resolve();
           })
           .fail(function() {
@@ -637,6 +638,11 @@ var SWWICP = (function($) {
         $("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
       }
       return dfd.promise();
+    }
+
+    //TODO write Selenium tests to ensure that categories div returns to its place
+    StarWarsWiki.prototype.categoriesInsertion.__exit__ = function() {
+      $("div [data-id='categories']").insertAfter("div [data-id='insert']");
     }
   
     // importArticles({

@@ -27,6 +27,7 @@ var ICP = (function($) {
     this.sendFeedbackEnabled = false;
     this.closeFeedbackEnabled = false;
     this.wikitextAutoReset = true;
+    this._currentStep = null;
   };
 
   /**
@@ -169,6 +170,7 @@ var ICP = (function($) {
   }
 
   ICP.prototype._controller = function(steps) {
+    this._currentStep = steps[0];
     if (steps.length === 0) return this.finishEdit();
     var instance = this;
     $.when(this.errorHandler(steps.shift()).apply(this)).then(function() {
@@ -372,11 +374,20 @@ var ICP = (function($) {
 
   ICP.prototype._handleProgressBarClick = function(item) {
     if (item.className != "past") return;
+    this._currentStepExit();
     var selectedIndex = item.textContent - 1;
     var steps = this.getSteps();
     var stepsSliced = steps.slice(selectedIndex);
     this.updateProgressBar(stepsSliced);
     this._controller(stepsSliced);
+  }
+
+  ICP.prototype._currentStepExit = function() {
+    try {
+      if (this._currentStep && typeof this._currentStep.__exit__ === "function") this._currentStep.__exit__();
+    } catch(e) {
+      console.warn(e);
+    }
   }
 
   /**
@@ -642,6 +653,7 @@ var ICP = (function($) {
     this.articleWikitext = this.articleWikitext.join("");
     this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
     this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+    this._currentStepExit();
     var instance = this;
     if (window.wgAction == "view") {
       //Visual Editor
