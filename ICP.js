@@ -24,6 +24,7 @@ var ICP = (function($) {
     this.wysiwyg = false;
     this.userActions = {};
     this.mwApi = null;
+    this.VESurface = null;
     this.sendFeedbackEnabled = false;
     this.closeFeedbackEnabled = false;
     this.wikitextAutoReset = true;
@@ -283,10 +284,8 @@ var ICP = (function($) {
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
       if (instance.closeFeedbackEnabled)
-        if (typeof(instance.userActions.passo0DT) != "undefined" && typeof(instance.userActions.passo4DT) == "undefined" && typeof(instance.userActions.errors[0]) == 'undefined')
-          instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
-      $("#blackout_CuratedContentToolModal").removeClass('visible');
-      if (instance.sendFeedbackEnabled) instance.sendFeedback();
+        instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
+      instance._finish();
     });
 
     $("#configuracoesICP").click(function () {
@@ -664,21 +663,23 @@ var ICP = (function($) {
     var instance = this;
     if (window.wgAction == "view") {
       //Visual Editor
-      var targetButtonText = $("span.oo-ui-tool-name-wikiaSourceMode span.oo-ui-tool-title").text();
-      alert("Por favor, clique em \""+targetButtonText+"\" e aguarde alguns segundos.");
-      $("#CuratedContentToolModal span.close").click();
-      $($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-      $("span.oo-ui-tool-name-wikiaSourceMode").css('border', '1px solid');
-      $("span.oo-ui-tool-name-wikiaSourceMode a").click(function() {
-        setTimeout(function() {
-          if ($("textarea.ui-autocomplete-input").val().search("\\[\\[Categoria:") >= 0)
-            $("textarea.ui-autocomplete-input").val(instance.articleWikitext+"\n\n"+$("textarea.ui-autocomplete-input").val());
-          else
-            $("textarea.ui-autocomplete-input").val(instance.articleWikitext);
-          $("textarea.ui-autocomplete-input").change();
-          setTimeout(function() {$("div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-buttonElement.oo-ui-labelElement.oo-ui-flaggedElement-progressive.oo-ui-flaggedElement-primary.oo-ui-buttonWidget.oo-ui-actionWidget.oo-ui-buttonElement-framed a.oo-ui-buttonElement-button").click();}, 1000);
-        }, 2000);
+      instance.mwApi.post({
+        action: "visualeditor",
+        paction: "parsefragment",
+        page: this.articleName,
+        wikitext: this.articleWikitext
+      }).then(function(data) {
+        //For UCP, this may be replaced for https://doc.wikimedia.org/VisualEditor/master/#!/api/mw.libs.ve.targetLoader-method-requestParsoidData
+        instance._finish();
+        instance.VESurface.getView().focus();
+        var wikiDocument = new DOMParser().parseFromString(data.visualeditor.content, "text/html");
+        var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
+        instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
+        //For UCP's source mode, the following should be enough:
+        // instance.VESurface.getModel().getFragment().insertContent(instance.articleWikitext);
+        //FYI, VESurface.mode == "visual" is the way to check for the mode
       });
+      this.updateModalBody("<p>Carregando suas edições...</p>");
     } else {
       //Source editor and WYSIWYG editor
       if ($("[id=wpTextbox1]").length > 1) //There may be two textareas with id=wpTextbox1 🤷
@@ -690,9 +691,14 @@ var ICP = (function($) {
         theTextarea.value = this.articleWikitext;
       else
         theTextarea.value += this.articleWikitext;
-      $("#CuratedContentToolModal span.close").click();
+      this._finish();
       if (this.wysiwyg == true) this.changeSourceToWys();
     }
+  }
+
+  ICP.prototype._finish = function() {
+    $("#blackout_CuratedContentToolModal").removeClass('visible');
+    if (this.sendFeedbackEnabled) this.sendFeedback();
   }
 
   ICP.prototype.encodeURL = function(txt) {
@@ -741,12 +747,19 @@ var ICP = (function($) {
     this.articleTitle = articleTitle;
   }
 
+  ICP.prototype.sendFeedback = function() {
+    return null;
+  }
+
   ICP.prototype.init = function() {
     var instance = this;
     console.info('ICP init v'+this.version+' with base v'+ICPversion);
     mw.loader.using('mediawiki.api', function() {
       console.debug('ICP: mediawiki.api loaded');
       instance.mwApi = new mw.Api();
+    });
+    mw.hook("ve.activationComplete").add(function() {
+      instance.VESurface = window.ve.init.target.getSurface();
     });
     this._collectInitialMetrics();
     if (!(this.shouldOpenICP())) return;

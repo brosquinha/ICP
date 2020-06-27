@@ -45,16 +45,6 @@ class TestICPVisual(ICPTestSuite):
         self.assertEqual(len(self.driver.find_elements_by_css_selector("#blackout_CuratedContentToolModal section p")), 2)
 
         self.support.skip_step_4()
-        icp_div = self.driver.find_element_by_id("blackout_CuratedContentToolModal")
-        categories_insertion_menu = self.driver.find_element_by_css_selector(
-            ".oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup.oo-ui-popupToolGroup-active.oo-ui-popupToolGroup-left")
-        self.assertTrue(categories_insertion_menu.is_displayed())
-        categories_insertion_button = categories_insertion_menu.find_element_by_class_name(
-            "oo-ui-tool-name-categories")
-        self.assertIn("1px solid", categories_insertion_button.value_of_css_property("border"))
-        # self.assertFalse(icp_div.is_displayed()) TODO bug: modal actually is not hidden, just z-indexed to -1
-
-        categories_insertion_button.click()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_class_name("oo-ui-processDialog-location")
         )
@@ -62,22 +52,12 @@ class TestICPVisual(ICPTestSuite):
         self.assertTrue(categories_insertion_modal.is_displayed())
         time.sleep(2)
 
-        self.driver.find_element_by_css_selector("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click()
-        alert = self.driver.switch_to.alert
-        alert.dismiss()
-        self.assertTrue(categories_insertion_menu.is_displayed())
-        self.assertNotIn("1px solid", categories_insertion_button.value_of_css_property("border"))
-        source_editor_button = categories_insertion_menu.find_element_by_class_name(
-            "oo-ui-tool-name-wikiaSourceMode")
-        self.assertIn("1px solid", source_editor_button.value_of_css_property("border"))
+        icp_div = self.driver.find_element_by_id("blackout_CuratedContentToolModal")
+        self.assertNotIn("visible", icp_div.get_attribute("class"))
 
-        source_editor_button.click()
-        WebDriverWait(self.driver, 5).until(
-            lambda d: d.find_element_by_css_selector("textarea.ui-autocomplete-input")
-        )
-        WebDriverWait(self.driver, 10).until_not(
-            lambda d: d.find_element_by_css_selector("textarea.ui-autocomplete-input")
-        )
+        self.driver.find_element_by_css_selector("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click()
+        time.sleep(2)
+
         self.driver.find_element_by_id("title-eraicons")
         self.driver.find_element_by_css_selector("#WikiaArticle aside.portable-infobox")
         self.assertEqual(self.driver.find_elements_by_css_selector("#WikiaArticle h2")[1].text, "Notas e referências")
@@ -100,10 +80,6 @@ class TestICPVisual(ICPTestSuite):
         self.support.skip_step_3()
 
         self.support.skip_step_4()
-        categories_insertion_menu = self.driver.find_element_by_css_selector(
-            ".oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup.oo-ui-popupToolGroup-active.oo-ui-popupToolGroup-left")
-        categories_insertion_button = categories_insertion_menu.find_element_by_class_name(
-            "oo-ui-tool-name-categories").click()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_class_name("oo-ui-processDialog-location")
         )
@@ -117,15 +93,7 @@ class TestICPVisual(ICPTestSuite):
         time.sleep(2)
 
         self.driver.find_element_by_css_selector("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click()
-        alert = self.driver.switch_to.alert
-        alert.dismiss()
-        categories_insertion_menu.find_element_by_class_name("oo-ui-tool-name-wikiaSourceMode").click()
-        WebDriverWait(self.driver, 5).until(
-            lambda d: d.find_element_by_css_selector("textarea.ui-autocomplete-input")
-        )
-        WebDriverWait(self.driver, 10).until_not(
-            lambda d: d.find_element_by_css_selector("textarea.ui-autocomplete-input")
-        )
+        time.sleep(2)
         self.driver.find_element_by_css_selector(".ve-init-mw-viewPageTarget-toolbar-actions a[accesskey='s']").click()
         time.sleep(1)
         self.driver.find_element_by_css_selector(".oo-ui-processDialog-actions-other .oo-ui-buttonElement-button.secondary").click()

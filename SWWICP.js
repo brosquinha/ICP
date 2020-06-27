@@ -620,25 +620,16 @@ var SWWICP = (function($) {
         });
       } else {
         //For VE, we'll simply redirect user to VE's categories interface
-        modalContent += '<p>Para isso, clique em "Categorias" no Editor Visual conforme lhe é apresentado e preencha o campo '
-        +'com as categorias. Quando terminar, clique no botão "Aplicar mudanças".</p>';
+        modalContent += '<p>Para isso, escreva as categorias na caixa "Adicionar uma categoria". '+
+        'Quando terminar, clique no botão "Aplicar".</p>';
         this.updateModalBody(modalContent);
         this.appendButtonToModalBody("Ok, vamos lá").then(function(button) {
-          $("#blackout_CuratedContentToolModal").removeClass('visible');
+          ve.ui.commandRegistry.registry["meta/categories"].execute(instance.VESurface);
+          //For UCP, VESurface.executeCommand("meta/categories") can replace this
+          
+          instance.userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
+          dfd.resolve();
         });
-        $($("div.oo-ui-toolbar-tools div.oo-ui-widget.oo-ui-widget-enabled.oo-ui-toolGroup.oo-ui-iconElement.oo-ui-indicatorElement.oo-ui-popupToolGroup.oo-ui-listToolGroup")[0]).addClass('oo-ui-popupToolGroup-active oo-ui-popupToolGroup-left');
-        $("span.oo-ui-tool-name-categories").css('border', '1px solid');
-        $("span.oo-ui-tool-name-categories a").click(function() {
-          setTimeout(function() {
-            $("div.oo-ui-processDialog-actions-primary .oo-ui-buttonElement-button").click(function () {
-              instance.userActions.passo4DT = (new Date().getTime()) - instance.deltaTime;
-              $("span.oo-ui-tool-name-categories").css('border', '0px solid');
-              $("#blackout_CuratedContentToolModal").addClass('visible');
-              dfd.resolve();
-            });
-          }, 1500);
-        });
-        $("div.oo-ui-layout.oo-ui-panelLayout.oo-ui-panelLayout-scrollable.oo-ui-panelLayout-expanded.oo-ui-pageLayout:nth-of-type(3)").appendTo("#CuratedContentToolModal section");
       }
       return dfd.promise();
     }
