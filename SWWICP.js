@@ -26,6 +26,8 @@ var SWWICP = (function($) {
       this.sendFeedbackEnabled = true;
       this.closeFeedbackEnabled = true;
       this.wikitextAutoReset = true;
+      this.replaceArticleWikitext = false;
+      this.replaceFandomStandardLayout = true;
     }
   
     StarWarsWiki.prototype.getSteps = function() {

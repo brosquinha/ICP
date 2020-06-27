@@ -28,6 +28,8 @@ var ICP = (function($) {
     this.closeFeedbackEnabled = false;
     this.wikitextAutoReset = true;
     this._currentStep = null;
+    this.replaceArticleWikitext = false;
+    this.replaceFandomStandardLayout = true;
   };
 
   /**
@@ -680,16 +682,17 @@ var ICP = (function($) {
       });
     } else {
       //Source editor and WYSIWYG editor
-      if (this.wysiwyg && $("[id=wpTextbox1]").length > 1) //For now, since there are two textareas with id=wpTextbox1
+      if ($("[id=wpTextbox1]").length > 1) //There may be two textareas with id=wpTextbox1 🤷
         $('#wpTextbox1').attr('id', 'wpTextbox0');
       var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
-      if (theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0) //Because of Fandom's "standard layout" option
+
+      var hasStandardLayout = theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0;
+      if (this.replaceArticleWikitext || (this.replaceFandomStandardLayout && hasStandardLayout))
         theTextarea.value = this.articleWikitext;
       else
         theTextarea.value += this.articleWikitext;
       $("#CuratedContentToolModal span.close").click();
-      if (this.wysiwyg == true)
-        setTimeout(function() {window.CKEDITOR.tools.callFunction(59)}, 1500);
+      if (this.wysiwyg == true) this.changeSourceToWys();
     }
   }
 
@@ -699,12 +702,15 @@ var ICP = (function($) {
 
   ICP.prototype.changeWysToSource = function() {
     this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
-    if (mw.config.get("wgAction") == 'edit' && $("#cke_21_label").length == 1)
-    {
-      window.CKEDITOR.tools.callFunction(56); //For WYSIWYG editor
+    if (mw.config.get("wgAction") == 'edit' && window.CKEDITOR && window.CKEDITOR.instances.wpTextbox1.mode == "wysiwyg") {
+      window.CKEDITOR.tools.callFunction(56);
       this.wysiwyg = true;
       this.userActions.editor = "WYSIWYG";
     }
+  }
+
+  ICP.prototype.changeSourceToWys = function() {
+    setTimeout(function() { window.CKEDITOR.tools.callFunction(59) }, 1500);
   }
 
   ICP.prototype._collectInitialMetrics = function() {
