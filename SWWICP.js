@@ -157,7 +157,7 @@ var SWWICP = (function($) {
               if (typeof(categoryName) != "undefined")
                 if (categoryName == "Categoria:Infoboxes de mídia")
                   instance.outOfUniverse = 1; //1 means out-of-universe article that needs Step1
-                if (categoryName == "Categoria:Infoboxes fora do universo")
+                else if (categoryName == "Categoria:Infoboxes fora do universo")
                   instance.outOfUniverse = 2; //2 means out-of-universe article that does not need Step1
             } catch (e) {
               console.warn(e);
@@ -279,6 +279,7 @@ var SWWICP = (function($) {
       var wikitext = new StepWikitext(this, 1);
       var infoboxObj = {};
       var infoboxWikitext = '';
+      var i;
       try {
         var infoboxContent = templateContent.split("</infobox>")[0] + "</infobox>";
         var infoboxDom = $.parseXML(infoboxContent);
@@ -313,14 +314,14 @@ var SWWICP = (function($) {
         }
         var personagemTypes = templateContent.split("\n*");
         personagemTypes[personagemTypes.length-1] = personagemTypes[personagemTypes.length-1].split("\n")[0];
-        for (var i=1; i<personagemTypes.length; i++)
+        for (i=1; i<personagemTypes.length; i++)
         {
           selectOptions.options.push({value: personagemTypes[i], label: personagemTypes[i]})
         }
         modalContent.addInfoboxFieldSelect("Tipo de personagem", "type", selectOptions);
       }
   
-      for (var i=0; i<$(infoboxDom).find("data").length; i++)
+      for (i=0; i<$(infoboxDom).find("data").length; i++)
       {
         var dataTag, labelTagText, sourceText, opts;
         dataTag = $(infoboxDom).find("data")[i];
@@ -581,7 +582,7 @@ var SWWICP = (function($) {
       if (wookiee.page.search("{{Interlang") >= 0) {
         //Adding HotCat data
         var hotcatInterlinks = wookiee.page.split("{{Interlang")[1].split("}}")[0].split("|");
-        for (i=0; i<hotcatInterlinks.length; i++)
+        for (var i=0; i<hotcatInterlinks.length; i++)
           hotcatInterlinks[i] = hotcatInterlinks[i].replace("=", ":").replace(/\n/g, ''); //Yep, only the first "="
         this.userActions.hotCatData = 'pt:'+encodeURIComponent(this.articleName+hotcatInterlinks.join("|"));
         return (wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+

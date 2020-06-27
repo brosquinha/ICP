@@ -72,7 +72,7 @@ var ICP = (function($) {
    * @param {Function} successCallback Success callback
    * @param {Function} [errorCallback] Error callback
    */
-  ICP.prototype.ajaxGet = function(url, successCallback, errorCallback=false) {
+  ICP.prototype.ajaxGet = function(url, successCallback, errorCallback) {
     this.showLoader();
     var instance = this;
     $.ajax({
@@ -93,7 +93,7 @@ var ICP = (function($) {
    * @param {Function} successCallback Success callback
    * @param {Function} [errorCallback] Error callback
    */
-  ICP.prototype.apiGet = function(options, successCallback, errorCallback=false) {
+  ICP.prototype.apiGet = function(options, successCallback, errorCallback) {
     var instance = this;
     if (this.mwApi === null) {
       console.warn('ICP: mwApi null, forcing its load');
@@ -162,7 +162,8 @@ var ICP = (function($) {
    * @param {Object} [options] ICP flow options
    * @param {Boolean} [options.anon] Whether to confirm anons intention before proceeding
    */
-  ICP.prototype.controller = function(steps, options={anon: true}) {
+  ICP.prototype.controller = function(steps, options) {
+    options = options || {anon: true};
     this.buildModal();
     this.buildProgressBar();
     if (options.anon) steps.unshift(this.confirmAnon);
@@ -418,7 +419,8 @@ var ICP = (function($) {
    * @param {Function} [options.callback] Callback for every button click event
    * @returns {Promise} Callback for first user click
    */
-  ICP.prototype.appendButtonToModalBody = function(label, options={}) {
+  ICP.prototype.appendButtonToModalBody = function(label, options) {
+    options = options || {};
     var dfd = $.Deferred();
     var button = document.createElement("button");
     button.innerHTML = label;
@@ -441,7 +443,8 @@ var ICP = (function($) {
    * @param {Object} [options] Options
    * @param {String} [options.infoboxClassList] Infobox class list
    */
-  var ModalInfobox = function(content, title, options={}) {
+  var ModalInfobox = function(content, title, options) {
+    options = options || {};
     var container = document.createElement("div");
     container.style.position = "relative";
     var contentDiv = document.createElement("div");
@@ -469,7 +472,8 @@ var ICP = (function($) {
    * @param {String} [options.value] Textarea initial value
    * @param {HTMLElement} [options.element] Infobox field value (defaults to textarea)
    */
-  ModalInfobox.prototype.addInfoboxField = function(label, source, options={}) {
+  ModalInfobox.prototype.addInfoboxField = function(label, source, options) {
+    options = options || {};
     var infoboxField = document.createElement("div");
     infoboxField.classList = "pi-item pi-data pi-item-spacing pi-border-color";
     var infoboxFieldLabel = document.createElement("h3");
@@ -550,8 +554,8 @@ var ICP = (function($) {
    *
    * @param {String} size CSS width
    */
-  ICP.prototype.resizeModal = function(size="") {
-    $("#CuratedContentToolModal").css('width', size);
+  ICP.prototype.resizeModal = function(size) {
+    $("#CuratedContentToolModal").css('width', size || "");
   }
 
   /**
@@ -580,7 +584,8 @@ var ICP = (function($) {
    * @param {Boolean} options.hasOther Whether to display "Other infoboxes" option
    * @returns {Promise} Callback for user selection
    */
-  ICP.prototype.insertArticleTypeTable = function(articleTypes, options = {}) {
+  ICP.prototype.insertArticleTypeTable = function(articleTypes, options) {
+    options = options || {};
     var dfd = $.Deferred();
     var rootDiv = document.createElement("div");
     var introParagraph = document.createElement("p");
@@ -627,6 +632,7 @@ var ICP = (function($) {
     if (this.userActions.user === false && document.location.href.search("redlink=1") >= 0)
     {
       //Many anons get here accidentally, so let's confirm they really intend to create a new article
+      var instance = this;
       var modalContent = '<p>Você seguiu para uma página que não existe. Para criá-la, clique em "Continuar". '+
       'Para voltar a navegar na <i>Star Wars Wiki</i> em Português, clique em "Voltar".</p>';
       $("#configuracoesICP").hide();
@@ -637,7 +643,7 @@ var ICP = (function($) {
         window.history.back();
       });
       this.appendButtonToModalBody("Continuar", {style: "float: right;"}).then(function(button) {
-        this.resizeModal();
+        instance.resizeModal();
         $("#configuracoesICP").show();
         dfd.resolve();
       });
