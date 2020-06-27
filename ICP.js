@@ -652,7 +652,6 @@ var ICP = (function($) {
     } else
       dfd.resolve();
     return dfd.promise();
-    //TODO write Selenium test for this whole step (not currently covered)
   }
 
   //Wrapping up

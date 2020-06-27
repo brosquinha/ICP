@@ -57,6 +57,7 @@ class Support():
         self.driver.get("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
         self.wait_for_icp()
         self.driver.execute_script(icp_content)
+        self.wait_for_new_icp(icp_content)
     
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
@@ -99,6 +100,9 @@ class Support():
 
     def get_infobox_textareas(self):
         return self.driver.find_elements_by_css_selector("aside textarea")
+
+    def get_modal_title(self):
+        return self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
     
     def choose_outros_step_0(self):
         self.driver.find_element_by_css_selector(
@@ -110,6 +114,15 @@ class Support():
         Select(self.driver.find_element_by_css_selector(
             "#blackout_CuratedContentToolModal select")).select_by_value(infobox_name)
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button").click()
+
+    def choose_wookiee_article(self, pagename):
+        self.driver.find_element_by_id("wookieePage").send_keys("")
+        self.select_written_text()
+        self.driver.find_element_by_id("wookieePage").send_keys(pagename)
+        self.driver.find_element_by_css_selector("section button").click()
+    
+    def return_to_step(self, step_number):
+        self.driver.find_element_by_css_selector("#CuratedContentToolModal nav ol li:nth-of-type(%d)" % step_number).click()
 
     def select_written_text(self):
         ActionChains(self.driver).key_down(Keys.LEFT_SHIFT).send_keys(Keys.HOME).key_up(Keys.LEFT_SHIFT).perform()
