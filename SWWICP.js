@@ -17,7 +17,6 @@ var SWWICP = (function($) {
       this.version = ICPversion;
       this.infoboxName;
       this.infoboxUrl;
-      this.deltaTime;
       this.outOfUniverse;
       this.articleType = '';
       this.infoboxObj = {};
@@ -89,8 +88,6 @@ var SWWICP = (function($) {
       this.insertArticleTypeTable(articleTypes, {numColumns: 2, hasOther: true}).then(this.errorHandler(function(type) {
         instance.articleType = type;
         console.log("Carregando modelo para "+type);
-        instance.deltaTime = (new Date().getTime()) - instance.deltaTime;
-        instance.userActions.passo0DT = instance.deltaTime;
         instance.userActions.infoboxType = type;
         if (type == 'outro') {
           instance._otherInfoboxes().then(function() {
@@ -103,7 +100,6 @@ var SWWICP = (function($) {
           dfd.resolve();
         }
       }));
-      this.deltaTime = new Date().getTime();
       return dfd.promise();
     }
   
@@ -198,12 +194,10 @@ var SWWICP = (function($) {
         {
           modalContent = '<p style="font-size:14px">Esse é um artigo fora-de-universo sobre uma mídia. A que universo pertence sua história?</p>';
           this.updateModalBody(modalContent);
-          this.deltaTime = new Date().getTime();
           var canonButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" style="height:19px" alt="Cânon" />';
           var legendsButton = '<img src="https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" style="height:19px" alt="Legends" />';
           var solveEras = this.errorHandler(function(response) {
             wikitext.append("{{Eras|"+(response == "none" ? "real" : response + "|real")+"}}\n");
-            instance.userActions.passo1DT = (new Date().getTime() - this.deltaTime);
             instance.userActions.erasAnswer = response;
             dfd.resolve();
           })
@@ -241,16 +235,13 @@ var SWWICP = (function($) {
         }
         modalContent += '</span>. Ele existe também no outro universo?</p>';
         this.updateModalBody(modalContent);
-        this.deltaTime = new Date().getTime();
         this.appendButtonToModalBody(txtButtonYes).then(this.errorHandler(function(button) {
           wikitext.append((instance.isCanonNamespace) ? "|legends}}\n" : "|canon}}\n");
-          instance.userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
           instance.userActions.erasAnswer = true;
           dfd.resolve();
         }));
         this.appendButtonToModalBody(txtButtonNo).then(this.errorHandler(function(button) {
           wikitext.append("}}\n");
-          instance.userActions.passo1DT = (new Date().getTime() - instance.deltaTime);
           instance.userActions.erasAnswer = false;
           dfd.resolve();
         }));
@@ -341,13 +332,11 @@ var SWWICP = (function($) {
       $("aside textarea").first().focus();
       $("aside textarea").first().blur();
       setTimeout(function () {$("aside textarea").first().focus(); }, 50); //Simple trick to force focus on the first textarea
-      this.deltaTime = new Date().getTime();
       $("#CuratedContentToolModal section").css('overflow-y', 'auto');
       this._infoboxButtonsCallbacks();
   
       var instance = this;
       $("#CuratedContentToolModal section button").one("click", this.errorHandler(function() {
-        instance.userActions.passo2DT = (new Date().getTime()) - instance.deltaTime;
         infoboxObj = modalContent.getValues();
         infoboxObj.nome = instance.articleTitle;
         infoboxObj.imagem = '';
@@ -420,14 +409,12 @@ var SWWICP = (function($) {
       +((this.articleType == "Personagem infobox" || this.articleType == "Planeta" || this.articleType == "Droide infobox") ? this.articleName.replace(/_/g, " ") : '')
       +"</textarea>";
       this.updateModalBody(modalContent);
-      this.deltaTime = new Date().getTime();
       var instance = this;
       this.appendButtonToModalBody("Enviar", {callback: this.errorHandler(function(button) {
         var wookieePage = $("#wookieePage").val();
         if (wookieePage == '') return;
         if (instance.userActions.interlink === wookieePage) return dfd.resolve();
         $(button).attr('disabled', '');
-        instance.userActions.passo3DT = (new Date().getTime()) - this.deltaTime;
         instance._getWookieeData(wookieePage)
         .then(function() {
             instance.userActions.interlink = wookieePage;
@@ -444,7 +431,6 @@ var SWWICP = (function($) {
       this.appendButtonToModalBody("Não sei / não existe").then(this.errorHandler(function() {
         var wikitext = new StepWikitext(instance, 2);
         instance.userActions.interlink = false;
-        instance.userActions.passo3DT = (new Date().getTime()) - instance.deltaTime;
         wikitext.append("\n\n== Notas e referências ==\n{{Reflist}}\n");
         dfd.resolve();
       }));
@@ -609,13 +595,11 @@ var SWWICP = (function($) {
       var modalContent = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
       'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
       this.userActions.categorias = true;
-      this.deltaTime = new Date().getTime();
       if (window.wgAction == 'edit') {
         this.updateModalBody(modalContent);
         $("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
         this.appendButtonToModalBody("Terminei").then(function(button) {
           $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-          instance.userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
           dfd.resolve();
         });
       } else {
@@ -627,7 +611,6 @@ var SWWICP = (function($) {
           ve.ui.commandRegistry.registry["meta/categories"].execute(instance.VESurface);
           //For UCP, VESurface.executeCommand("meta/categories") can replace this
           
-          instance.userActions.passo4DT = (new Date().getTime()) - this.deltaTime;
           dfd.resolve();
         });
       }

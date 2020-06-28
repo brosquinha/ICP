@@ -7,6 +7,7 @@
  * @author Thales César
  * @version 0.1.0-beta.0
  * @description Page Creation Interface framework
+ * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
@@ -20,6 +21,8 @@ var ICP = (function($) {
     this.version = ICPversion;
     this.articleName;
     this.articleTitle;
+    this._currentStepIndex;
+    this._deltaTime;
     this.articleWikitext = new Array(5);
     this.wysiwyg = false;
     this.userActions = {};
@@ -176,12 +179,27 @@ var ICP = (function($) {
   ICP.prototype._controller = function(steps) {
     this._currentStep = steps[0];
     if (steps.length === 0) return this.finishEdit();
+    
+    this._handleStepStart(steps);
     var instance = this;
     $.when(this.errorHandler(steps.shift()).apply(this)).then(function() {
-      instance.updateProgressBar(steps);
+      instance._handleStepFinish(steps);
       instance._controller(steps);
     });
   };
+
+  ICP.prototype._handleStepStart = function(remainingSteps) {
+    this._currentStepIndex = this.getSteps().length - remainingSteps.length;
+    this._deltaTime = new Date().getTime();
+    this.updateProgressBar();
+  }
+  
+  ICP.prototype._handleStepFinish = function() {
+    this.userActions.stepsExecuted.push({
+      index: this._currentStepIndex,
+      timeTaken: (new Date().getTime()) - this._deltaTime
+    });
+  }
 
   //Helpers
   /**
@@ -361,15 +379,13 @@ var ICP = (function($) {
     $("#CuratedContentToolModal nav").html(olElement);
   }
 
-  ICP.prototype.updateProgressBar = function(remainingSteps) {
+  ICP.prototype.updateProgressBar = function() {
     var liElements = $("#CuratedContentToolModal nav ol li");
     var numSteps = this.getSteps().length;
-    var numRemainingSteps = remainingSteps.length;
-    var stepIndex = numSteps - numRemainingSteps;
     for (var i = 0; i < numSteps; i++) {
       var liElement = liElements[i];
-      if (i < stepIndex) liElement.classList = "past";
-      else if (i > stepIndex) liElement.classList = "disabled";
+      if (i < this._currentStepIndex) liElement.classList = "past";
+      else if (i > this._currentStepIndex) liElement.classList = "disabled";
       else liElement.classList = "active";
     }
   }
@@ -380,7 +396,6 @@ var ICP = (function($) {
     var selectedIndex = item.textContent - 1;
     var steps = this.getSteps();
     var stepsSliced = steps.slice(selectedIndex);
-    this.updateProgressBar(stepsSliced);
     this._controller(stepsSliced);
   }
 
@@ -725,6 +740,7 @@ var ICP = (function($) {
     this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
     this.userActions.version = [ICPversion, this.version];
     this.userActions.errors = [];
+    this.userActions.stepsExecuted = [];
   }
 
   ICP.prototype._getICPSettings = function() {
