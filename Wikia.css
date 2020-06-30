@@ -54,7 +54,7 @@ div[data-tipo="outro"] {
 }
 #refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
-#NovaPaginaTipoDeArtigo>div:hover { background-color: lightgray; }
+#ICPNewArticleGrid>div:hover { background-color: lightgray; }
 #CuratedContentToolModal p {
     font-size: 14px;
     margin: 10px 0;

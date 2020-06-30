@@ -1,12 +1,18 @@
 /* ************************************************************************
 ************************* Page Creation Interface *************************
-* Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português. It consists on a modal window that simplifies the article-creation process into a step-by-step procedure. Through this feature, editors can insert default navigation templates, infobox and categories, all in acord to our internal guidelines. NOTE: I have discussed this tool with FANDOM Staff, and I've got their approval.
+* Page Creation Interface (ICP) is a helping tool developed by Thales César for creating new articles in Star Wars Wiki em Português.
+* It consists on a modal window that simplifies the article-creation process into a step-by-step procedure.
+* Through this feature, editors can insert default navigation templates, infobox and categories,
+* all in accord to our internal guidelines.
+* 
+* Note: I have discussed this tool with FANDOM Staff, and I've got their approval.
+* 
 * GitHub repository: https://github.com/brosquinha/ICP
 */
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '2.8.0-beta.0';
+    var ICPversion = '3.0.0';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -56,7 +62,9 @@ var SWWICP = (function($) {
     }
   
     StarWarsWiki.prototype.sendFeedback = function() {
-      //This is meant for collecting info about how people use this tool so that I can improve it a lot more. I am only sending people's hashID because I need to know whether the data is from different people or not. This is also used to collect info when errors occur
+      //This is meant for collecting info about how people use this tool so that I can improve it a lot more.
+      //I am only sending people's hashID because I need to know whether the data is from different people or not.
+      //This is also used to collect info when errors occur
       $.ajax({
         url:"https://www.99luca11.com/sww_helper",
         type: "POST",
@@ -172,7 +180,7 @@ var SWWICP = (function($) {
     StarWarsWiki.prototype.templateErasInsertion = function() {
       var dfd = $.Deferred();
       var wikitext = new StepWikitext(this, 0);
-      this.updateModalTitle("Passo 1: Universo");
+      this.updateModalTitle("Passo 2: Universo");
       var modalContent, txtButtonYes, txtButtonNo;
       var instance = this;
       //Title template insertion
@@ -281,7 +289,7 @@ var SWWICP = (function($) {
         return dfd.promise();
       }
   
-      this.updateModalTitle("Passo 2: Infobox");
+      this.updateModalTitle("Passo 3: Infobox");
       var modalToolbox = '<p>Preencha a infobox para o artigo</p>'+
       '<p>Ferramentas:</p><div class="ICPbuttons"><div id="linkButton"></div><div id="refButton"></div></div>'+
       '<br /><button>Pronto</button></div>';
@@ -403,7 +411,7 @@ var SWWICP = (function($) {
     //Step3: Insert interlang links
     StarWarsWiki.prototype.interwikiInsertion = function() {
       var dfd = $.Deferred();
-      this.updateModalTitle("Passo 3: Fontes e Aparições");
+      this.updateModalTitle("Passo 4: Fontes e Aparições");
       var modalContent = "<p>Por favor, insira o nome da página correspondente em inglês (nome da página na Wookieepedia):";
       modalContent += "<textarea id='wookieePage' name='wookieePage' >"
       +((this.articleType == "Personagem infobox" || this.articleType == "Planeta" || this.articleType == "Droide infobox") ? this.articleName.replace(/_/g, " ") : '')
@@ -591,7 +599,7 @@ var SWWICP = (function($) {
     StarWarsWiki.prototype.categoriesInsertion = function() {
       var dfd = $.Deferred();
       var instance = this;
-      this.updateModalTitle("Passo 4: Categorias");
+      this.updateModalTitle("Passo 5: Categorias");
       var modalContent = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
       'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
       this.userActions.categorias = true;

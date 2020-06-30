@@ -61,7 +61,7 @@ class Support():
     
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
-            "#NovaPaginaTipoDeArtigo div[data-tipo='Personagem infobox']").click()
+            "#ICPNewArticleGrid div[data-tipo='Personagem infobox']").click()
 
     def skip_step_1(self):
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button").click()
@@ -77,7 +77,7 @@ class Support():
 
     def wait_for_step_2_ready(self):
         WebDriverWait(self.driver, 5).until(
-            lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 2: Infobox"
+            lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 3: Infobox"
         )
 
     def wait_for_all_infoboxes_ready(self):
@@ -92,7 +92,7 @@ class Support():
 
     def wait_for_wookiee_response(self):
         WebDriverWait(self.driver, 10).until(
-            lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 4: Categorias"
+            lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 5: Categorias"
         )
     
     def get_source_textarea_value(self):
@@ -106,7 +106,7 @@ class Support():
     
     def choose_outros_step_0(self):
         self.driver.find_element_by_css_selector(
-            "#NovaPaginaTipoDeArtigo div[data-tipo='outro']").click()
+            "#ICPNewArticleGrid div[data-tipo='outro']").click()
     
     def choose_infobox(self, infobox_name):
         self.choose_outros_step_0()

@@ -24,23 +24,23 @@ class TestICPSource(ICPTestSuite):
 
         self.support.skip_step_0()
         h3 = self.support.get_modal_title()
-        self.assertEqual(h3.text, "Passo 1: Universo")
+        self.assertEqual(h3.text, "Passo 2: Universo")
 
         self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
         h3 = self.support.get_modal_title()
-        self.assertEqual(h3.text, "Passo 2: Infobox")
+        self.assertEqual(h3.text, "Passo 3: Infobox")
         self.driver.find_element_by_tag_name("aside")
         self.driver.find_element_by_css_selector("aside textarea")
 
         self.support.skip_step_2()
         h3 = self.support.get_modal_title()
-        self.assertEqual(h3.text, "Passo 3: Fontes e Aparições")
+        self.assertEqual(h3.text, "Passo 4: Fontes e Aparições")
         self.driver.find_element_by_id("wookieePage")
 
         self.support.skip_step_3()
         h3 = self.support.get_modal_title()
-        self.assertEqual(h3.text, "Passo 4: Categorias")
+        self.assertEqual(h3.text, "Passo 5: Categorias")
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal div.CategorySelect input")
 
         self.support.skip_step_4()
@@ -232,7 +232,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_infobox_type_gathering()
 
         h3 = self.support.get_modal_title()
-        if "Passo 1" in h3.text:
+        if "Passo 2" in h3.text:
             self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -412,13 +412,13 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
 
         self.support.return_to_step(4)
-        self.assertEqual(self.support.get_modal_title().text, "Passo 3: Fontes e Aparições")
+        self.assertEqual(self.support.get_modal_title().text, "Passo 4: Fontes e Aparições")
 
         self.support.return_to_step(3)
-        self.assertEqual(self.support.get_modal_title().text, "Passo 2: Infobox")
+        self.assertEqual(self.support.get_modal_title().text, "Passo 3: Infobox")
 
         self.support.return_to_step(2)
-        self.assertEqual(self.support.get_modal_title().text, "Passo 1: Universo")
+        self.assertEqual(self.support.get_modal_title().text, "Passo 2: Universo")
 
         self.support.return_to_step(1)
         self.assertEqual(self.support.get_modal_title().text, "Criando um novo artigo")

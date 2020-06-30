@@ -2,17 +2,17 @@
  * Page Creation Interface (ICP) is a framework for a helping tool for creating new articles.
  * It has been running for years now at Star Wars Wiki em Português, helping new-comers to create
  * new pages with appropriate structure and standards. It has since been extracted to provide a
- * useful framework so that other communities can use it to build their own helping tool.
+ * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 0.1.0-beta.0
+ * @version 0.1.0
  * @description Page Creation Interface framework
  * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '0.1.0-beta.0';
+  var ICPversion = '0.1.0';
 
   /**
    * ICP framework class
@@ -140,7 +140,7 @@ var ICP = (function($) {
    * During Selenium test suite runs, some random tests would consistently break
    * because mediawiki.api would get stuck at "loading" status. This forces mw.Api
    * to load by calling it directly, bypassing any cache or mw.loader controll.
-   * With any luck, this should not happen in production
+   * With any luck, this should not happen in production.
    */
   ICP.prototype.forceMwApiLoad = function() {
     mw.loader.load("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1591798434636-20200610T140000Z/mediawiki.api");
@@ -616,7 +616,7 @@ var ICP = (function($) {
     parentDiv.style.justifyContent = "space-around";
     parentDiv.style.textAlign = "center";
     parentDiv.style.flexWrap = "wrap";
-    parentDiv.id = "NovaPaginaTipoDeArtigo";
+    parentDiv.id = "ICPNewArticleGrid";
     articleTypes.forEach(function(type) {
       var typeElem = document.createElement("div");
       typeElem.style.flexGrow = "1";
@@ -636,7 +636,7 @@ var ICP = (function($) {
     rootDiv.appendChild(parentDiv);
     this.updateModalBody(rootDiv.innerHTML);
 
-    $("#NovaPaginaTipoDeArtigo>div").one("click", function() {
+    $("#ICPNewArticleGrid>div").one("click", function() {
       dfd.resolve($(this).attr("data-tipo"));
     });
     return dfd.promise();
