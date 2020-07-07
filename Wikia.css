@@ -5,25 +5,25 @@
     height: 100px;
     margin: 0 auto;
 }
-td[data-tipo="personagem"] .infoboxIcon, .infoboxIcon.personagem {
+div[data-tipo="personagem"] .infoboxIcon, .infoboxIcon.personagem {
     background-position: 0px 100px;
 }
-td[data-tipo="planeta"] .infoboxIcon, .infoboxIcon.planeta {
+div[data-tipo="planeta"] .infoboxIcon, .infoboxIcon.planeta {
     background-position: -100px 100px;
 }
-td[data-tipo="droide"] .infoboxIcon, .infoboxIcon.droide {
+div[data-tipo="droide"] .infoboxIcon, .infoboxIcon.droide {
     background-position: 0 0;
 }
-td[data-tipo="espaçonave"] .infoboxIcon, .infoboxIcon.nave {
+div[data-tipo="espaçonave"] .infoboxIcon, .infoboxIcon.nave {
     background-position: 200px 0px;
 }
-td[data-tipo="evento"] .infoboxIcon, .infoboxIcon.evento {
+div[data-tipo="evento"] .infoboxIcon, .infoboxIcon.evento {
     background-position: 100px 0px;
 }
-td[data-tipo="tecnologia"] .infoboxIcon, .infoboxIcon.tecnologia {
+div[data-tipo="tecnologia"] .infoboxIcon, .infoboxIcon.tecnologia {
     background-position: 100px 100px;
 }
-td[data-tipo="outro"] {
+div[data-tipo="outro"] {
     font-size: 15px;
     padding: 15px;
 }
@@ -54,7 +54,7 @@ td[data-tipo="outro"] {
 }
 #refButton:hover { border-right-color: #969696; }
 .pi-data-value textarea { width: 100%; }
-#NovaPaginaTipoDeArtigo td:hover { background-color: lightgray; }
+#ICPNewArticleGrid>div:hover { background-color: lightgray; }
 #CuratedContentToolModal p {
     font-size: 14px;
     margin: 10px 0;
@@ -62,3 +62,61 @@ td[data-tipo="outro"] {
 #CuratedContentToolModal section { overflow-y: auto; }
 #CuratedContentToolModal { max-height: 80%; }
 .ICPdisclaimer { font-size: 12px; }
+
+#CuratedContentToolModal > nav li {
+    display: inline-block;
+    width: 33%;
+    line-height: 30px;
+    position: relative;
+}
+
+#CuratedContentToolModal > nav li:before {
+    content: '';
+    width: 100%;
+    height: 2px;
+    background: royalblue;
+    display: inline-block;
+    margin-right: 30px;
+    position: absolute;
+    top: 14px;
+    left: -50%;
+    z-index: 0;
+}
+
+#CuratedContentToolModal > nav li > div {
+    background: lightblue;
+    width: 30px;
+    height: 30px;
+    border-radius: 30px;
+    color: royalblue;
+    margin: 0 auto;
+    z-index: 5;
+    position: relative;
+}
+
+#CuratedContentToolModal > nav li:first-child:before {
+    content: none;
+}
+
+#CuratedContentToolModal > nav li.disabled > div {
+    background: #CCC;
+    color: #666;
+}
+
+#CuratedContentToolModal > nav li.disabled:before {
+    background: #CCC;
+}
+
+#CuratedContentToolModal > nav li.past > div {
+    background: lightblue;
+    cursor: pointer;
+}
+
+#CuratedContentToolModal > nav li.past:before {
+    background: lightblue;
+}
+
+#CuratedContentToolModal > nav li.active > div {
+    background: royalblue;
+    color: #fff;
+}

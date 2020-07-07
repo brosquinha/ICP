@@ -1,4 +1,3 @@
-import re
 import textwrap
 from random import choice
 
@@ -20,28 +19,28 @@ class TestICPSource(ICPTestSuite):
         super().set_up("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
 
     def test_icp_full_basic_flow(self):
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
+        h3 = self.support.get_modal_title()
         self.assertEqual(h3.text, "Criando um novo artigo")
 
         self.support.skip_step_0()
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
-        self.assertEqual(h3.text, "Passo 1: Universo")
+        h3 = self.support.get_modal_title()
+        self.assertEqual(h3.text, "Passo 2: Universo")
 
         self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
-        self.assertEqual(h3.text, "Passo 2: Infobox")
+        h3 = self.support.get_modal_title()
+        self.assertEqual(h3.text, "Passo 3: Infobox")
         self.driver.find_element_by_tag_name("aside")
         self.driver.find_element_by_css_selector("aside textarea")
 
         self.support.skip_step_2()
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
-        self.assertEqual(h3.text, "Passo 3: Fontes e Aparições")
+        h3 = self.support.get_modal_title()
+        self.assertEqual(h3.text, "Passo 4: Fontes e Aparições")
         self.driver.find_element_by_id("wookieePage")
 
         self.support.skip_step_3()
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
-        self.assertEqual(h3.text, "Passo 4: Categorias")
+        h3 = self.support.get_modal_title()
+        self.assertEqual(h3.text, "Passo 5: Categorias")
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal div.CategorySelect input")
 
         self.support.skip_step_4()
@@ -50,10 +49,38 @@ class TestICPSource(ICPTestSuite):
         self.assertIn("{{Personagem infobox\n|nome = Teste\n", textarea_value)
         self.assertIn("== Notas e referências ==\n", textarea_value)
 
+    def test_anon_confirmation_leave(self):
+        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source&redlink=1")
+        self.support.wait_for_icp()
+        self.driver.execute_script(self.icp_content)
+        self.support.wait_for_new_icp(self.icp_content)
+
+        modal = self.driver.find_element_by_css_selector("#CuratedContentToolModal")
+        self.assertEqual(modal.value_of_css_property("width"), "500px")
+
+        self.driver.find_element_by_css_selector("#CuratedContentToolModal section button.secondary").click()
+        self.assertEqual(self.driver.current_url, "https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
+
+    def test_anon_confirmation_confirm(self):
+        redlink_url = "https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source&redlink=1"
+        self.driver.get(redlink_url)
+        self.support.wait_for_icp()
+        self.driver.execute_script(self.icp_content)
+        self.support.wait_for_new_icp(self.icp_content)
+
+        modal = self.driver.find_element_by_css_selector("#CuratedContentToolModal")
+        self.assertEqual(modal.value_of_css_property("width"), "500px")
+
+        self.driver.find_element_by_css_selector("#CuratedContentToolModal section button:not(.secondary)").click()
+        self.assertEqual(self.driver.current_url, redlink_url)
+
+        self.assertNotEqual(modal.value_of_css_property("width"), "500px")
+        self.support.skip_step_0()
+
     def test_eras_only_canon(self):
         self.support.skip_step_0()
 
-        self.driver.find_element_by_css_selector("button[data-resp='n']").click()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(2)").click()
         
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -63,10 +90,41 @@ class TestICPSource(ICPTestSuite):
         textarea_value = self.support.get_source_textarea_value()
         self.assertIn("{{Eras|canon}}", textarea_value)
 
+    def test_eras_only_legends(self):
+        self.support.get_legends_article(self.icp_content)
+
+        self.support.skip_step_0()
+
+        self.driver.find_element_by_css_selector("section button:nth-of-type(2)").click()
+
+        self.support.wait_for_step_2_ready()
+        self.support.skip_step_2()
+        self.support.skip_step_3()
+        self.support.skip_step_4()
+
+        textarea_value = self.support.get_source_textarea_value()
+        self.assertIn("{{Eras|legends}}", textarea_value)
+
+    def test_eras_both_legends_and_canon(self):
+        self.support.get_legends_article(self.icp_content)
+
+        self.support.skip_step_0()
+
+        self.driver.find_element_by_css_selector("section button:nth-of-type(1)").click()
+
+        self.support.wait_for_step_2_ready()
+        self.support.skip_step_2()
+        self.support.skip_step_3()
+        self.support.skip_step_4()
+
+        textarea_value = self.support.get_source_textarea_value()
+        self.assertIn("{{Eras|legends|canon}}", textarea_value)
+
     def test_out_universe_canon_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='canon']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(1)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -79,7 +137,8 @@ class TestICPSource(ICPTestSuite):
     def test_out_universe_legends_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='legends']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(2)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -92,7 +151,8 @@ class TestICPSource(ICPTestSuite):
     def test_out_universe_no_universe_article(self):
         self.support.choose_infobox("Infobox TV")
 
-        self.driver.find_element_by_css_selector("button[data-resp='none']").click()
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("section button:nth-of-type(3)").click()
 
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -155,7 +215,7 @@ class TestICPSource(ICPTestSuite):
 
     def test_other_infoboxes(self):
         self.support.choose_outros_step_0()
-        h3 = self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal h3")
+        h3 = self.support.get_modal_title()
         self.assertEqual(h3.text, "Criando um novo artigo")
 
         self.support.wait_for_all_infoboxes_ready()
@@ -168,10 +228,11 @@ class TestICPSource(ICPTestSuite):
         while chosen_infobox in blacklist:
             chosen_infobox = choice(available_infoboxes[1:]).get_attribute('value')
         infobox_select.select_by_value(chosen_infobox)
-        self.driver.find_element_by_css_selector("button[data-resp='s']").click()
+        self.driver.find_element_by_css_selector("section button").click()
         self.support.wait_for_infobox_type_gathering()
 
-        if self.driver.find_elements_by_css_selector("button[data-resp]"):
+        h3 = self.support.get_modal_title()
+        if "Passo 2" in h3.text:
             self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
@@ -187,16 +248,14 @@ class TestICPSource(ICPTestSuite):
     def test_media_infobox_proper_step_1(self):
         self.support.choose_infobox("Quadrinhos")
         self.support.wait_for_infobox_type_gathering()
-        buttons = self.driver.find_elements_by_css_selector("button[data-resp]")
+        buttons = self.driver.find_elements_by_css_selector("section button")
         self.assertEqual(len(buttons), 3)
-        self.assertEqual([x.get_attribute('data-resp') for x in buttons], ['canon', 'legends', 'none'])
 
     def test_in_universe_infobox_proper_step_1(self):
         self.support.choose_infobox("Lua")
         self.support.wait_for_infobox_type_gathering()
-        buttons = self.driver.find_elements_by_css_selector("button[data-resp]")
+        buttons = self.driver.find_elements_by_css_selector("section button")
         self.assertEqual(len(buttons), 2)
-        self.assertEqual([x.get_attribute('data-resp') for x in buttons], ['s', 'n'])
 
     def test_guerra_batalha_missao_infoboxes(self):
         self.support.choose_infobox(choice(['Batalha', 'Missão', 'Guerra']))
@@ -209,6 +268,8 @@ class TestICPSource(ICPTestSuite):
         prompt.send_keys(choice(['2', '3', '4']))
         prompt.accept()
         self.support.wait_for_infobox_type_gathering()
+        self.support.skip_step_1()
+        self.support.wait_for_step_2_ready()
 
     def test_step_2_link_button_canon(self):
         self.support.skip_step_0()
@@ -265,10 +326,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
 
-        self.driver.find_element_by_id("wookieePage").send_keys("")
-        self.support.select_written_text()
-        self.driver.find_element_by_id("wookieePage").send_keys("Alderaan")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.support.choose_wookiee_article("Alderaan")
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
@@ -290,10 +348,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
 
-        self.driver.find_element_by_id("wookieePage").send_keys("")
-        self.support.select_written_text()
-        self.driver.find_element_by_id("wookieePage").send_keys("Darth Sidious")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.support.choose_wookiee_article("Darth Sidious")
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
@@ -320,10 +375,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_step_2_ready()
         self.support.skip_step_2()
 
-        self.driver.find_element_by_id("wookieePage").send_keys("")
-        self.support.select_written_text()
-        self.driver.find_element_by_id("wookieePage").send_keys("Dave Filoni")
-        self.driver.find_element_by_css_selector("button[data-interlink]").click()
+        self.support.choose_wookiee_article("Dave Filoni")
 
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
@@ -352,6 +404,50 @@ class TestICPSource(ICPTestSuite):
             [x.text for x in self.driver.find_elements_by_css_selector("td.diff-addedline div")]
         )
 
+    def test_return_steps(self):
+        self.support.skip_step_0()
+        self.support.skip_step_1()
+        self.support.wait_for_step_2_ready()
+        self.support.skip_step_2()
+        self.support.skip_step_3()
+
+        self.support.return_to_step(4)
+        self.assertEqual(self.support.get_modal_title().text, "Passo 4: Fontes e Aparições")
+
+        self.support.return_to_step(3)
+        self.assertEqual(self.support.get_modal_title().text, "Passo 3: Infobox")
+
+        self.support.return_to_step(2)
+        self.assertEqual(self.support.get_modal_title().text, "Passo 2: Universo")
+
+        self.support.return_to_step(1)
+        self.assertEqual(self.support.get_modal_title().text, "Criando um novo artigo")
+
+    def test_return_steps_latest_wikitext_goes(self):
+        self.support.skip_step_0()
+        self.support.skip_step_1()
+        self.support.wait_for_step_2_ready()
+        self.support.skip_step_2()
+        self.support.skip_step_3()
+
+        self.support.return_to_step(1)
+        self.support.choose_infobox("Planeta")
+        self.support.wait_for_infobox_type_gathering()
+        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal button:nth-of-type(2)").click()
+        self.support.wait_for_step_2_ready()
+
+        self.support.skip_step_2()
+        self.support.choose_wookiee_article("Exegol")
+        self.support.wait_for_wookiee_response()
+        self.support.skip_step_4()
+
+        wikitext = self.support.get_source_textarea_value()
+        self.assertIn("{{Eras|canon}}", wikitext)
+        self.assertNotIn("{{Eras|canon|legends}}", wikitext)
+        self.assertIn("{{Planeta\n", wikitext)
+        self.assertNotIn("{{Personagem\n", wikitext)
+        self.assertIn("{{Interlang\n", wikitext)
+
     def test_config_always_show_on_page_creation(self):
         self.driver.find_element_by_id("configuracoesICP").click()
         self.driver.find_element_by_css_selector(".modalContent input[type='checkbox']").click()
@@ -364,10 +460,11 @@ class TestICPSource(ICPTestSuite):
 
     def test_config_version(self):
         self.driver.find_element_by_id("configuracoesICP").click()
-        icp_version = re.findall(r"var ICPversion = \'(.*)\'\;", self.icp_content)[0]
+        icp_version = self.support.get_new_icp_version(self.icp_content)
         self.assertIn(icp_version, self.driver.find_element_by_css_selector(".modalContent div>p").text)
     
     def tearDown(self):
+        # print(list(filter(lambda x: 'ICP' in x['message'], self.driver.get_log('browser'))))
         self.driver.execute_script("window.localStorage.clear();")
         self.driver.refresh()
 
