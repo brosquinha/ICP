@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '0.1.0';
+  var ICPversion = '1.0.0';
 
   /**
    * ICP framework class
@@ -52,16 +52,16 @@ var ICP = (function($) {
       }
       catch(e) {
         console.error(e.toString());
-        var erroTxt = e.name + ": " + e.message
+        var erroTxt = e.name + ": " + e.message;
         erroTxt += (typeof e.stack === "undefined") ? '' : ' - ' + e.stack;
         instance.userActions.errors.push(erroTxt);
         instance.userActions.userAgent = window.navigator.userAgent;
         alert("Ocorreu um erro. "+(instance.sendFeedbackEnabled ? "Um relatório sobre esse inconveniente está sendo enviado para os administradores." : "") + "Sua edição até aqui será salva.");
         instance.finishEdit();
       }
-    }
+    };
     return fn.__errorHandler__;
-  }
+  };
 
   ICP.prototype.treatError = function(msg) {
     console.warn(msg);
@@ -69,7 +69,7 @@ var ICP = (function($) {
     this.userActions.userAgent = window.navigator.userAgent;
     alert("Ocorreu um erro. "+(this.sendFeedbackEnabled ? "Um relatório sobre esse inconveniente está sendo enviado para os administradores." : "") + "Sua edição até aqui será salva.");
     this.finishEdit();
-  }
+  };
 
   /**
    * Peforms a GET request on given URL
@@ -90,7 +90,7 @@ var ICP = (function($) {
       }),
       error: errorCallback || this.retryAjax
     });
-  }
+  };
   
   /**
    * Peforms a MediaWiki API get request with given parameters
@@ -116,7 +116,7 @@ var ICP = (function($) {
       instance.hideLoader();
       successCallback(data);
     })).fail(errorCallback || this.retryAjax);
-  }
+  };
 
   /**
    * Gets given article's wikitext content
@@ -132,7 +132,7 @@ var ICP = (function($) {
       dfd.resolve(data.query.pages[pageId].revisions[0]['*']);
     });
     return dfd.promise();
-  }
+  };
 
   /**
    * Forces mediawiki.api module to load
@@ -144,7 +144,7 @@ var ICP = (function($) {
    */
   ICP.prototype.forceMwApiLoad = function() {
     mw.loader.load("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1591798434636-20200610T140000Z/mediawiki.api");
-  }
+  };
 
   ICP.prototype.retryAjax = function(xhr, textStatus, error) {
     this.hideLoader();
@@ -159,7 +159,7 @@ var ICP = (function($) {
         $.ajax(ajaxSettings);
       }, 30000);
     }
-  }
+  };
 
   /**
    * ICP logic flow manager
@@ -174,7 +174,7 @@ var ICP = (function($) {
     this.buildProgressBar();
     if (options.anon) steps.unshift(this.confirmAnon);
     this._controller(steps);
-  }
+  };
 
   ICP.prototype._controller = function(steps) {
     this._currentStep = steps[0];
@@ -192,14 +192,14 @@ var ICP = (function($) {
     this._currentStepIndex = this.getSteps().length - remainingSteps.length;
     this._deltaTime = new Date().getTime();
     this.updateProgressBar();
-  }
+  };
   
   ICP.prototype._handleStepFinish = function() {
     this.userActions.stepsExecuted.push({
       index: this._currentStepIndex,
       timeTaken: (new Date().getTime()) - this._deltaTime
     });
-  }
+  };
 
   //Helpers
   /**
@@ -209,7 +209,7 @@ var ICP = (function($) {
    */
   ICP.prototype.isSpecialCreatePage = function() {
     return mw.config.get("wgNamespaceNumber") == -1 && mw.config.get("wgTitle") == "CreatePage";
-  }
+  };
 
   /**
    * Checks if current page belongs to main namespace (ns 0)
@@ -218,7 +218,7 @@ var ICP = (function($) {
    */
   ICP.prototype.isMainNamespace = function() {
     return mw.config.get("wgNamespaceNumber") === 0;
-  }
+  };
 
   /**
    * Checks if current page is a new article
@@ -227,7 +227,7 @@ var ICP = (function($) {
    */
   ICP.prototype.isNewArticle = function() {
     return mw.config.get("wgArticleId") === 0;
-  }
+  };
 
   /**
    * Article wikitext manager
@@ -245,14 +245,14 @@ var ICP = (function($) {
     this.index = stepIndex;
     if (this.icp.articleWikitext[this.index] === undefined || this.icp.wikitextAutoReset)
       this.icp.articleWikitext[this.index] = "";
-  }
+  };
 
   /**
    * Resets step's accumulated wikitext
    */
   StepWikitext.prototype.reset = function() {
     this.icp.articleWikitext[this.index] = "";
-  }
+  };
 
   /**
    * Appends wikitext code to accumulated step's wikitext
@@ -261,8 +261,8 @@ var ICP = (function($) {
    */
   StepWikitext.prototype.append = function(text) {
     this.icp.articleWikitext[this.index] += text;
-  }
-
+  };
+  
   /**
    * Returns generated step's wikitext
    * 
@@ -270,7 +270,7 @@ var ICP = (function($) {
    */
   StepWikitext.prototype.get = function() {
     return this.icp.articleWikitext[this.index];
-  }
+  };
 
   /**
    * Builds ICP's modal
@@ -295,7 +295,7 @@ var ICP = (function($) {
       +'</div>'
     +'</div>');
     this._setModalButtonsCallbacks();
-  }
+  };
 
   ICP.prototype._setModalButtonsCallbacks = function() {
     var instance = this;
@@ -321,7 +321,7 @@ var ICP = (function($) {
           message: 'Salvar',
           handler: function() {
             var formRes = $('form[name="config_form"]').serialize();
-            var settingsObj = {}
+            var settingsObj = {};
             if (formRes.search("default_action") > -1)
               settingsObj.default_action = 1;
             else
@@ -336,14 +336,13 @@ var ICP = (function($) {
           message: 'Enviar feedback',
           handler: function() {
             var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
-            if (feedbackTxt)
-            {
-              instance.userActions.msgFeedback = feedbackTxt
+            if (feedbackTxt) {
+              instance.userActions.msgFeedback = feedbackTxt;
               instance.sendFeedback();
               alert("Obrigado!");
             }
           }
-        })
+        });
       }
       $.showCustomModal('Configurações', configModal, {
         id: 'ModalSettingsWindow',
@@ -355,7 +354,7 @@ var ICP = (function($) {
     $("#finalizarEdicao").click(function () {
       this.finishEdit();
     });
-  }
+  };
 
   ICP.prototype.buildProgressBar = function() {
     var instance = this;
@@ -364,20 +363,20 @@ var ICP = (function($) {
     olElement.style.padding = "5px 0";
     var numSteps = this.getSteps().length;
     for (var i = 0; i < numSteps; i++) {
-      var liElement = document.createElement("li")
+      var liElement = document.createElement("li");
       liElement.style.width = 100 / numSteps + "%";
       if (i === 0) liElement.className = "active";
       else liElement.className = "disabled";
       liElement.onclick = function() {
         instance._handleProgressBarClick(this);
-      }
+      };
       var divElement = document.createElement("div");
       divElement.textContent = i+1;
       liElement.appendChild(divElement);
       olElement.appendChild(liElement);
     }
     $("#CuratedContentToolModal nav").html(olElement);
-  }
+  };
 
   ICP.prototype.updateProgressBar = function() {
     var liElements = $("#CuratedContentToolModal nav ol li");
@@ -388,7 +387,7 @@ var ICP = (function($) {
       else if (i > this._currentStepIndex) liElement.classList = "disabled";
       else liElement.classList = "active";
     }
-  }
+  };
 
   ICP.prototype._handleProgressBarClick = function(item) {
     if (item.className != "past") return;
@@ -397,7 +396,7 @@ var ICP = (function($) {
     var steps = this.getSteps();
     var stepsSliced = steps.slice(selectedIndex);
     this._controller(stepsSliced);
-  }
+  };
 
   ICP.prototype._currentStepExit = function() {
     try {
@@ -405,7 +404,7 @@ var ICP = (function($) {
     } catch(e) {
       console.warn(e);
     }
-  }
+  };
 
   /**
    * Updates modal's content
@@ -414,7 +413,7 @@ var ICP = (function($) {
    */
   ICP.prototype.updateModalBody = function(content) {
     $("#CuratedContentToolModal section").html(content);
-  }
+  };
 
   /**
    * Updates modal's title
@@ -423,7 +422,7 @@ var ICP = (function($) {
    */
   ICP.prototype.updateModalTitle = function(title) {
     $("#CuratedContentToolModal header h3").text(title);
-  }
+  };
 
   /**
    * Appends a button to modal's body
@@ -449,7 +448,7 @@ var ICP = (function($) {
     });
     $("#CuratedContentToolModal section").append(button);
     return dfd.promise();
-  }
+  };
 
   /**
    * Manager for building infobox inside ICP modal
@@ -477,7 +476,7 @@ var ICP = (function($) {
     this.container = container;
     this.infoboxRoot = infoboxRoot;
     this.textareaValues = {};
-  }
+  };
 
   /**
    * Adds a infobox field with textarea for user to write
@@ -509,7 +508,7 @@ var ICP = (function($) {
     infoboxField.appendChild(infoboxFieldLabel);
     infoboxField.appendChild(infoboxFieldValue);
     this.infoboxRoot.appendChild(infoboxField);
-  }
+  };
 
   /**
    * 
@@ -534,7 +533,7 @@ var ICP = (function($) {
     if (selectOptions.callback) $(select).change(selectOptions.callback);
     this.addInfoboxField(label, source, {element: select});
     this.textareaValues[source] = select;
-  }
+  };
 
   /**
    * Returns infobox root element
@@ -543,14 +542,14 @@ var ICP = (function($) {
    */
   ModalInfobox.prototype.getInfoboxRoot = function() {
     return this.infoboxRoot;
-  }
+  };
 
   /**
    * Inserts infobox content into modal
    */
   ModalInfobox.prototype.getContent = function() {
     return this.container;
-  }
+  };
 
   /**
    * Returns all user input on all textareas by source field name
@@ -558,12 +557,12 @@ var ICP = (function($) {
    * @returns {Object} User input by field
    */
   ModalInfobox.prototype.getValues = function() {
-    var values = {}
+    var values = {};
     for (var source in this.textareaValues) {
       values[source] = this.textareaValues[source].value;
     }
     return values;
-  }
+  };
 
   /**
    * Resizes modal's window
@@ -572,24 +571,35 @@ var ICP = (function($) {
    */
   ICP.prototype.resizeModal = function(size) {
     $("#CuratedContentToolModal").css('width', size || "");
-  }
+  };
 
   /**
    * Shows modal's AJAX loader gif
    */
   ICP.prototype.showLoader = function() {
     $("#CuratedContentToolModal header img").show();
-  }
+  };
 
   /**
    * Hides modal's AJAX loader gif
    */
   ICP.prototype.hideLoader = function() {
     $("#CuratedContentToolModal header img").hide();
-  }
+  };
 
   /**
    * Inserts an article type selection table into modal
+   *
+   * @example
+   * articleTypes = [
+   *  {name: "Character infobox", class: "character", label: "Character"},
+   *  {name: "Event infobox", class: "conflict", label: "Event"}
+   * ]
+   * options = {
+   *  numColumns: 3,
+   *  hasOther: false
+   * }
+   * insertArticleTypeTable(articleTypes, options);
    *
    * @param {Object[]} articleTypes List of articleTypes
    * @param {string} articleTypes[].name Template name
@@ -640,7 +650,7 @@ var ICP = (function($) {
       dfd.resolve($(this).attr("data-tipo"));
     });
     return dfd.promise();
-  }
+  };
 
   //Pre-Step0: Confirm anons intention on creating an article
   ICP.prototype.confirmAnon = function() {
@@ -666,7 +676,7 @@ var ICP = (function($) {
     } else
       dfd.resolve();
     return dfd.promise();
-  }
+  };
 
   //Wrapping up
   ICP.prototype.finishEdit = function() {
@@ -707,18 +717,18 @@ var ICP = (function($) {
       else
         theTextarea.value += this.articleWikitext;
       this._finish();
-      if (this.wysiwyg == true) this.changeSourceToWys();
+      if (this.wysiwyg === true) this.changeSourceToWys();
     }
-  }
+  };
 
   ICP.prototype._finish = function() {
     $("#blackout_CuratedContentToolModal").removeClass('visible');
     if (this.sendFeedbackEnabled) this.sendFeedback();
-  }
+  };
 
   ICP.prototype.encodeURL = function(txt) {
-    return encodeURI(txt.replace(/ /g, "_"))
-  }
+    return encodeURI(txt.replace(/ /g, "_"));
+  };
 
   ICP.prototype.changeWysToSource = function() {
     this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
@@ -727,11 +737,11 @@ var ICP = (function($) {
       this.wysiwyg = true;
       this.userActions.editor = "WYSIWYG";
     }
-  }
+  };
 
   ICP.prototype.changeSourceToWys = function() {
     setTimeout(function() { window.CKEDITOR.tools.callFunction(59) }, 1500);
-  }
+  };
 
   ICP.prototype._collectInitialMetrics = function() {
     this.userActions.user = (mw.config.get("wgUserId") || false);
@@ -741,7 +751,7 @@ var ICP = (function($) {
     this.userActions.version = [ICPversion, this.version];
     this.userActions.errors = [];
     this.userActions.stepsExecuted = [];
-  }
+  };
 
   ICP.prototype._getICPSettings = function() {
     var settings = {};
@@ -753,19 +763,19 @@ var ICP = (function($) {
       this.userActions.ICPconfig = false;
     }
     return settings;
-  }
+  };
 
   ICP.prototype.shouldOpenICP = function() {
-    return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage())
-  }
+    return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage());
+  };
 
   ICP.prototype.setArticleTitle = function(articleTitle) {
     this.articleTitle = articleTitle;
-  }
+  };
 
   ICP.prototype.sendFeedback = function() {
     return null;
-  }
+  };
 
   ICP.prototype.init = function() {
     var instance = this;
@@ -795,7 +805,7 @@ var ICP = (function($) {
 
     var ICPsettings = this._getICPSettings();
     var SWWSteps = this.getSteps();
-    if (ICPsettings.default_action == 0) {
+    if (ICPsettings.default_action === 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
       $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
     } else {
@@ -807,7 +817,7 @@ var ICP = (function($) {
         else
           $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
     }
-  }
+  };
 
   /**
    * Extends ICP subclass with its variables and functions
@@ -821,18 +831,18 @@ var ICP = (function($) {
       enumerable: false,
       writable: true
     });
-  }
+  };
 
   var exports = {
     ICP: ICP,
     ModalInfobox: ModalInfobox,
     StepWikitext: StepWikitext,
     extend: extend
-  }
+  };
 
   $(document).ready(function() {
     mw.hook("dev.icp").fire(exports);
   });
   
-  return exports
+  return exports;
 })(jQuery);

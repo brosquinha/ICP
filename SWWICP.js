@@ -5,10 +5,19 @@
 * Through this feature, editors can insert default navigation templates, infobox and categories,
 * all in accord to our internal guidelines.
 * 
-* Note: I have discussed this tool with FANDOM Staff, and I've got their approval.
-* 
 * GitHub repository: https://github.com/brosquinha/ICP
 */
+/**
+ * Release notes to Fandom staff:
+ * 
+ * Creates SWWICP module
+ * 
+ * This module is responsible for holding all of Star Wars Wiki em Português'
+ * logic of page creation. As such, it will inherit a generic ICP class
+ * that will be replacing current MediaWiki:ICP.js as soon as this script
+ * is approved. If you require ICP class to fully understand this script, please
+ * refer to https://github.com/brosquinha/ICP/blob/refactor/ICP.js
+ */
 var SWWICP = (function($) {
     "use strict";
   
@@ -33,7 +42,7 @@ var SWWICP = (function($) {
       this.wikitextAutoReset = true;
       this.replaceArticleWikitext = false;
       this.replaceFandomStandardLayout = true;
-    }
+    };
   
     StarWarsWiki.prototype.getSteps = function() {
       return [
@@ -42,14 +51,14 @@ var SWWICP = (function($) {
         this.infoboxInsertion,
         this.interwikiInsertion,
         this.categoriesInsertion
-      ]
-    }
+      ];
+    };
   
     StarWarsWiki.prototype.shouldOpenICP = function() {
       this.isCanonNamespace = this.isMainNamespace();
       var isLegendsNamespace = mw.config.get("wgNamespaceNumber") == 114;
-      return ((this.isNewArticle() && (isLegendsNamespace || this.isCanonNamespace)) || this.isSpecialCreatePage())
-    }
+      return ((this.isNewArticle() && (isLegendsNamespace || this.isCanonNamespace)) || this.isSpecialCreatePage());
+    };
   
     StarWarsWiki.prototype.setArticleTitle = function(articleTitle) {
       if (articleTitle.substr(0, 8) == "Legends:" && this.isSpecialCreatePage()) {
@@ -59,7 +68,7 @@ var SWWICP = (function($) {
         this.articleTitle = articleTitle;
         this.isCanonNamespace = true;
       }
-    }
+    };
   
     StarWarsWiki.prototype.sendFeedback = function() {
       //This is meant for collecting info about how people use this tool so that I can improve it a lot more.
@@ -77,8 +86,8 @@ var SWWICP = (function($) {
         error: function(data) {
           console.log("Envio malsucedido");
         }
-      })
-    }
+      });
+    };
   
     //Step0: article type selection
     StarWarsWiki.prototype.articleTypeSelection = function() {
@@ -100,7 +109,7 @@ var SWWICP = (function($) {
         if (type == 'outro') {
           instance._otherInfoboxes().then(function() {
             dfd.resolve();
-          })
+          });
         } else {
           instance.outOfUniverse = false; //false means it's an in-universe article
           instance.infoboxName = type;
@@ -109,7 +118,7 @@ var SWWICP = (function($) {
         }
       }));
       return dfd.promise();
-    }
+    };
   
     //Step0 helper: Select "Other"
     StarWarsWiki.prototype._otherInfoboxes = function() {
@@ -119,15 +128,14 @@ var SWWICP = (function($) {
       '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
       this.updateModalBody(modalContent);
       this.apiGetPageContents("Ajuda:Predefinições/Infobox").then(this.errorHandler(function(data) {
-        var infoboxes = data.split("\n{{")
-        for (var i=1; i<infoboxes.length; i++)
-        {
+        var infoboxes = data.split("\n{{");
+        for (var i=1; i<infoboxes.length; i++) {
           $("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
         }
         var chooseInfoboxTypeController = false;
         this.appendButtonToModalBody("Pronto").then(this.errorHandler(function(button) {
           instance.infoboxName = $("#selecionarInfoboxCustom").val();
-          if (instance.infoboxName == '' || chooseInfoboxTypeController ==  true)
+          if (instance.infoboxName === '' || chooseInfoboxTypeController === true)
             return;
           chooseInfoboxTypeController = true;
           instance.userActions.infoboxType = instance.infoboxName;
@@ -137,7 +145,7 @@ var SWWICP = (function($) {
             //Batalha, Missão and Guerra infoboxes are special
             var numParticipants = '';
             while (numParticipants != '4' && numParticipants != '3' && numParticipants != '2')
-              numParticipants = prompt("Quantos participantes? (2, 3 ou 4)")
+              numParticipants = prompt("Quantos participantes? (2, 3 ou 4)");
             if (instance.infoboxName == "Batalha")
               instance.infoboxUrl = "Battle";
             else if (instance.infoboxName == "Guerra")
@@ -174,7 +182,7 @@ var SWWICP = (function($) {
         }));
       }));
       return dfd.promise();
-    }
+    };
   
     //Step1: Insert Eras template
     StarWarsWiki.prototype.templateErasInsertion = function() {
@@ -208,13 +216,13 @@ var SWWICP = (function($) {
             wikitext.append("{{Eras|"+(response == "none" ? "real" : response + "|real")+"}}\n");
             instance.userActions.erasAnswer = response;
             dfd.resolve();
-          })
+          });
           this.appendButtonToModalBody(canonButton).then(function(button) {
             solveEras("canon");
           });
           this.appendButtonToModalBody(legendsButton).then(function(button) {
             solveEras("legends");
-          })
+          });
           this.appendButtonToModalBody("Nenhum", {style: "vertical-align:top"}).then(function(button) {
             solveEras("none");
           });
@@ -256,7 +264,7 @@ var SWWICP = (function($) {
       }
       this.changeWysToSource();
       return dfd.promise();
-    }
+    };
   
     //Step2: Filling in infobox
     StarWarsWiki.prototype.infoboxInsertion = function() {
@@ -273,7 +281,7 @@ var SWWICP = (function($) {
           });
       }));
       return dfd.promise();
-    }
+    };
   
     StarWarsWiki.prototype._infoboxParser = function(templateContent, templateName) {
       var dfd = $.Deferred();
@@ -312,18 +320,16 @@ var SWWICP = (function($) {
             $(infobox).addClass("pi-theme-"+type.replace(/ /g, "-"));
           },
           options: []
-        }
+        };
         var personagemTypes = templateContent.split("\n*");
         personagemTypes[personagemTypes.length-1] = personagemTypes[personagemTypes.length-1].split("\n")[0];
-        for (i=1; i<personagemTypes.length; i++)
-        {
-          selectOptions.options.push({value: personagemTypes[i], label: personagemTypes[i]})
+        for (i=1; i<personagemTypes.length; i++) {
+          selectOptions.options.push({value: personagemTypes[i], label: personagemTypes[i]});
         }
         modalContent.addInfoboxFieldSelect("Tipo de personagem", "type", selectOptions);
       }
   
-      for (i=0; i<$(infoboxDom).find("data").length; i++)
-      {
+      for (i=0; i<$(infoboxDom).find("data").length; i++) {
         var dataTag, labelTagText, sourceText, opts;
         dataTag = $(infoboxDom).find("data")[i];
         sourceText = $(dataTag).attr('source');
@@ -332,7 +338,7 @@ var SWWICP = (function($) {
         else
           labelTagText = $(dataTag).children()[0].innerHTML;
         if (sourceText in this.infoboxObj.parameters)
-          opts = {value: this.infoboxObj.parameters[sourceText]}
+          opts = {value: this.infoboxObj.parameters[sourceText]};
         modalContent.addInfoboxField(labelTagText, sourceText, opts);
       }
       this.updateModalBody(modalContent.getContent());
@@ -360,7 +366,7 @@ var SWWICP = (function($) {
         dfd.resolve();
       }));
       return dfd.promise();
-    }
+    };
   
     //Step2 helper: wikitext builder from infobox object
     StarWarsWiki.prototype._buildInfoboxWikitext = function(templateName, infoboxObj) {
@@ -406,7 +412,7 @@ var SWWICP = (function($) {
           return false;
         }
       });
-    }
+    };
   
     //Step3: Insert interlang links
     StarWarsWiki.prototype.interwikiInsertion = function() {
@@ -434,7 +440,7 @@ var SWWICP = (function($) {
           });
       })});
       this.appendButtonToModalBody("Visualizar", {callback: this.errorHandler(function() {
-        window.open("https://starwars.wikia.com/wiki/"+instance.encodeURL($("#wookieePage").val()))
+        window.open("https://starwars.wikia.com/wiki/"+instance.encodeURL($("#wookieePage").val()));
       })});
       this.appendButtonToModalBody("Não sei / não existe").then(this.errorHandler(function() {
         var wikitext = new StepWikitext(instance, 2);
@@ -443,7 +449,7 @@ var SWWICP = (function($) {
         dfd.resolve();
       }));
       return dfd.promise();
-    }
+    };
   
     StarWarsWiki.prototype._getWookieeData = function(wookieePagename) {
       var dfd = $.Deferred();
@@ -466,18 +472,18 @@ var SWWICP = (function($) {
         alert("Erro ao obter página "+wookieePagename+" da Wookieepedia");
         console.warn(error);
         dfd.reject();
-      }
+      };
       this.ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+this.encodeURL(wookieePagename), success, error);
       // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
       return dfd.promise();
-    }
+    };
   
     //Gets and translates Wookiee's reference sections
     StarWarsWiki.prototype._translateWookiee = function (data) {
       var dfd = $.Deferred();
       var wikitext = new StepWikitext(this, 2);
       var wookieeWikitext = '';
-      if (data == false) {
+      if (data === false) {
         alert("Página não encontrada!");
         dfd.reject();
         return dfd.promise();
@@ -500,13 +506,13 @@ var SWWICP = (function($) {
         successionBoxSection = false;
       wookiee = this._translateSuccessionBox(wookiee, successionBoxSection);
   
-      if (wookiee.cast != '' && this.outOfUniverse == 1)
+      if (wookiee.cast !== '' && this.outOfUniverse == 1)
         wookieeWikitext += "== Elenco =="+wookiee.cast;
-      if (wookiee.appearances != '' && this.outOfUniverse == false)
+      if (wookiee.appearances !== '' && this.outOfUniverse === false)
         wookieeWikitext += "== Aparições =="+wookiee.appearances;
-      if (wookiee.sources != '')
+      if (wookiee.sources !== '')
         wookieeWikitext += "== Fontes =="+wookiee.sources;
-      if (wookiee.bibliography != '' && this.outOfUniverse)
+      if (wookiee.bibliography !== '' && this.outOfUniverse)
         wookieeWikitext += "== Bibliografia =="+wookiee.bibliography;
       wookieeWikitext = wookieeWikitext.trimEnd();
       wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
@@ -522,7 +528,7 @@ var SWWICP = (function($) {
         dfd.resolve();
       }));
       return dfd.promise();
-    }
+    };
   
     StarWarsWiki.prototype._buildWookieeData = function(wookieeText) {
       var wookiee = {
@@ -547,7 +553,7 @@ var SWWICP = (function($) {
         }
       }
       return wookiee;
-    }
+    };
   
     StarWarsWiki.prototype._translateSuccessionBox = function(wookiee, section) {
       if (section === false) {
@@ -572,7 +578,7 @@ var SWWICP = (function($) {
       });
       this.userActions.successionBox = true;
       return wookiee;
-    }
+    };
   
     StarWarsWiki.prototype._addInterlang = function(wookiee) {
       if (wookiee.page.search("{{Interlang") >= 0) {
@@ -587,13 +593,13 @@ var SWWICP = (function($) {
         this.userActions.hotCatData = 'pt:'+encodeURIComponent(this.articleName);
         return wookiee.disclaimer[0]+"{{Interlang\n|en="+$("#wookieePage").val()+"\n"+wookiee.disclaimer[1]+"\n}}";
       }
-    }
+    };
   
     //Step3 helper: wookiee page validator
     StarWarsWiki.prototype._redirectPage = function(data) {
       $("#wookieePage").val(data.split("[[")[1].split("]]")[0]);
       return this._getWookieeData($("#wookieePage").val());
-    }
+    };
   
     //Step4: Categorize
     StarWarsWiki.prototype.categoriesInsertion = function() {
@@ -623,12 +629,12 @@ var SWWICP = (function($) {
         });
       }
       return dfd.promise();
-    }
+    };
 
     //TODO write Selenium tests to ensure that categories div returns to its place
     StarWarsWiki.prototype.categoriesInsertion.__exit__ = function() {
       $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-    }
+    };
   
     // importArticles({
     //   type: 'script',
@@ -650,6 +656,5 @@ var SWWICP = (function($) {
       ICP: ICP,
       StarWarsWiki: StarWarsWiki,
       isAlt: false //Key control
-    }
-  })(jQuery);
-  
+    };
+})(jQuery);
