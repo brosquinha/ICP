@@ -371,8 +371,8 @@ var SWWICP = (function($) {
     StarWarsWiki.prototype._infoboxButtonsCallbacks = function() {
       var instance = this;
       this.userActions.usageOfNewButtons = 0;
-      if (typeof mw.toolbar === "undefined") //For VE
-        importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
+      // if (typeof mw.toolbar === "undefined") //For VE
+      //   importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
       if (this.isCanonNamespace)
       {
         $("#linkButton").click(function() {

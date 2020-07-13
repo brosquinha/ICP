@@ -273,21 +273,62 @@ var ICP = (function($) {
    * Builds ICP's modal
    */
   ICP.prototype.buildModal = function() {
+    // if (document.getElementById("CuratedContentToolModal") != "null")
+    //   $("#CuratedContentToolModal").remove();
+    // function ICPProcessDialog(config) {
+    //   ICPProcessDialog.super.call(this, config);
+    // }
+    // OO.inheritClass(ICPProcessDialog, OO.ui.ProcessDialog);
+    
+    // ICPProcessDialog.static.name = 'myProcessDialog';
+    // ICPProcessDialog.static.title = 'Process dialog';
+    // ICPProcessDialog.static.actions = [
+    //   {action: 'next', label: 'Next', flags: ['primary', 'progressive']},
+    //   {action: 'previous', label: 'Previous', flags: 'back'},
+    //   {label: 'Cancel', flags: 'close'}
+    // ];
+    
+    // ICPProcessDialog.prototype.initialize = function() {
+    //   ICPProcessDialog.super.prototype.initialize.apply(this, arguments);
+    //   this.content = new OO.ui.PanelLayout({padded: true, expanded: false});
+    //   this.content.$element.append('<nav></nav><section id="icpModalSection"></section>');
+    //   this.$body.append(this.content.$element);
+    // };
+    // ICPProcessDialog.prototype.getActionProcess = function(action) {
+    //   var dialog = this;
+    //   if (action) {
+    //     return new OO.ui.Process(function () {
+    //       dialog.close({action: action});
+    //     });
+    //   }
+    //   return ICPProcessDialog.super.prototype.getActionProcess.call(this, action);
+    // };
+    
+    // var windowManager = new OO.ui.WindowManager();
+    // $(document.body).append(windowManager.$element);
+    
+    // this.icpModal = new ICPProcessDialog({id: "CuratedContentToolModal", size: "larger"});
+    // windowManager.addWindows([this.icpModal]);
+    // windowManager.openWindow(this.icpModal);
+    // console.log(ICPProcessDialog);
+    // console.log(this.icpModal);
     if (document.getElementById("blackout_CuratedContentToolModal") != "null")
       $("#blackout_CuratedContentToolModal").remove();
-    $(document.head).append('<link rel="stylesheet" href="https://slot1-images.wikia.nocookie.net/__am/7900017900012/sass/background-dynamic%3Dtrue%26background-image%3Dhttps%253A%252F%252Fvignette.wikia.nocookie.net%252Fpt.starwars%252Fimages%252F5%252F50%252FWiki-background%252Frevision%252Flatest%253Fcb%253D20180407180604%26background-image-height%3D820%26background-image-width%3D1920%26color-body%3D%2523ddedfd%26color-body-middle%3D%2523ddedfd%26color-buttons%3D%25232f8f9d%26color-community-header%3D%25232f8f9d%26color-header%3D%25232f8f9d%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26oasisTypography%3D1%26page-opacity%3D100%26widthType%3D0/resources/wikia/ui_components/modal/css/modal_default.scss" />');
-    $('body').append('<div id="blackout_CuratedContentToolModal" class="modal-blackout visible">'
-      +'<div id="CuratedContentToolModal" class="modal medium no-scroll curated-content-tool-modal ">'
-        +'<header>'
-          +'<span class="close">Close</span>'
-            +'<img alt="Carregando" src="https://slot1-images.wikia.nocookie.net/__cb1591343180920/common/skins/common/images/ajax.gif" style="vertical-align: baseline; display: none; border: 0px;" />'
-            +'<h3 style="display: inline;"></h3>'
+    $('body').append('<div id="blackout_CuratedContentToolModal" class="wds-dialog__curtain curated-content-tool-modal__curtain" style="z-index:450">'
+      +'<div id="CuratedContentToolModal" class="wds-dialog__wrapper no-scroll curated-content-tool-modal"'
+          +' style="display: flex; flex-direction: column; max-width: 700px; width: 700px;">'
+        +'<header class="wds-dialog__title">'
+          +'<h3 style="display: inline;"></h3>'
+          +'<svg class="wds-icon curated-content-tool-modal__close"><use href="#wds-icons-close"></use></svg>'
+          +'<img alt="Carregando" src="https://slot1-images.wikia.nocookie.net/__cb1591343180920/common/skins/common/images/ajax.gif" style="vertical-align: baseline; display: none; border: 0px;" />'
         +'</header>'
         +'<nav></nav>'
-        +'<section></section>'
+        +'<section class="wds-dialog__content"></section>'
         +'<footer>'
-          +'<button id="configuracoesICP" class="secondary">Configurações</button>'
-          +'<span id="ICPVersion" style="display:none">'+ICPversion+'</span>'
+          +'<div class="wds-dialog__actions">'
+            +'<button id="configuracoesICP" class="wds-button wds-is-text create-page-dialog__button secondary">Configurações</button>'
+            +'<span id="ICPVersion" style="display:none">'+ICPversion+'</span>'
+          +'</div>'
         +'</footer>'
       +'</div>'
     +'</div>');
@@ -296,7 +337,7 @@ var ICP = (function($) {
 
   ICP.prototype._setModalButtonsCallbacks = function() {
     var instance = this;
-    $("#CuratedContentToolModal span.close").click(function() {
+    $("#CuratedContentToolModal header>svg").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
       var minStepsLength = (instance.anonMessage) ? 1 : 0;
       var shouldAskForCloseFeedback = instance.closeFeedbackEnabled && instance.userActions.stepsExecuted.length > minStepsLength;
@@ -411,6 +452,8 @@ var ICP = (function($) {
    * @param {String|HTMLElement} content HTML content
    */
   ICP.prototype.updateModalBody = function(content) {
+    // this.icpModal.content.$element.html(content);
+    // $("#icpModalSection").html(content);
     $("#CuratedContentToolModal section").html(content);
   };
 
@@ -420,6 +463,7 @@ var ICP = (function($) {
    * @param {String} title Modal's title
    */
   ICP.prototype.updateModalTitle = function(title) {
+    // this.icpModal.title.setLabel(title);
     $("#CuratedContentToolModal header h3").text(title);
   };
 
@@ -685,42 +729,27 @@ var ICP = (function($) {
     articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
     this._currentStepExit();
     var instance = this;
-    if (window.wgAction == "view") {
+    if (this.VESurface.mode == "visual") {
       //Visual Editor
-      instance.mwApi.post({
-        action: "visualeditor",
-        paction: "parsefragment",
-        page: this.articleName,
-        wikitext: articleWikitext
-      }).then(function(data) {
-        //For UCP, this may be replaced for https://doc.wikimedia.org/VisualEditor/master/#!/api/mw.libs.ve.targetLoader-method-requestParsoidData
+      //TODO ensure that mw.libs.ve is avaliable beforehand
+      mw.libs.ve.targetLoader.requestParsoidData(this.articleTitle, {wikitext: articleWikitext}).then(function(data) {
         instance._finish();
         instance.VESurface.getView().focus();
         var wikiDocument = new DOMParser().parseFromString(data.visualeditor.content, "text/html");
         var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
         instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
-        //For UCP's source mode, the following should be enough:
-        // instance.VESurface.getModel().getFragment().insertContent(articleWikitext);
-        //FYI, VESurface.mode == "visual" is the way to check for the mode
       });
       this.updateModalBody("<p>Carregando suas edições...</p>");
     } else {
       //Source editor and WYSIWYG editor
-      if ($("[id=wpTextbox1]").length > 1) //There may be two textareas with id=wpTextbox1 🤷
-        $('#wpTextbox1').attr('id', 'wpTextbox0');
-      var theTextarea = ($('#cke_1_contents textarea')[0] || $('#wpTextbox1')[0]);
-
-      var hasStandardLayout = theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0;
-      if (this.replaceArticleWikitext || (this.replaceFandomStandardLayout && hasStandardLayout))
-        theTextarea.value = articleWikitext;
-      else
-        theTextarea.value += articleWikitext;
       this._finish();
+      this.VESurface.getView().focus();
+      this.VESurface.getModel().getFragment().insertContent(articleWikitext);
     }
   };
 
   ICP.prototype._finish = function() {
-    $("#blackout_CuratedContentToolModal").removeClass('visible');
+    $("#blackout_CuratedContentToolModal").remove();
     if (this.sendFeedbackEnabled) this.sendFeedback();
     if (this.wysiwyg === true) this.changeSourceToWys();
   };
@@ -826,8 +855,10 @@ var ICP = (function($) {
       if (mw.config.get("wgAction") == 'view')
         if (document.location.href.search("veaction=edit") >= 0)
           this.controller();
-        else
+        else {
           $("#ca-ve-edit").click(function() {instance.controller() });
+          $("#ca-edit").click(function() {instance.controller() });
+        }
     }
   };
 
@@ -853,7 +884,9 @@ var ICP = (function($) {
   };
 
   $(document).ready(function() {
-    mw.hook("dev.icp").fire(exports);
+    mw.loader.using(['oojs-ui-core', 'oojs-ui-windows']).done(function() {
+      mw.hook("dev.icp").fire(exports);
+    })
   });
   
   return exports;
