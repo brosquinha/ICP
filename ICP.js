@@ -5,14 +5,14 @@
  * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 1.0.1
+ * @version 2.0.0
  * @description Page Creation Interface framework
  * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1';
+  var ICPversion = '2.0.0-beta.0';
 
   /**
    * ICP framework class
@@ -273,53 +273,14 @@ var ICP = (function($) {
    * Builds ICP's modal
    */
   ICP.prototype.buildModal = function() {
-    // if (document.getElementById("CuratedContentToolModal") != "null")
-    //   $("#CuratedContentToolModal").remove();
-    // function ICPProcessDialog(config) {
-    //   ICPProcessDialog.super.call(this, config);
-    // }
-    // OO.inheritClass(ICPProcessDialog, OO.ui.ProcessDialog);
-    
-    // ICPProcessDialog.static.name = 'myProcessDialog';
-    // ICPProcessDialog.static.title = 'Process dialog';
-    // ICPProcessDialog.static.actions = [
-    //   {action: 'next', label: 'Next', flags: ['primary', 'progressive']},
-    //   {action: 'previous', label: 'Previous', flags: 'back'},
-    //   {label: 'Cancel', flags: 'close'}
-    // ];
-    
-    // ICPProcessDialog.prototype.initialize = function() {
-    //   ICPProcessDialog.super.prototype.initialize.apply(this, arguments);
-    //   this.content = new OO.ui.PanelLayout({padded: true, expanded: false});
-    //   this.content.$element.append('<nav></nav><section id="icpModalSection"></section>');
-    //   this.$body.append(this.content.$element);
-    // };
-    // ICPProcessDialog.prototype.getActionProcess = function(action) {
-    //   var dialog = this;
-    //   if (action) {
-    //     return new OO.ui.Process(function () {
-    //       dialog.close({action: action});
-    //     });
-    //   }
-    //   return ICPProcessDialog.super.prototype.getActionProcess.call(this, action);
-    // };
-    
-    // var windowManager = new OO.ui.WindowManager();
-    // $(document.body).append(windowManager.$element);
-    
-    // this.icpModal = new ICPProcessDialog({id: "CuratedContentToolModal", size: "larger"});
-    // windowManager.addWindows([this.icpModal]);
-    // windowManager.openWindow(this.icpModal);
-    // console.log(ICPProcessDialog);
-    // console.log(this.icpModal);
     if (document.getElementById("blackout_CuratedContentToolModal") != "null")
       $("#blackout_CuratedContentToolModal").remove();
     $('body').append('<div id="blackout_CuratedContentToolModal" class="wds-dialog__curtain curated-content-tool-modal__curtain" style="z-index:450">'
       +'<div id="CuratedContentToolModal" class="wds-dialog__wrapper no-scroll curated-content-tool-modal"'
           +' style="display: flex; flex-direction: column; max-width: 700px; width: 700px;">'
-        +'<header class="wds-dialog__title">'
+        +'<header class="wds-dialog__title" style="display: flex; justify-content: space-between;">'
           +'<h3 style="display: inline;"></h3>'
-          +'<svg class="wds-icon curated-content-tool-modal__close"><use href="#wds-icons-close"></use></svg>'
+          +'<svg class="wds-icon curated-content-tool-modal__close" style="cursor: pointer;"><use href="#wds-icons-close"></use></svg>'
           +'<img alt="Carregando" src="https://slot1-images.wikia.nocookie.net/__cb1591343180920/common/skins/common/images/ajax.gif" style="vertical-align: baseline; display: none; border: 0px;" />'
         +'</header>'
         +'<nav></nav>'
@@ -346,55 +307,78 @@ var ICP = (function($) {
       instance._finish();
     });
 
+    this._buildConfigModal();
     $("#configuracoesICP").click(function () {
-      //Config modal
-      var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
-      "<input type='checkbox' name='default_action' checked /></label></p></form>"+
-      '<p><a href="https://starwars.fandom.com/pt/wiki/Utilizador:Thales_C%C3%A9sar/ICP" target="_blank">Sobre a ICP</a> - versão '+instance.version+' ('+ICPversion+')</p>';
-      var buttons = [
-        {
-          message: 'Resetar mudanças',
-          handler: function() {
-            $('#ModalSettingsWindow fieldset').replaceWith(configModal);
-          }
-        },{
-          message: 'Salvar',
-          handler: function() {
-            var formRes = $('form[name="config_form"]').serialize();
-            var settingsObj = {};
-            if (formRes.search("default_action") > -1)
-              settingsObj.default_action = 1;
-            else
-              settingsObj.default_action = 0;
-            localStorage.ICPsettings = JSON.stringify(settingsObj);
-            alert("Alterações salvas!");
-          }
-        }
-      ];
-      if (instance.sendFeedbackEnabled) { 
-        buttons.unshift({
-          message: 'Enviar feedback',
-          handler: function() {
-            var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
-            if (feedbackTxt) {
-              instance.userActions.msgFeedback = feedbackTxt;
-              instance.sendFeedback();
-              alert("Obrigado!");
-            }
-          }
-        });
-      }
-      $.showCustomModal('Configurações', configModal, {
-        id: 'ModalSettingsWindow',
-        width: 600,
-        height: 250,
-        buttons: buttons
-      });
+      instance.windowManager.openWindow(instance.configModal);
     });
+
     $("#finalizarEdicao").click(function () {
       this.finishEdit();
     });
   };
+
+  ICP.prototype._buildConfigModal = function() {
+    var instance = this;
+    function ICPConfigModal(config) {
+      ICPConfigModal.super.call(this, config);
+    }
+    OO.inheritClass(ICPConfigModal, OO.ui.ProcessDialog);
+    
+    ICPConfigModal.static.name = 'ICPConfigDialog';
+    ICPConfigModal.static.title = 'Configurações';
+    ICPConfigModal.static.actions = [
+      {action: 'save', label: 'Save', flags: 'primary'},
+      {label: 'Cancel', flags: 'close'}
+    ];
+    if (this.sendFeedbackEnabled) ICPConfigModal.static.actions.push({label: 'Enviar feedback', action: 'feedback'});
+    
+    ICPConfigModal.prototype.initialize = function() {
+      ICPConfigModal.super.prototype.initialize.apply(this, arguments);
+      var configModal = "<form name='config_form'><p><label>Abrir Interface de Criação de Páginas sempre que iniciar nova página."+
+      "<input type='checkbox' name='default_action' checked /></label></p></form>"+
+      '<p><a href="https://starwars.fandom.com/pt/wiki/Star_Wars_Wiki%3AInterface_de_Cria%C3%A7%C3%A3o_de_P%C3%A1ginas" target="_blank">Sobre a ICP</a> - versão '+instance.version+' ('+ICPversion+')</p>';
+      this.content = new OO.ui.PanelLayout({padded: true, expanded: false});
+      this.content.$element.append(configModal);
+      this.$body.append(this.content.$element);
+    };
+
+    ICPConfigModal.prototype.getActionProcess = function(action) {
+      var dialog = this;
+      if (action) {
+        instance._handleConfigModalAction(action);
+        return new OO.ui.Process(function () {
+          dialog.close({action: action});
+        });
+      }
+      return ICPConfigModal.super.prototype.getActionProcess.call(this, action);
+    };
+    
+    this.windowManager = new OO.ui.WindowManager();
+    $(document.body).append(this.windowManager.$element);
+    
+    this.configModal = new ICPConfigModal({id: "ICPConfigModal", size: "larger"});
+    this.windowManager.addWindows([this.configModal]);
+  }
+
+  ICP.prototype._handleConfigModalAction = function(action) {
+    if (action == "save") {
+      var formRes = $('form[name="config_form"]').serialize();
+      var settingsObj = {};
+      if (formRes.search("default_action") > -1)
+        settingsObj.default_action = 1;
+      else
+        settingsObj.default_action = 0;
+      localStorage.ICPsettings = JSON.stringify(settingsObj);
+      alert("Alterações salvas!");
+    } else if (action == "feedback") {
+      var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
+      if (feedbackTxt) {
+        instance.userActions.msgFeedback = feedbackTxt;
+        instance.sendFeedback();
+        alert("Obrigado!");
+      }
+    }
+  }
 
   ICP.prototype.buildProgressBar = function() {
     var instance = this;
