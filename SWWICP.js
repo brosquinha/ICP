@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.0.1';
+    var ICPversion = '3.1.0-beta.0';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -613,8 +613,7 @@ var SWWICP = (function($) {
         this.appendButtonToModalBody("Ok, vamos lá").then(function(button) {
           instance._finish = function() {
             ICP.prototype._finish.call(instance);
-            ve.ui.commandRegistry.registry["meta/categories"].execute(instance.VESurface);
-            //For UCP, VESurface.executeCommand("meta/categories") can replace this
+            instance.VESurface.executeCommand("meta/categories");
             // For some reason, if the user clicks on "Cancel" on VE's categories modal,
             // the inserted articleWikitext is removed. As such, this little hack will
             // invoke this VE modal only after articleWikitext is successfully inserted
