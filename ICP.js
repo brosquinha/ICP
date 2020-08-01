@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.0-beta.0';
+  var ICPversion = '2.0.0-beta.1';
 
   /**
    * ICP framework class
@@ -716,14 +716,21 @@ var ICP = (function($) {
     if (this.VESurface.mode == "visual") {
       //Visual Editor
       //TODO ensure that mw.libs.ve is avaliable beforehand
-      mw.libs.ve.targetLoader.requestParsoidData(this.articleTitle, {wikitext: articleWikitext}).then(function(data) {
-        instance._finish();
-        instance.VESurface.getView().focus();
-        var wikiDocument = new DOMParser().parseFromString(data.visualeditor.content, "text/html");
-        var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
-        instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
-      });
       this.updateModalBody("<p>Carregando suas edições...</p>");
+      mw.libs.ve.targetLoader.requestParsoidData(this.articleTitle, {wikitext: articleWikitext}).then(function(data) {
+        try {
+          instance.VESurface.getView().focus();
+          var wikiDocument = new DOMParser().parseFromString(data.visualeditor.content, "text/html");
+          var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
+          instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
+          instance._finish();
+        } catch (e) {
+          instance.userActions.errors.push(e.toString());
+          instance._handleFinishEditError(articleWikitext);
+        }
+      }).fail(function() {
+        instance._handleFinishEditError(articleWikitext, true);
+      });
     } else {
       //Source editor and WYSIWYG editor
       this._finish();
@@ -737,6 +744,32 @@ var ICP = (function($) {
     if (this.sendFeedbackEnabled) this.sendFeedback();
     if (this.wysiwyg === true) this.changeSourceToWys();
   };
+
+  ICP.prototype._handleFinishEditError = function(articleWikitext, retryable) {
+    var instance = this;
+    var container = document.createElement("div");
+    var paragraph = document.createElement("p");
+    paragraph.innerText = "Houve um erro na inserção automática de suas contribuições no Editor Visual. ";
+    paragraph.innerText += "Para completar sua edição, copie o wikitexto a seguir e insira-no no modo fonte:";
+    container.appendChild(paragraph);
+
+    var textarea = document.createElement("textarea");
+    textarea.readOnly = true;
+    textarea.style.width = "100%";
+    textarea.style.height = "500px";
+    textarea.value = articleWikitext;
+    container.appendChild(textarea);
+
+    this.updateModalBody(container);
+    this.appendButtonToModalBody("OK").then(function() {
+      instance._finish();
+    });
+    if (retryable) {
+      this.appendButtonToModalBody("Tentar novamente").then(function() {
+        instance.finishEdit();
+      });
+    }
+  }
 
   ICP.prototype.encodeURL = function(txt) {
     return encodeURI(txt.replace(/ /g, "_"));
