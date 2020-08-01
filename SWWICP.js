@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.0-beta.1';
+    var ICPversion = '3.1.0-beta.2';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -615,16 +615,9 @@ var SWWICP = (function($) {
       var instance = this;
       this.updateModalTitle("Passo 5: Categorias");
       var modalContent = '<p>Para finalizar, categorize o artigo. Lembre-se de não ser reduntante: se categorizar '+
-      'o artigo como "Mestre Jedi", por exemplo, NÃO o categorize como "Jedi".</p>';
+      'o artigo como "Mestre Jedi", por exemplo, <b>NÃO</b> o categorize como "Jedi".</p>';
       this.userActions.categorias = true;
-      if (window.wgAction == 'edit') {
-        this.updateModalBody(modalContent);
-        $("div [data-id='categories']").appendTo("#CuratedContentToolModal section");
-        this.appendButtonToModalBody("Terminei").then(function(button) {
-          $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-          dfd.resolve();
-        });
-      } else {
+      if (this.VESurface.mode == "visual") {
         //For VE, we'll simply redirect user to VE's categories interface
         modalContent += '<p>Para isso, escreva as categorias na caixa "Adicionar uma categoria". '+
         'Quando terminar, clique no botão "Aplicar".</p>';
@@ -639,15 +632,19 @@ var SWWICP = (function($) {
           }
           dfd.resolve();
         });
+      } else {
+        // Since VE's sorce mode does not have meta/categories enabled, let's just explain
+        // how to add categories using plain wikitext
+        modalContent += '<p>Para isso, escreva nos final do artigo as categorias da seguinte forma:</p>'+
+        '<p><code>[['+'Categoria:Exemplo]]</code></p>';
+        this.updateModalBody(modalContent);
+        this.appendButtonToModalBody("Ok, vamos lá").then(function(button) {
+          dfd.resolve();
+        });
       }
       return dfd.promise();
     };
 
-    //TODO write Selenium tests to ensure that categories div returns to its place
-    StarWarsWiki.prototype.categoriesInsertion.__exit__ = function() {
-      $("div [data-id='categories']").insertAfter("div [data-id='insert']");
-    };
-  
     // importArticles({
     //   type: 'script',
     //   article: 'u:dev:MediaWiki:ICP.js'
