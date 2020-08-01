@@ -5,14 +5,14 @@
  * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 0.1.0
+ * @version 1.0.1
  * @description Page Creation Interface framework
  * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.0';
+  var ICPversion = '1.0.1';
 
   /**
    * ICP framework class
@@ -709,7 +709,7 @@ var ICP = (function($) {
       //Source editor and WYSIWYG editor
       if ($("[id=wpTextbox1]").length > 1) //There may be two textareas with id=wpTextbox1 🤷
         $('#wpTextbox1').attr('id', 'wpTextbox0');
-      var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
+      var theTextarea = ($('#cke_1_contents textarea')[0] || $('#wpTextbox1')[0]);
 
       var hasStandardLayout = theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0;
       if (this.replaceArticleWikitext || (this.replaceFandomStandardLayout && hasStandardLayout))

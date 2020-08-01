@@ -44,7 +44,7 @@ class TestICPSource(ICPTestSuite):
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal div.CategorySelect input")
 
         self.support.skip_step_4()
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|canon|legends}}", textarea_value)
         self.assertIn("{{Personagem infobox\n|nome = Teste\n", textarea_value)
         self.assertIn("== Notas e referências ==\n", textarea_value)
@@ -87,7 +87,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|canon}}", textarea_value)
 
     def test_eras_only_legends(self):
@@ -102,7 +102,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|legends}}", textarea_value)
 
     def test_eras_both_legends_and_canon(self):
@@ -117,7 +117,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|legends|canon}}", textarea_value)
 
     def test_out_universe_canon_article(self):
@@ -131,7 +131,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|canon|real}}", textarea_value)
 
     def test_out_universe_legends_article(self):
@@ -145,7 +145,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|legends|real}}", textarea_value)
 
     def test_out_universe_no_universe_article(self):
@@ -159,7 +159,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|real}}", textarea_value)
 
     def test_infobox_personagem_generation(self):
@@ -183,7 +183,7 @@ class TestICPSource(ICPTestSuite):
 
         self.support.skip_step_3()
         self.support.skip_step_4()
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
 
         excepted = textwrap.dedent("""\
         {{Personagem infobox
@@ -238,7 +238,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_2()
         self.support.skip_step_3()
         self.support.skip_step_4()
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{%s" % chosen_infobox, wikitext)
 
     def test_real_world_infobox_skips_step_1(self):
@@ -331,7 +331,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
         self.assertIn("\n== Aparições ==\n", wikitext)
         self.assertIn("\n*{{Filme|III}}", wikitext)
         self.assertNotIn("*[[Star Wars: Episode III Revenge of the Sith|", wikitext)
@@ -353,7 +353,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
         self.assertIn("\n== Aparições ==\n", wikitext)
         self.assertIn("\n*{{Filme|III}}", wikitext)
         self.assertNotIn("*[[Star Wars: Episode III Revenge of the Sith|", wikitext)
@@ -380,7 +380,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
         self.assertIn("\n== Bibliografia ==\n", wikitext)
         self.assertIn("{{ICPDisclaimer}}{{Interlang\n|en=Dave Filoni\n", wikitext)
     
@@ -441,7 +441,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_source_textarea_value()
+        wikitext = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|canon}}", wikitext)
         self.assertNotIn("{{Eras|canon|legends}}", wikitext)
         self.assertIn("{{Planeta\n", wikitext)

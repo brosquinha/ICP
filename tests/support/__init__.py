@@ -98,6 +98,9 @@ class Support():
     def get_source_textarea_value(self):
         return self.driver.find_element_by_id("wpTextbox1").get_attribute('value')
 
+    def get_wysiwyg_textarea_value(self):
+        return self.driver.find_element_by_css_selector("#cke_1_contents textarea").get_attribute('value')
+
     def get_infobox_textareas(self):
         return self.driver.find_elements_by_css_selector("aside textarea")
 
