@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.0-beta.0';
+    var ICPversion = '3.1.0-beta.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -369,38 +369,57 @@ var SWWICP = (function($) {
   
     //Step2 helper: buttons and callbacks
     StarWarsWiki.prototype._infoboxButtonsCallbacks = function() {
+      window.isAlt = false;
       var instance = this;
+      
+      this._currentTextarea = {};
+      $("aside textarea").focus(function() {
+        instance._currentTextarea = this;
+      });
+      
       this.userActions.usageOfNewButtons = 0;
-      // if (typeof mw.toolbar === "undefined") //For VE
-      //   importScriptURI("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1508417393-20171019T123000Z/jquery.textSelection%7Cmediawiki.action.edit");
-      if (this.isCanonNamespace)
-      {
-        $("#linkButton").click(function() {
-          mw.toolbar.insertTags("[[", "]]", "Exemplo", 0);
-          instance.userActions.usageOfNewButtons += 1;
-        });
+      var linkMarkupStart, linkMarkupEnd;
+      if (this.isCanonNamespace) {
+        linkMarkupStart = "[[";
+        linkMarkupEnd = "]]";
+      } else {
+        linkMarkupStart = "{{"+"SUBST:L|";
+        linkMarkupEnd = "}}";
       }
-      else
-      {
-        $("#linkButton").click(function() {
-          mw.toolbar.insertTags("{{"+"SUBST:L|", "}}", "Exemplo", 0);
-          instance.userActions.usageOfNewButtons += 1;
-        });
-      }
-      $("#refButton").click(function() {
-        mw.toolbar.insertTags('<ref name="NOME">', "</ref>", "Exemplo", 0);
+
+      $("#linkButton").click(function() {
+        instance._insertTags(linkMarkupStart, linkMarkupEnd);
         instance.userActions.usageOfNewButtons += 1;
       });
-      $("img.mw-toolbar-editbutton[title='Legends link']").attr('accesskey', '');
+      $("#refButton").click(function() {
+        instance._insertTags('<ref name="NOME">', "</ref>");
+        instance.userActions.usageOfNewButtons += 1;
+      });
       $("#CuratedContentToolModal").keyup(function (e) {
-        if(e.which == 18) SWWICP.isAlt = false;
+        if(e.which == 18) window.isAlt = false;
       }).keydown(function (e) {
-        if(e.which == 18) SWWICP.isAlt = true;
-        if(e.which == 76 && SWWICP.isAlt == true) {
-          mw.toolbar.insertTags('{{'+'SUBST:L|', "}}", "Exemplo", 0);
+        if(e.which == 18) window.isAlt = true;
+        if(e.which == 76 && window.isAlt == true) {
+          instance._insertTags('{{'+'SUBST:L|', "}}");
           return false;
         }
       });
+    };
+
+    StarWarsWiki.prototype._insertTags = function(startTag, endTag) {
+      var selectedElement = this._currentTextarea;
+      var selectionStart = selectedElement.selectionStart;
+      var selectionEnd = selectedElement.selectionEnd;
+
+      var textBefore = selectedElement.value.substr(0, selectionStart);
+      var textSelected = selectedElement.value.substr(selectionStart, (selectionEnd - selectionStart)) || "Exemplo";
+      var textAfter = selectedElement.value.substr(selectionEnd);
+      
+      selectedElement.value = textBefore + startTag + textSelected + endTag + textAfter;
+
+      var selectionIndex = (textBefore + startTag).length;
+      selectedElement.focus();
+      selectedElement.setSelectionRange(selectionIndex, (selectionIndex + textSelected.length));
     };
   
     //Step3: Insert interlang links
