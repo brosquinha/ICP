@@ -2,22 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Module: ICP</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ICP - Documentation</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
     <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
     <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
 </head>
-
 <body>
 
-<div id="main">
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
 
-    <h1 class="page-title">Module: ICP</h1>
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Modules</li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-extend.html">extend</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-ICP.html">ICP</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#ajaxGet">ajaxGet</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#apiGet">apiGet</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#apiGetPageContents">apiGetPageContents</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#controller">controller</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#errorHandler">errorHandler</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#forceMwApiLoad">forceMwApiLoad</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#isMainNamespace">isMainNamespace</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#isNewArticle">isNewArticle</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ICP.html#isSpecialCreatePage">isSpecialCreatePage</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-ModalInfobox.html">ModalInfobox</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ModalInfobox.html#addInfoboxField">addInfoboxField</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ModalInfobox.html#addInfoboxFieldSelect">addInfoboxFieldSelect</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ModalInfobox.html#getContent">getContent</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ModalInfobox.html#getInfoboxRoot">getInfoboxRoot</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-ModalInfobox.html#getValues">getValues</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-StepWikitext.html">StepWikitext</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-StepWikitext.html#append">append</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-StepWikitext.html#get">get</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-StepWikitext.html#reset">reset</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-member">M</span><span class="nav-item-name"><a href="global.html#ICP">ICP</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">ICP</h1>
+    
 
     
 
@@ -43,14 +56,7 @@
 
         
             
-
-
-
-
-
-
-
-
+<div class="section-method">
 
 
 
@@ -117,6 +123,10 @@
 
 
 
+
+
+
+</div>
         
     
     </div>
@@ -127,9 +137,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -140,12 +148,11 @@
 
         
             
+<div class="section-method">
 
     
 
-    
     <h4 class="name" id="ajaxGet"><span class="type-signature"></span>ajaxGet<span class="signature">(url, successCallback, errorCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -154,137 +161,6 @@
 <div class="description">
     Peforms a GET request on given URL
 </div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>url</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">URL to be called</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>successCallback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Success callback</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>errorCallback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Error callback</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
 
 
 
@@ -338,42 +214,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="apiGet"><span class="type-signature"></span>apiGet<span class="signature">(options, successCallback, errorCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Peforms a MediaWiki API get request with given parameters
-</div>
-
-
-
-
-
-
-
-
-
     <h5>Parameters:</h5>
     
 
@@ -401,13 +241,13 @@
 
         <tr>
             
-                <td class="name"><code>options</code></td>
+                <td class="name"><code>url</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type"><code>String</code></span>
 
 
             
@@ -425,7 +265,10 @@
 
             
 
-            <td class="description last">MediaWiki API options</td>
+            <td class="description last">
+                URL to be called
+                
+            </td>
         </tr>
 
     
@@ -438,7 +281,7 @@
             <td class="type">
             
                 
-<span class="param-type">function</span>
+<span class="param-type"><code>function</code></span>
 
 
             
@@ -456,7 +299,10 @@
 
             
 
-            <td class="description last">Success callback</td>
+            <td class="description last">
+                Success callback
+                
+            </td>
         </tr>
 
     
@@ -469,7 +315,7 @@
             <td class="type">
             
                 
-<span class="param-type">function</span>
+<span class="param-type"><code>function</code></span>
 
 
             
@@ -489,13 +335,47 @@
 
             
 
-            <td class="description last">Error callback</td>
+            <td class="description last">
+                Error callback
+                
+            </td>
         </tr>
 
     
     </tbody>
 </table>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="apiGet"><span class="type-signature"></span>apiGet<span class="signature">(options, successCallback, errorCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    Peforms a MediaWiki API get request with given parameters
+</div>
 
 
 
@@ -549,42 +429,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="apiGetPageContents"><span class="type-signature"></span>apiGetPageContents<span class="signature">(pagename)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Gets given article's wikitext content
-</div>
-
-
-
-
-
-
-
-
-
     <h5>Parameters:</h5>
     
 
@@ -598,6 +442,8 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -610,29 +456,141 @@
 
         <tr>
             
-                <td class="name"><code>pagename</code></td>
+                <td class="name"><code>options</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type"><code>Object</code></span>
 
 
             
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last">Wiki article title</td>
+            <td class="description last">
+                MediaWiki API options
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>successCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                Success callback
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>errorCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                Error callback
+                
+            </td>
         </tr>
 
     
     </tbody>
 </table>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="apiGetPageContents"><span class="type-signature"></span>apiGetPageContents<span class="signature">(pagename)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Gets given article's wikitext content
+</div>
 
 
 
@@ -686,64 +644,6 @@
 
 
 
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Success callback or rejected when page is not found
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="controller"><span class="type-signature"></span>controller<span class="signature">(steps, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    ICP logic flow manager
-</div>
-
-
-
-
-
-
-
-
-
     <h5>Parameters:</h5>
     
 
@@ -757,8 +657,6 @@
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -771,124 +669,25 @@
 
         <tr>
             
-                <td class="name"><code>steps</code></td>
+                <td class="name"><code>pagename</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;function()></span>
+<span class="param-type"><code>String</code></span>
 
 
             
             </td>
 
             
-                <td class="attributes">
+
+            
+
+            <td class="description last">
+                Wiki article title
                 
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">ICP steps functions</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">ICP flow options
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>anon</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Whether to confirm anons intention before proceeding</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
             </td>
         </tr>
 
@@ -896,6 +695,62 @@
     </tbody>
 </table>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+<dl class="param-type">
+    <dt>
+        Type:
+    </dt>
+    <dd>
+        
+<span class="param-type"><code>Promise</code></span>
+
+
+    </dd>
+</dl>
+
+
+<div class="param-desc">
+    Success callback or rejected when page is not found
+</div>
+
+    
+</div>
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="controller"><span class="type-signature"></span>controller<span class="signature">(steps, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    ICP logic flow manager
+</div>
 
 
 
@@ -949,44 +804,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="errorHandler"><span class="type-signature"></span>errorHandler<span class="signature">(fn)</span><span class="type-signature"> &rarr; {function}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Wraps a given function in order to handle any untreated exceptions
-
-Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window-onerror
-</div>
-
-
-
-
-
-
-
-
-
     <h5>Parameters:</h5>
     
 
@@ -1000,6 +817,8 @@ Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -1012,29 +831,172 @@ Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window
 
         <tr>
             
-                <td class="name"><code>fn</code></td>
+                <td class="name"><code>steps</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">function</span>
+<span class="param-type"><code>Array.&lt;function()></code></span>
 
 
             
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last">Function to be wrapped</td>
+            <td class="description last">
+                ICP steps functions
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>Object</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                ICP flow options
+                
+                    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>anon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>Boolean</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                Whether to confirm anons intention before proceeding
+                
+            </td>
         </tr>
 
     
     </tbody>
 </table>
 
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="errorHandler"><span class="type-signature"></span>errorHandler<span class="signature">(fn)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Wraps a given function in order to handle any untreated exceptions
+
+Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window-onerror
+</div>
 
 
 
@@ -1088,47 +1050,105 @@ Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window
 
 
 
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>fn</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                Function to be wrapped
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+<div class="section-returns">
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    Wrapped function
-</div>
 
-
-
-<dl>
+<dl class="param-type">
     <dt>
-        Type
+        Type:
     </dt>
     <dd>
         
-<span class="param-type">function</span>
+<span class="param-type"><code>function</code></span>
 
 
     </dd>
 </dl>
 
+
+<div class="param-desc">
+    Wrapped function
+</div>
+
     
+</div>
 
 
 
-
-
+</div>
         
             
+<div class="section-method">
 
     
 
-    
     <h4 class="name" id="forceMwApiLoad"><span class="type-signature"></span>forceMwApiLoad<span class="signature">()</span><span class="type-signature"></span></h4>
-    
 
     
 
@@ -1142,14 +1162,6 @@ because mediawiki.api would get stuck at "loading" status. This forces mw.Api
 to load by calling it directly, bypassing any cache or mw.loader controll.
 With any luck, this should not happen in production.
 </div>
-
-
-
-
-
-
-
-
 
 
 
@@ -1214,14 +1226,17 @@ With any luck, this should not happen in production.
 
 
 
+
+
+
+</div>
         
             
+<div class="section-method">
 
     
 
-    
     <h4 class="name" id="isMainNamespace"><span class="type-signature"></span>isMainNamespace<span class="signature">()</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
-    
 
     
 
@@ -1230,14 +1245,6 @@ With any luck, this should not happen in production.
 <div class="description">
     Checks if current page belongs to main namespace (ns 0)
 </div>
-
-
-
-
-
-
-
-
 
 
 
@@ -1297,41 +1304,47 @@ With any luck, this should not happen in production.
 
 
 
+
+
+
+
+
+
+<div class="section-returns">
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    True if current namespace is 0
-</div>
 
-
-
-<dl>
+<dl class="param-type">
     <dt>
-        Type
+        Type:
     </dt>
     <dd>
         
-<span class="param-type">Boolean</span>
+<span class="param-type"><code>Boolean</code></span>
 
 
     </dd>
 </dl>
 
+
+<div class="param-desc">
+    True if current namespace is 0
+</div>
+
     
+</div>
 
 
 
-
-
+</div>
         
             
+<div class="section-method">
 
     
 
-    
     <h4 class="name" id="isNewArticle"><span class="type-signature"></span>isNewArticle<span class="signature">()</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
-    
 
     
 
@@ -1340,14 +1353,6 @@ With any luck, this should not happen in production.
 <div class="description">
     Checks if current page is a new article
 </div>
-
-
-
-
-
-
-
-
 
 
 
@@ -1407,41 +1412,47 @@ With any luck, this should not happen in production.
 
 
 
+
+
+
+
+
+
+<div class="section-returns">
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    True if current article is new
-</div>
 
-
-
-<dl>
+<dl class="param-type">
     <dt>
-        Type
+        Type:
     </dt>
     <dd>
         
-<span class="param-type">Boolean</span>
+<span class="param-type"><code>Boolean</code></span>
 
 
     </dd>
 </dl>
 
+
+<div class="param-desc">
+    True if current article is new
+</div>
+
     
+</div>
 
 
 
-
-
+</div>
         
             
+<div class="section-method">
 
     
 
-    
     <h4 class="name" id="isSpecialCreatePage"><span class="type-signature"></span>isSpecialCreatePage<span class="signature">()</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
-    
 
     
 
@@ -1450,14 +1461,6 @@ With any luck, this should not happen in production.
 <div class="description">
     Checks if current page is Special:CreatePage
 </div>
-
-
-
-
-
-
-
-
 
 
 
@@ -1517,33 +1520,40 @@ With any luck, this should not happen in production.
 
 
 
+
+
+
+
+
+
+<div class="section-returns">
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    True if current page is Special:CreatePage
-</div>
 
-
-
-<dl>
+<dl class="param-type">
     <dt>
-        Type
+        Type:
     </dt>
     <dd>
         
-<span class="param-type">Boolean</span>
+<span class="param-type"><code>Boolean</code></span>
 
 
     </dd>
 </dl>
 
+
+<div class="param-desc">
+    True if current page is Special:CreatePage
+</div>
+
     
+</div>
 
 
 
-
-
+</div>
         
     
 
@@ -1559,17 +1569,13 @@ With any luck, this should not happen in production.
 
 </div>
 
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-extend.html">extend</a></li><li><a href="module-ICP.html">ICP</a></li><li><a href="module-ModalInfobox.html">ModalInfobox</a></li><li><a href="module-StepWikitext.html">StepWikitext</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ICP">ICP</a></li></ul>
-</nav>
-
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Sun Aug 02 2020 19:05:08 GMT-0300 (Horário Padrão de Brasília)
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> on Sun Aug 02 2020 19:16:49 GMT-0300 (Horário Padrão de Brasília) using the Minami theme.
 </footer>
 
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
 </body>
 </html>
