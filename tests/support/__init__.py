@@ -1,5 +1,6 @@
 import os
 import re
+from time import sleep
 from unittest import TestCase
 
 from selenium import webdriver
@@ -52,6 +53,11 @@ class Support():
         WebDriverWait(self.driver, 5).until(
             lambda d: d.find_element_by_css_selector("#ICPVersion").get_attribute('textContent') == self.get_new_icp_version(icp_content)
         )
+
+    def wait_for_ve(self):
+        WebDriverWait(self.driver, 15).until(
+            lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
+        )
     
     def get_legends_article(self, icp_content):
         self.driver.get("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
@@ -64,6 +70,7 @@ class Support():
             "#ICPNewArticleGrid div[data-tipo='Personagem infobox']").click()
 
     def skip_step_1(self):
+        sleep(0.5)
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button").click()
 
     def skip_step_2(self):
