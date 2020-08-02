@@ -7,21 +7,10 @@
 * 
 * GitHub repository: https://github.com/brosquinha/ICP
 */
-/**
- * Release notes to Fandom staff:
- * 
- * Creates SWWICP module
- * 
- * This module is responsible for holding all of Star Wars Wiki em Português'
- * logic of page creation. As such, it will inherit a generic ICP class
- * that will be replacing current MediaWiki:ICP.js as soon as this script
- * is approved. If you require ICP class to fully understand this script, please
- * refer to https://github.com/brosquinha/ICP/blob/refactor/ICP.js
- */
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.0.1.beta.1';
+    var ICPversion = '3.0.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
