@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1.beta.5';
+  var ICPversion = '1.0.1.beta.6';
 
   /**
    * ICP framework class
@@ -716,13 +716,13 @@ var ICP = (function($) {
       else
         theTextarea.value += articleWikitext;
       this._finish();
-      if (this.wysiwyg === true) this.changeSourceToWys();
     }
   };
 
   ICP.prototype._finish = function() {
     $("#blackout_CuratedContentToolModal").removeClass('visible');
     if (this.sendFeedbackEnabled) this.sendFeedback();
+    if (this.wysiwyg === true) this.changeSourceToWys();
   };
 
   ICP.prototype.encodeURL = function(txt) {
