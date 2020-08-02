@@ -301,7 +301,8 @@ var ICP = (function($) {
     var instance = this;
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
-      if (instance.closeFeedbackEnabled)
+      var shouldAskForCloseFeedback = instance.closeFeedbackEnabled && instance.userActions.stepsExecuted.length > 1;
+      if (shouldAskForCloseFeedback)
         instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
       instance._finish();
     });
