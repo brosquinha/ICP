@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1.beta.4';
+  var ICPversion = '1.0.1.beta.5';
 
   /**
    * ICP framework class
@@ -742,8 +742,16 @@ var ICP = (function($) {
   ICP.prototype._handleWysiwygEditor = function() {
     var instance = this;
     if (window.CKEDITOR) {
-      window.CKEDITOR.on('load', setTimeout(function() { instance.changeWysToSource() }, 3000));
+      var interval = setInterval(function() {
+        if (!(window.CKEDITOR.instances && window.CKEDITOR.instances.wpTextbox1))
+          return;
+        if (window.CKEDITOR.instances.wpTextbox1.mode != "source")
+          return instance.changeWysToSource();
+        clearInterval(interval);
+        console.debug("CKEditor on mode: "+window.CKEDITOR.instances.mode);
+      }, 500);
     }
+    // window.CKEDITOR.on('load', function() {}) didn't seem to work consistently
   };
 
   ICP.prototype._collectInitialMetrics = function() {
