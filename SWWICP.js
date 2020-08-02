@@ -21,7 +21,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.0.1';
+    var ICPversion = '3.0.1.beta.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -37,6 +37,7 @@ var SWWICP = (function($) {
       this.infoboxObj = {};
       this.isCanonNamespace = false;
       this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
+      this.anonMessage = true;
       this.sendFeedbackEnabled = true;
       this.closeFeedbackEnabled = true;
       this.wikitextAutoReset = true;
@@ -262,7 +263,6 @@ var SWWICP = (function($) {
           dfd.resolve();
         }));
       }
-      this.changeWysToSource();
       return dfd.promise();
     };
   

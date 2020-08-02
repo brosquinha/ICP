@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1';
+  var ICPversion = '1.0.1.beta.1';
 
   /**
    * ICP framework class
@@ -28,6 +28,7 @@ var ICP = (function($) {
     this.userActions = {};
     this.mwApi = null;
     this.VESurface = null;
+    this.anonMessage = true;
     this.sendFeedbackEnabled = false;
     this.closeFeedbackEnabled = false;
     this.wikitextAutoReset = true;
@@ -163,16 +164,12 @@ var ICP = (function($) {
 
   /**
    * ICP logic flow manager
-   * 
-   * @param {Function[]} steps ICP steps functions
-   * @param {Object} [options] ICP flow options
-   * @param {Boolean} [options.anon] Whether to confirm anons intention before proceeding
    */
-  ICP.prototype.controller = function(steps, options) {
-    options = options || {anon: true};
+  ICP.prototype.controller = function() {
+    var steps = this.getSteps();
     this.buildModal();
     this.buildProgressBar();
-    if (options.anon) steps.unshift(this.confirmAnon);
+    if (this.anonMessage) steps.unshift(this.confirmAnon);
     this._controller(steps);
   };
 
@@ -301,7 +298,8 @@ var ICP = (function($) {
     var instance = this;
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
-      var shouldAskForCloseFeedback = instance.closeFeedbackEnabled && instance.userActions.stepsExecuted.length > 1;
+      var minStepsLength = (instance.anonMessage) ? 1 : 0;
+      var shouldAskForCloseFeedback = instance.closeFeedbackEnabled && instance.userActions.stepsExecuted.length > minStepsLength;
       if (shouldAskForCloseFeedback)
         instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
       instance._finish();
@@ -732,21 +730,25 @@ var ICP = (function($) {
   };
 
   ICP.prototype.changeWysToSource = function() {
-    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
-    if (mw.config.get("wgAction") == 'edit' && window.CKEDITOR && window.CKEDITOR.instances.wpTextbox1.mode == "wysiwyg") {
-      window.CKEDITOR.tools.callFunction(56);
-      this.wysiwyg = true;
-      this.userActions.editor = "WYSIWYG";
-    }
+    window.CKEDITOR.tools.callFunction(56);
+    this.wysiwyg = true;
+    this.userActions.editor = "WYSIWYG";
   };
 
   ICP.prototype.changeSourceToWys = function() {
     setTimeout(function() { window.CKEDITOR.tools.callFunction(59) }, 1500);
   };
 
+  ICP.prototype._handleWysiwygEditor = function() {
+    if (window.CKEDITOR) {
+      window.CKEDITOR.on('load', this.changeWysToSource());
+    }
+  };
+
   ICP.prototype._collectInitialMetrics = function() {
     this.userActions.user = (mw.config.get("wgUserId") || false);
     this.userActions.page = mw.config.get("wgPageName");
+    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
     this.userActions.date = new Date();
     this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
     this.userActions.version = [ICPversion, this.version];
@@ -789,6 +791,7 @@ var ICP = (function($) {
       instance.VESurface = window.ve.init.target.getSurface();
     });
     this._collectInitialMetrics();
+    this._handleWysiwygEditor();
     if (!(this.shouldOpenICP())) return;
     if (this.isSpecialCreatePage()) {
       //TODO write Selenium tests for CreatePage entry point
@@ -805,18 +808,17 @@ var ICP = (function($) {
     }
 
     var ICPsettings = this._getICPSettings();
-    var SWWSteps = this.getSteps();
     if (ICPsettings.default_action === 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-      $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
+      $("#ICP_opener").click(function() {instance.controller() });
     } else {
       if (mw.config.get("wgAction") == 'edit')
-        this.controller(SWWSteps);
+        this.controller();
       if (mw.config.get("wgAction") == 'view')
         if (document.location.href.search("veaction=edit") >= 0)
-          this.controller(SWWSteps);
+          this.controller();
         else
-          $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
+          $("#ca-ve-edit").click(function() {instance.controller() });
     }
   };
 
