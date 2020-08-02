@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1.beta.2';
+  var ICPversion = '1.0.1.beta.4';
 
   /**
    * ICP framework class
@@ -740,8 +740,9 @@ var ICP = (function($) {
   };
 
   ICP.prototype._handleWysiwygEditor = function() {
+    var instance = this;
     if (window.CKEDITOR) {
-      window.CKEDITOR.on('load', this.changeWysToSource());
+      window.CKEDITOR.on('load', setTimeout(function() { instance.changeWysToSource() }, 3000));
     }
   };
 
