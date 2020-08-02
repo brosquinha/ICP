@@ -12,7 +12,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.1.beta.1';
+  var ICPversion = '1.0.1.beta.2';
 
   /**
    * ICP framework class
@@ -680,9 +680,9 @@ var ICP = (function($) {
   //Wrapping up
   ICP.prototype.finishEdit = function() {
     console.log(this.articleWikitext);
-    this.articleWikitext = this.articleWikitext.join("");
-    this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-    this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+    var articleWikitext = this.articleWikitext.join("");
+    articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+    articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
     this._currentStepExit();
     var instance = this;
     if (window.wgAction == "view") {
@@ -691,7 +691,7 @@ var ICP = (function($) {
         action: "visualeditor",
         paction: "parsefragment",
         page: this.articleName,
-        wikitext: this.articleWikitext
+        wikitext: articleWikitext
       }).then(function(data) {
         //For UCP, this may be replaced for https://doc.wikimedia.org/VisualEditor/master/#!/api/mw.libs.ve.targetLoader-method-requestParsoidData
         instance._finish();
@@ -700,7 +700,7 @@ var ICP = (function($) {
         var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
         instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
         //For UCP's source mode, the following should be enough:
-        // instance.VESurface.getModel().getFragment().insertContent(instance.articleWikitext);
+        // instance.VESurface.getModel().getFragment().insertContent(articleWikitext);
         //FYI, VESurface.mode == "visual" is the way to check for the mode
       });
       this.updateModalBody("<p>Carregando suas edições...</p>");
@@ -712,9 +712,9 @@ var ICP = (function($) {
 
       var hasStandardLayout = theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0;
       if (this.replaceArticleWikitext || (this.replaceFandomStandardLayout && hasStandardLayout))
-        theTextarea.value = this.articleWikitext;
+        theTextarea.value = articleWikitext;
       else
-        theTextarea.value += this.articleWikitext;
+        theTextarea.value += articleWikitext;
       this._finish();
       if (this.wysiwyg === true) this.changeSourceToWys();
     }
