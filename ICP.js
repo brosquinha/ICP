@@ -7,7 +7,6 @@
  * @author Thales César
  * @version 2.0.0
  * @description Page Creation Interface framework
- * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
@@ -16,6 +15,7 @@ var ICP = (function($) {
 
   /**
    * ICP framework class
+   * @exports ICP
    */
   var ICP = function() {
     this.version = ICPversion;
@@ -236,6 +236,7 @@ var ICP = (function($) {
    * 
    * @param {ICP} icp ICP instance
    * @param {Number} stepIndex Step index number
+   * @exports StepWikitext
    */
   var StepWikitext = function(icp, stepIndex) {
     this.icp = icp;
@@ -484,6 +485,7 @@ var ICP = (function($) {
    * @param {String} title Infobox's title
    * @param {Object} [options] Options
    * @param {String} [options.infoboxClassList] Infobox class list
+   * @exports ModalInfobox
    */
   var ModalInfobox = function(content, title, options) {
     options = options || {};
@@ -883,6 +885,7 @@ var ICP = (function($) {
    * Extends ICP subclass with its variables and functions
    * 
    * @param {ICP} module ICP subclass
+   * @exports extend
    */
   var extend = function(module) {
     module.prototype = $.extend({}, ICP.prototype, module.prototype);
