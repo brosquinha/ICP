@@ -10,7 +10,9 @@ Para testar a última versão beta da ICP, copie o seguinte código no console d
 ```javascript
 var ICPBeta = setInterval(function() {
   if (typeof SWWICP !== "undefined") {
-    importScriptURI("https://rawgit.com/brosquinha/ICP/beta/ICP.js");
+    $.getScript("https://rawgit.com/brosquinha/ICP/beta/ICP.js", function() {
+      $.getScript("https://rawgit.com/brosquinha/ICP/beta/SWWICP.js");
+    });
     clearInterval(ICPBeta);
   }
 }, 200);

@@ -7,21 +7,10 @@
 * 
 * GitHub repository: https://github.com/brosquinha/ICP
 */
-/**
- * Release notes to Fandom staff:
- * 
- * Creates SWWICP module
- * 
- * This module is responsible for holding all of Star Wars Wiki em Português'
- * logic of page creation. As such, it will inherit a generic ICP class
- * that will be replacing current MediaWiki:ICP.js as soon as this script
- * is approved. If you require ICP class to fully understand this script, please
- * refer to https://github.com/brosquinha/ICP/blob/refactor/ICP.js
- */
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.0.0';
+    var ICPversion = '3.0.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -37,6 +26,7 @@ var SWWICP = (function($) {
       this.infoboxObj = {};
       this.isCanonNamespace = false;
       this.infoboxesForTitle = ["Nave", "Filme", "Livro", "Livro de referência", "Quadrinhos", "Revista", "Série de quadrinhos", "Infobox TV", "Videogame"];
+      this.anonMessage = true;
       this.sendFeedbackEnabled = true;
       this.closeFeedbackEnabled = true;
       this.wikitextAutoReset = true;
@@ -262,7 +252,6 @@ var SWWICP = (function($) {
           dfd.resolve();
         }));
       }
-      this.changeWysToSource();
       return dfd.promise();
     };
   
@@ -622,9 +611,14 @@ var SWWICP = (function($) {
         'Quando terminar, clique no botão "Aplicar".</p>';
         this.updateModalBody(modalContent);
         this.appendButtonToModalBody("Ok, vamos lá").then(function(button) {
-          ve.ui.commandRegistry.registry["meta/categories"].execute(instance.VESurface);
-          //For UCP, VESurface.executeCommand("meta/categories") can replace this
-          
+          instance._finish = function() {
+            ICP.prototype._finish.call(instance);
+            ve.ui.commandRegistry.registry["meta/categories"].execute(instance.VESurface);
+            //For UCP, VESurface.executeCommand("meta/categories") can replace this
+            // For some reason, if the user clicks on "Cancel" on VE's categories modal,
+            // the inserted articleWikitext is removed. As such, this little hack will
+            // invoke this VE modal only after articleWikitext is successfully inserted
+          }
           dfd.resolve();
         });
       }

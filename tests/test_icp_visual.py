@@ -16,9 +16,7 @@ class TestICPVisual(ICPTestSuite):
         super().set_up("https://starwars.fandom.com/pt/wiki/Teste?veaction=edit")
 
     def test_icp_full_flow(self):
-        WebDriverWait(self.driver, 15).until(
-            lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
-        )
+        self.support.wait_for_ve()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
         )
@@ -63,9 +61,7 @@ class TestICPVisual(ICPTestSuite):
         self.assertEqual(self.driver.find_elements_by_css_selector("#WikiaArticle h2")[1].text, "Notas e referências")
 
     def test_add_categories(self):
-        WebDriverWait(self.driver, 15).until(
-            lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
-        )
+        self.support.wait_for_ve()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
         )
@@ -100,6 +96,32 @@ class TestICPVisual(ICPTestSuite):
         time.sleep(1)
         wikitext = self.driver.find_element_by_css_selector(".ve-ui-mwSaveDialog-viewer pre").text
         self.assertTrue(wikitext.endswith("[[Categoria:Machos]]"))
+
+    def test_cancel_categories(self):
+        self.support.wait_for_ve()
+        self.support.wait_for_icp()
+
+        self.support.skip_step_0()
+
+        self.support.skip_step_1()
+        self.support.wait_for_step_2_ready()
+
+        self.support.skip_step_2()
+
+        self.support.skip_step_3()
+
+        self.support.skip_step_4()
+        WebDriverWait(self.driver, 3).until(
+            lambda d: d.find_element_by_class_name("oo-ui-processDialog-location")
+        )
+        time.sleep(2)
+
+        self.driver.find_element_by_css_selector("div.oo-ui-processDialog-actions-safe .oo-ui-buttonElement-button").click()
+
+        time.sleep(2)
+        self.driver.find_element_by_id("title-eraicons")
+        self.driver.find_element_by_css_selector("#WikiaArticle aside.portable-infobox")
+        self.assertEqual(self.driver.find_elements_by_css_selector("#WikiaArticle h2")[1].text, "Notas e referências")
     
     @classmethod
     def tearDownClass(cls):

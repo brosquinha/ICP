@@ -5,14 +5,14 @@
  * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 0.1.0
+ * @version 1.0.1
  * @description Page Creation Interface framework
  * @exports ICP
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '1.0.0';
+  var ICPversion = '1.0.1';
 
   /**
    * ICP framework class
@@ -28,6 +28,7 @@ var ICP = (function($) {
     this.userActions = {};
     this.mwApi = null;
     this.VESurface = null;
+    this.anonMessage = true;
     this.sendFeedbackEnabled = false;
     this.closeFeedbackEnabled = false;
     this.wikitextAutoReset = true;
@@ -163,16 +164,12 @@ var ICP = (function($) {
 
   /**
    * ICP logic flow manager
-   * 
-   * @param {Function[]} steps ICP steps functions
-   * @param {Object} [options] ICP flow options
-   * @param {Boolean} [options.anon] Whether to confirm anons intention before proceeding
    */
-  ICP.prototype.controller = function(steps, options) {
-    options = options || {anon: true};
+  ICP.prototype.controller = function() {
+    var steps = this.getSteps();
     this.buildModal();
     this.buildProgressBar();
-    if (options.anon) steps.unshift(this.confirmAnon);
+    if (this.anonMessage) steps.unshift(this.confirmAnon);
     this._controller(steps);
   };
 
@@ -301,7 +298,9 @@ var ICP = (function($) {
     var instance = this;
     $("#CuratedContentToolModal span.close").click(function() {
       //Many people seem to leave in the middle of the process, so let's ask them why
-      if (instance.closeFeedbackEnabled)
+      var minStepsLength = (instance.anonMessage) ? 1 : 0;
+      var shouldAskForCloseFeedback = instance.closeFeedbackEnabled && instance.userActions.stepsExecuted.length > minStepsLength;
+      if (shouldAskForCloseFeedback)
         instance.userActions.closeFeedback = prompt("Por favor, nos ajude a deixar essa ferramenta ainda melhor. Diga-nos o motivo de estar abandonando o processo no meio.") || false;
       instance._finish();
     });
@@ -681,9 +680,9 @@ var ICP = (function($) {
   //Wrapping up
   ICP.prototype.finishEdit = function() {
     console.log(this.articleWikitext);
-    this.articleWikitext = this.articleWikitext.join("");
-    this.articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
-    this.articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
+    var articleWikitext = this.articleWikitext.join("");
+    articleWikitext += "\n\n"+"<!-- Artigo gerado pelo ICP -->";
+    articleWikitext += "\n<!-- Gerado às "+new Date().toString()+"-->";
     this._currentStepExit();
     var instance = this;
     if (window.wgAction == "view") {
@@ -692,7 +691,7 @@ var ICP = (function($) {
         action: "visualeditor",
         paction: "parsefragment",
         page: this.articleName,
-        wikitext: this.articleWikitext
+        wikitext: articleWikitext
       }).then(function(data) {
         //For UCP, this may be replaced for https://doc.wikimedia.org/VisualEditor/master/#!/api/mw.libs.ve.targetLoader-method-requestParsoidData
         instance._finish();
@@ -701,7 +700,7 @@ var ICP = (function($) {
         var VEDocument = ve.dm.converter.getModelFromDom(wikiDocument);
         instance.VESurface.getModel().getFragment().insertDocument(VEDocument);
         //For UCP's source mode, the following should be enough:
-        // instance.VESurface.getModel().getFragment().insertContent(instance.articleWikitext);
+        // instance.VESurface.getModel().getFragment().insertContent(articleWikitext);
         //FYI, VESurface.mode == "visual" is the way to check for the mode
       });
       this.updateModalBody("<p>Carregando suas edições...</p>");
@@ -709,21 +708,21 @@ var ICP = (function($) {
       //Source editor and WYSIWYG editor
       if ($("[id=wpTextbox1]").length > 1) //There may be two textareas with id=wpTextbox1 🤷
         $('#wpTextbox1').attr('id', 'wpTextbox0');
-      var theTextarea = ($('#cke_contents_wpTextbox1 textarea')[0] || $('#wpTextbox1')[0]);
+      var theTextarea = ($('#cke_1_contents textarea')[0] || $('#wpTextbox1')[0]);
 
       var hasStandardLayout = theTextarea.value.toLowerCase().search("\\[\\[file:placeholder") >= 0;
       if (this.replaceArticleWikitext || (this.replaceFandomStandardLayout && hasStandardLayout))
-        theTextarea.value = this.articleWikitext;
+        theTextarea.value = articleWikitext;
       else
-        theTextarea.value += this.articleWikitext;
+        theTextarea.value += articleWikitext;
       this._finish();
-      if (this.wysiwyg === true) this.changeSourceToWys();
     }
   };
 
   ICP.prototype._finish = function() {
     $("#blackout_CuratedContentToolModal").removeClass('visible');
     if (this.sendFeedbackEnabled) this.sendFeedback();
+    if (this.wysiwyg === true) this.changeSourceToWys();
   };
 
   ICP.prototype.encodeURL = function(txt) {
@@ -731,21 +730,34 @@ var ICP = (function($) {
   };
 
   ICP.prototype.changeWysToSource = function() {
-    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
-    if (mw.config.get("wgAction") == 'edit' && window.CKEDITOR && window.CKEDITOR.instances.wpTextbox1.mode == "wysiwyg") {
-      window.CKEDITOR.tools.callFunction(56);
-      this.wysiwyg = true;
-      this.userActions.editor = "WYSIWYG";
-    }
+    window.CKEDITOR.tools.callFunction(56);
+    this.wysiwyg = true;
+    this.userActions.editor = "WYSIWYG";
   };
 
   ICP.prototype.changeSourceToWys = function() {
     setTimeout(function() { window.CKEDITOR.tools.callFunction(59) }, 1500);
   };
 
+  ICP.prototype._handleWysiwygEditor = function() {
+    var instance = this;
+    if (window.CKEDITOR) {
+      var interval = setInterval(function() {
+        if (!(window.CKEDITOR.instances && window.CKEDITOR.instances.wpTextbox1))
+          return;
+        if (window.CKEDITOR.instances.wpTextbox1.mode != "source")
+          return instance.changeWysToSource();
+        clearInterval(interval);
+        console.debug("CKEditor on mode: "+window.CKEDITOR.instances.mode);
+      }, 500);
+    }
+    // window.CKEDITOR.on('load', function() {}) didn't seem to work consistently
+  };
+
   ICP.prototype._collectInitialMetrics = function() {
     this.userActions.user = (mw.config.get("wgUserId") || false);
     this.userActions.page = mw.config.get("wgPageName");
+    this.userActions.editor = (mw.config.get("wgAction") == 'edit') ? "source" : "VE";
     this.userActions.date = new Date();
     this.userActions.whereFrom = document.location.href; //So that I know if they're coming from redlinks, Special:CreatePage or other flows
     this.userActions.version = [ICPversion, this.version];
@@ -788,6 +800,7 @@ var ICP = (function($) {
       instance.VESurface = window.ve.init.target.getSurface();
     });
     this._collectInitialMetrics();
+    this._handleWysiwygEditor();
     if (!(this.shouldOpenICP())) return;
     if (this.isSpecialCreatePage()) {
       //TODO write Selenium tests for CreatePage entry point
@@ -804,18 +817,17 @@ var ICP = (function($) {
     }
 
     var ICPsettings = this._getICPSettings();
-    var SWWSteps = this.getSteps();
     if (ICPsettings.default_action === 0) {
       $("#WikiaBarWrapper ul.tools").append('<li id="ICP_opener"><a href="#">Int. Criação Página</a></li>');
-      $("#ICP_opener").click(function() {instance.controller(SWWSteps) });
+      $("#ICP_opener").click(function() {instance.controller() });
     } else {
       if (mw.config.get("wgAction") == 'edit')
-        this.controller(SWWSteps);
+        this.controller();
       if (mw.config.get("wgAction") == 'view')
         if (document.location.href.search("veaction=edit") >= 0)
-          this.controller(SWWSteps);
+          this.controller();
         else
-          $("#ca-ve-edit").click(function() {instance.controller(SWWSteps) });
+          $("#ca-ve-edit").click(function() {instance.controller() });
     }
   };
 

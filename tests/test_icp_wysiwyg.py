@@ -42,7 +42,7 @@ class TestICPWYSIWYG(ICPTestSuite):
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal div.CategorySelect input")
 
         self.support.skip_step_4()
-        textarea_value = self.support.get_source_textarea_value()
+        textarea_value = self.support.get_wysiwyg_textarea_value()
         self.assertIn("{{Eras|canon|legends}}", textarea_value)
         self.assertIn("{{Personagem infobox\n|nome = Teste\n", textarea_value)
         self.assertIn("== Notas e referências ==\n", textarea_value)
