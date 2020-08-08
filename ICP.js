@@ -312,10 +312,6 @@ var ICP = (function($) {
     $("#configuracoesICP").click(function () {
       instance.windowManager.openWindow(instance.configModal);
     });
-
-    $("#finalizarEdicao").click(function () {
-      this.finishEdit();
-    });
   };
 
   ICP.prototype._buildConfigModal = function() {
@@ -437,8 +433,6 @@ var ICP = (function($) {
    * @param {String|HTMLElement} content HTML content
    */
   ICP.prototype.updateModalBody = function(content) {
-    // this.icpModal.content.$element.html(content);
-    // $("#icpModalSection").html(content);
     $("#CuratedContentToolModal section").html(content);
   };
 
@@ -448,7 +442,6 @@ var ICP = (function($) {
    * @param {String} title Modal's title
    */
   ICP.prototype.updateModalTitle = function(title) {
-    // this.icpModal.title.setLabel(title);
     $("#CuratedContentToolModal header h3").text(title);
   };
 
@@ -777,31 +770,6 @@ var ICP = (function($) {
     return encodeURI(txt.replace(/ /g, "_"));
   };
 
-  ICP.prototype.changeWysToSource = function() {
-    window.CKEDITOR.tools.callFunction(56);
-    this.wysiwyg = true;
-    this.userActions.editor = "WYSIWYG";
-  };
-
-  ICP.prototype.changeSourceToWys = function() {
-    setTimeout(function() { window.CKEDITOR.tools.callFunction(59) }, 1500);
-  };
-
-  ICP.prototype._handleWysiwygEditor = function() {
-    var instance = this;
-    if (window.CKEDITOR) {
-      var interval = setInterval(function() {
-        if (!(window.CKEDITOR.instances && window.CKEDITOR.instances.wpTextbox1))
-          return;
-        if (window.CKEDITOR.instances.wpTextbox1.mode != "source")
-          return instance.changeWysToSource();
-        clearInterval(interval);
-        console.debug("CKEditor on mode: "+window.CKEDITOR.instances.mode);
-      }, 500);
-    }
-    // window.CKEDITOR.on('load', function() {}) didn't seem to work consistently
-  };
-
   ICP.prototype._collectInitialMetrics = function() {
     this.userActions.user = (mw.config.get("wgUserId") || false);
     this.userActions.page = mw.config.get("wgPageName");
@@ -846,9 +814,9 @@ var ICP = (function($) {
     });
     mw.hook("ve.activationComplete").add(function() {
       instance.VESurface = window.ve.init.target.getSurface();
+      instance.userActions.editor = instance.VESurface.mode;
     });
     this._collectInitialMetrics();
-    this._handleWysiwygEditor();
     if (!(this.shouldOpenICP())) return;
     if (this.isSpecialCreatePage()) {
       //TODO write Selenium tests for CreatePage entry point
