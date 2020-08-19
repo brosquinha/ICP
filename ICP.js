@@ -11,7 +11,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.0-beta.1';
+  var ICPversion = '2.0.0';
 
   /**
    * ICP framework class
