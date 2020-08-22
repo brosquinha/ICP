@@ -11,7 +11,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.1-beta.0';
+  var ICPversion = '2.0.1-beta.1';
 
   /**
    * ICP framework class
@@ -367,7 +367,7 @@ var ICP = (function($) {
         settingsObj.default_action = 1;
       else
         settingsObj.default_action = 0;
-      localStorage.ICPsettings = JSON.stringify(settingsObj);
+      mw.storage.set("ICPsettings", JSON.stringify(settingsObj));
       alert("Alterações salvas!");
     } else if (action == "feedback") {
       var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
@@ -784,14 +784,10 @@ var ICP = (function($) {
   };
 
   ICP.prototype._getICPSettings = function() {
-    var settings = {};
-    if (localStorage.ICPsettings) {
-      settings = JSON.parse(localStorage.ICPsettings);
-      this.userActions.ICPconfig = localStorage.ICPsettings;
-    } else {
-      settings.default_action = 1;
-      this.userActions.ICPconfig = false;
-    }
+    var defaultSettings = {default_action: 1};
+    var settingsRaw = (mw.storage && mw.storage.get("ICPsettings")) || JSON.stringify(defaultSettings);
+    var settings = JSON.parse(settingsRaw);
+    this.userActions.ICPconfig = settingsRaw;
     return settings;
   };
 
