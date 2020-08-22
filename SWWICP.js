@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.1-beta.0';
+    var ICPversion = '3.1.1-beta.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -123,7 +123,7 @@ var SWWICP = (function($) {
           $("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');
         }
         var chooseInfoboxTypeController = false;
-        this.appendButtonToModalBody("Pronto").then(this.errorHandler(function(button) {
+        this.appendButtonToModalBody("Pronto", {callback: this.errorHandler(function(button) {
           instance.infoboxName = $("#selecionarInfoboxCustom").val();
           if (instance.infoboxName === '' || chooseInfoboxTypeController === true)
             return;
@@ -169,7 +169,7 @@ var SWWICP = (function($) {
             }
             dfd.resolve();
           });
-        }));
+        })});
       }));
       return dfd.promise();
     };
