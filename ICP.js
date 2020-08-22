@@ -5,13 +5,13 @@
  * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 2.0.0
+ * @version 2.0.1
  * @description Page Creation Interface framework
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.0';
+  var ICPversion = '2.0.1-beta.0';
 
   /**
    * ICP framework class
@@ -274,8 +274,10 @@ var ICP = (function($) {
    * Builds ICP's modal
    */
   ICP.prototype.buildModal = function() {
-    if (document.getElementById("blackout_CuratedContentToolModal") != "null")
+    if (document.getElementById("blackout_CuratedContentToolModal") != "null") {
       $("#blackout_CuratedContentToolModal").remove();
+      $("#ICPConfigModal").remove();
+    }
     $('body').append('<div id="blackout_CuratedContentToolModal" class="wds-dialog__curtain curated-content-tool-modal__curtain" style="z-index:450">'
       +'<div id="CuratedContentToolModal" class="wds-dialog__wrapper no-scroll curated-content-tool-modal"'
           +' style="display: flex; flex-direction: column; max-width: 700px; width: 700px;">'
@@ -592,7 +594,7 @@ var ICP = (function($) {
    * @param {String} size CSS width
    */
   ICP.prototype.resizeModal = function(size) {
-    $("#CuratedContentToolModal").css('width', size || "");
+    $("#CuratedContentToolModal").css('width', size || "700px");
   };
 
   /**

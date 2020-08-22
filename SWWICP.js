@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.0';
+    var ICPversion = '3.1.1-beta.0';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -117,7 +117,7 @@ var SWWICP = (function($) {
       var modalContent = "<p>Selecione uma infobox para seu artigo</p>"+
       '<select id="selecionarInfoboxCustom"><option value>Escolher infobox</option></select>';
       this.updateModalBody(modalContent);
-      this.apiGetPageContents("Ajuda:Predefinições/Infobox").then(this.errorHandler(function(data) {
+      this.apiGetPageContents("Star Wars Wiki:Predefinições/Infobox").then(this.errorHandler(function(data) {
         var infoboxes = data.split("\n{{");
         for (var i=1; i<infoboxes.length; i++) {
           $("#selecionarInfoboxCustom").append('<option value="'+infoboxes[i].split("/preload")[0]+'">'+infoboxes[i].split("/preload")[0]+'</option>');

@@ -4,6 +4,7 @@ from time import sleep
 from unittest import TestCase
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -15,20 +16,19 @@ class ICPTestSuite(TestCase):
     def setUpClass(cls):
         chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
         cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
+        cls.support = Support(cls.driver)
         with open('ICP.js') as f:
-            cls.icp_content = f.read()
+            cls.support.icp_content = f.read()
         with open('SWWICP.js') as f:
-            cls.icp_content += f.read()
+            cls.support.swwicp_content = f.read()
 
     def setUp(self):
-        self.support = Support(self.driver)
+        pass
 
     def set_up(self, url):
         self.driver.implicitly_wait(3)
-        self.driver.get(url)
-        self.support.wait_for_icp()
-        self.driver.execute_script(self.icp_content)
-        self.support.wait_for_new_icp(self.icp_content)
+        self.support.get_url(url)
+        self.support.clear_localstorage()
 
     @classmethod
     def tearDownClass(cls):
@@ -41,29 +41,50 @@ class Support():
     def __init__(self, driver):
         self.driver = driver
     
-    def get_new_icp_version(self, icp_content):
-        return re.findall(r"var ICPversion = \'(.*)\'\;", icp_content)[0]
+    def get_new_icp_version(self):
+        return re.findall(r"var ICPversion = \'(.*)\'\;", self.icp_content)[0]
     
     def wait_for_icp(self):
         WebDriverWait(self.driver, 5).until(
             lambda d: len(d.find_elements_by_css_selector("#blackout_CuratedContentToolModal")) > 0
         )
     
-    def wait_for_new_icp(self, icp_content):
+    def load_new_icp(self):
+        self.driver.execute_script(self.icp_content)
+        sleep(0.2)
+        self.driver.execute_script(self.swwicp_content)
+    
+    def wait_for_new_icp(self):
+        sleep(0.2)
         WebDriverWait(self.driver, 5).until(
-            lambda d: d.find_element_by_css_selector("#ICPVersion").get_attribute('textContent') == self.get_new_icp_version(icp_content)
+            lambda d: d.find_element_by_css_selector("#ICPVersion").get_attribute('textContent') == self.get_new_icp_version()
         )
 
     def wait_for_ve(self):
+        try:
+            WebDriverWait(self.driver, 5).until(
+                lambda d: d.execute_script("return window.ve && ve.init && ve.init.target && ve.init.target.active")
+            )
+        except TimeoutException:
+            self.driver.refresh()
+    
+    def wait_for_old_ve(self):
         WebDriverWait(self.driver, 15).until(
             lambda d: d.find_element_by_class_name("ve-ui-wikia-anon-warning")
         )
     
-    def get_legends_article(self, icp_content):
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
+    def get_url(self, url):
+        self.driver.get(url)
+        self.wait_for_ve()
         self.wait_for_icp()
-        self.driver.execute_script(icp_content)
-        self.wait_for_new_icp(icp_content)
+        self.load_new_icp()
+        self.wait_for_new_icp()
+    
+    def get_legends_article(self):
+        self.get_url("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
+
+    def clear_localstorage(self):
+        self.driver.execute_script('localStorage.clear(); sessionStorage.clear()')
     
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
@@ -80,6 +101,7 @@ class Support():
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section button:nth-of-type(3)").click()
 
     def skip_step_4(self):
+        sleep(0.1)
         self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal button").click()
 
     def wait_for_step_2_ready(self):
@@ -105,8 +127,8 @@ class Support():
     def get_source_textarea_value(self):
         return self.driver.find_element_by_id("wpTextbox1").get_attribute('value')
 
-    def get_wysiwyg_textarea_value(self):
-        return self.driver.find_element_by_css_selector("#cke_1_contents textarea").get_attribute('value')
+    def get_ve_wikitext(self):
+        return self.driver.find_element_by_css_selector(".ve-ce-rootNode").text
 
     def get_infobox_textareas(self):
         return self.driver.find_elements_by_css_selector("aside textarea")

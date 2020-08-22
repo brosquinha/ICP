@@ -16,7 +16,7 @@ class TestICPSource(ICPTestSuite):
     def setUp(self):
         super().setUp()
         self.support.treat_eventual_alert()
-        super().set_up("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
+        super().set_up("https://starwars.fandom.com/pt/wiki/Teste?veaction=editsource")
 
     def test_icp_full_basic_flow(self):
         h3 = self.support.get_modal_title()
@@ -41,32 +41,26 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         h3 = self.support.get_modal_title()
         self.assertEqual(h3.text, "Passo 5: Categorias")
-        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal div.CategorySelect input")
+        self.driver.find_element_by_css_selector("#blackout_CuratedContentToolModal section code")
 
         self.support.skip_step_4()
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|canon|legends}}", textarea_value)
         self.assertIn("{{Personagem infobox\n|nome = Teste\n", textarea_value)
         self.assertIn("== Notas e referências ==\n", textarea_value)
 
     def test_anon_confirmation_leave(self):
-        self.driver.get("https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source&redlink=1")
-        self.support.wait_for_icp()
-        self.driver.execute_script(self.icp_content)
-        self.support.wait_for_new_icp(self.icp_content)
+        self.support.get_url("https://starwars.fandom.com/pt/wiki/Teste?veaction=editsource&redlink=1")
 
         modal = self.driver.find_element_by_css_selector("#CuratedContentToolModal")
         self.assertEqual(modal.value_of_css_property("width"), "500px")
 
         self.driver.find_element_by_css_selector("#CuratedContentToolModal section button.secondary").click()
-        self.assertEqual(self.driver.current_url, "https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source")
+        self.assertEqual(self.driver.current_url, "https://starwars.fandom.com/pt/wiki/Teste?veaction=editsource&redlink=1")
 
     def test_anon_confirmation_confirm(self):
-        redlink_url = "https://starwars.fandom.com/pt/wiki/Teste?action=edit&useeditor=source&redlink=1"
-        self.driver.get(redlink_url)
-        self.support.wait_for_icp()
-        self.driver.execute_script(self.icp_content)
-        self.support.wait_for_new_icp(self.icp_content)
+        redlink_url = "https://starwars.fandom.com/pt/wiki/Teste?veaction=editsource&redlink=1"
+        self.support.get_url(redlink_url)
 
         modal = self.driver.find_element_by_css_selector("#CuratedContentToolModal")
         self.assertEqual(modal.value_of_css_property("width"), "500px")
@@ -87,11 +81,11 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|canon}}", textarea_value)
 
     def test_eras_only_legends(self):
-        self.support.get_legends_article(self.icp_content)
+        self.support.get_legends_article()
 
         self.support.skip_step_0()
 
@@ -102,11 +96,11 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|legends}}", textarea_value)
 
     def test_eras_both_legends_and_canon(self):
-        self.support.get_legends_article(self.icp_content)
+        self.support.get_legends_article()
 
         self.support.skip_step_0()
 
@@ -117,7 +111,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|legends|canon}}", textarea_value)
 
     def test_out_universe_canon_article(self):
@@ -131,7 +125,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|canon|real}}", textarea_value)
 
     def test_out_universe_legends_article(self):
@@ -145,7 +139,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|legends|real}}", textarea_value)
 
     def test_out_universe_no_universe_article(self):
@@ -159,7 +153,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_3()
         self.support.skip_step_4()
 
-        textarea_value = self.support.get_wysiwyg_textarea_value()
+        textarea_value = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|real}}", textarea_value)
 
     def test_infobox_personagem_generation(self):
@@ -183,7 +177,7 @@ class TestICPSource(ICPTestSuite):
 
         self.support.skip_step_3()
         self.support.skip_step_4()
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
 
         excepted = textwrap.dedent("""\
         {{Personagem infobox
@@ -238,7 +232,7 @@ class TestICPSource(ICPTestSuite):
         self.support.skip_step_2()
         self.support.skip_step_3()
         self.support.skip_step_4()
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
         self.assertIn("{{%s" % chosen_infobox, wikitext)
 
     def test_real_world_infobox_skips_step_1(self):
@@ -288,7 +282,7 @@ class TestICPSource(ICPTestSuite):
         self.assertEqual(chosen_textarea.get_attribute('value'), "[[Teste]]")
 
     def test_step_2_link_button_legends(self):
-        self.support.get_legends_article(self.icp_content)
+        self.support.get_legends_article()
         self.support.skip_step_0()
         self.support.skip_step_1()
         self.support.wait_for_step_2_ready()
@@ -331,7 +325,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
         self.assertIn("\n== Aparições ==\n", wikitext)
         self.assertIn("\n*{{Filme|III}}", wikitext)
         self.assertNotIn("*[[Star Wars: Episode III Revenge of the Sith|", wikitext)
@@ -353,7 +347,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
         self.assertIn("\n== Aparições ==\n", wikitext)
         self.assertIn("\n*{{Filme|III}}", wikitext)
         self.assertNotIn("*[[Star Wars: Episode III Revenge of the Sith|", wikitext)
@@ -380,30 +374,10 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
         self.assertIn("\n== Bibliografia ==\n", wikitext)
         self.assertIn("{{ICPDisclaimer}}{{Interlang\n|en=Dave Filoni\n", wikitext)
     
-    def test_categories(self):
-        self.support.skip_step_0()
-        self.support.skip_step_1()
-        self.support.wait_for_step_2_ready()
-        self.support.skip_step_2()
-        self.support.skip_step_3()
-
-        self.driver.find_element_by_id("CategorySelectInput").send_keys('Machos')
-        self.driver.find_element_by_id("CategorySelectInput").send_keys(Keys.ENTER)
-        self.support.skip_step_4()
-
-        self.driver.find_element_by_id("wpDiff").click()
-        WebDriverWait(self.driver, 3).until(
-            lambda d: d.find_elements_by_css_selector("td.diff-addedline")
-        )
-        self.assertIn(
-            "[[Categoria:Machos]]",
-            [x.text for x in self.driver.find_elements_by_css_selector("td.diff-addedline div")]
-        )
-
     def test_return_steps(self):
         self.support.skip_step_0()
         self.support.skip_step_1()
@@ -415,6 +389,7 @@ class TestICPSource(ICPTestSuite):
         self.assertEqual(self.support.get_modal_title().text, "Passo 4: Fontes e Aparições")
 
         self.support.return_to_step(3)
+        self.support.wait_for_step_2_ready()
         self.assertEqual(self.support.get_modal_title().text, "Passo 3: Infobox")
 
         self.support.return_to_step(2)
@@ -441,7 +416,7 @@ class TestICPSource(ICPTestSuite):
         self.support.wait_for_wookiee_response()
         self.support.skip_step_4()
 
-        wikitext = self.support.get_wysiwyg_textarea_value()
+        wikitext = self.support.get_ve_wikitext()
         self.assertIn("{{Eras|canon}}", wikitext)
         self.assertNotIn("{{Eras|canon|legends}}", wikitext)
         self.assertIn("{{Planeta\n", wikitext)
@@ -450,8 +425,12 @@ class TestICPSource(ICPTestSuite):
 
     def test_config_always_show_on_page_creation(self):
         self.driver.find_element_by_id("configuracoesICP").click()
-        self.driver.find_element_by_css_selector(".modalContent input[type='checkbox']").click()
-        self.driver.find_elements_by_css_selector(".modalContent .wikia-button.secondary")[2].click()
+        WebDriverWait(self.driver, 5).until(
+            lambda d: len(d.find_elements_by_css_selector(".oo-ui-window-content-ready")) > 0
+        )
+        self.driver.execute_script('if ($("[id=\'ICPConfigModal\']").length > 1) $("#ICPConfigModal").remove();') # Temp
+        self.driver.find_elements_by_css_selector("form[name='config_form'] input[type='checkbox']")[-1].click()
+        self.driver.find_element_by_css_selector(".oo-ui-window-head span.oo-ui-actionWidget").click()
         alert = self.driver.switch_to.alert
         alert.dismiss()
 
@@ -460,8 +439,11 @@ class TestICPSource(ICPTestSuite):
 
     def test_config_version(self):
         self.driver.find_element_by_id("configuracoesICP").click()
-        icp_version = self.support.get_new_icp_version(self.icp_content)
-        self.assertIn(icp_version, self.driver.find_element_by_css_selector(".modalContent div>p").text)
+        WebDriverWait(self.driver, 5).until(
+            lambda d: len(d.find_elements_by_css_selector(".oo-ui-window-content-ready")) > 0
+        )
+        icp_version = self.support.get_new_icp_version()
+        self.assertIn(icp_version, self.driver.find_elements_by_css_selector(".oo-ui-window-body div>p")[-1].text)
     
     def tearDown(self):
         # print(list(filter(lambda x: 'ICP' in x['message'], self.driver.get_log('browser'))))
