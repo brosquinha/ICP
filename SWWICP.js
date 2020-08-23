@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.1-beta.1';
+    var ICPversion = '3.1.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
