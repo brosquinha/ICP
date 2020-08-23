@@ -25,13 +25,17 @@ var ICPBeta = setInterval(function() {
 ### Testes para UCP
 
 ```javascript
-var ICPUCP = setInterval(function() {
-  if (typeof SWWICP !== "undefined") {
-    $.getScript("https://rawgit.com/brosquinha/ICP/ucp-refactor/ICP.js");
-    $.getScript("https://rawgit.com/brosquinha/ICP/ucp-refactor/SWWICP.js");
-    clearInterval(ICPUCP);
-  }
-}, 200);
+(function() {
+  var alreadyLoaded = false;
+
+  mw.hook("dev.icp.init").add(function() {
+    if (alreadyLoaded) return;
+    $.getScript("https://rawgit.com/brosquinha/ICP/beta/ICP.js", function() {
+      alreadyLoaded = true;
+      $.getScript("https://rawgit.com/brosquinha/ICP/beta/SWWICP.js");
+    });
+  });
+})();
 ```
 
 ## Testes automatizados com Selenium

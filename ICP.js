@@ -11,7 +11,7 @@
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.1-beta.1';
+  var ICPversion = '2.0.1-beta.2';
 
   /**
    * ICP framework class
@@ -170,6 +170,7 @@ var ICP = (function($) {
     this.buildModal();
     this.buildProgressBar();
     if (this.anonMessage) steps.unshift(this.confirmAnon);
+    mw.hook("dev.icp.init").fire();
     this._controller(steps);
   };
 
