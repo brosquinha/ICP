@@ -16,7 +16,7 @@ class TestICPVisual(ICPTestSuite):
         super().set_up("https://starwars.fandom.com/pt/wiki/Teste?veaction=edit")
 
     def test_icp_full_flow(self):
-        self.support.wait_for_ve()
+        self.support.wait_for_old_ve()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
         )
@@ -61,7 +61,7 @@ class TestICPVisual(ICPTestSuite):
         self.assertEqual(self.driver.find_elements_by_css_selector("#WikiaArticle h2")[1].text, "Notas e referências")
 
     def test_add_categories(self):
-        self.support.wait_for_ve()
+        self.support.wait_for_old_ve()
         WebDriverWait(self.driver, 3).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Criando um novo artigo"
         )
@@ -98,7 +98,7 @@ class TestICPVisual(ICPTestSuite):
         self.assertTrue(wikitext.endswith("[[Categoria:Machos]]"))
 
     def test_cancel_categories(self):
-        self.support.wait_for_ve()
+        self.support.wait_for_old_ve()
         self.support.wait_for_icp()
 
         self.support.skip_step_0()

@@ -5,13 +5,13 @@
  * useful framework so that other communities can use it to build their own article creation tool.
  * 
  * @author Thales César
- * @version 2.0.0
+ * @version 2.0.1
  * @description Page Creation Interface framework
  */
 var ICP = (function($) {
   "use strict";
 
-  var ICPversion = '2.0.0';
+  var ICPversion = '2.0.1';
 
   /**
    * ICP framework class
@@ -170,6 +170,7 @@ var ICP = (function($) {
     this.buildModal();
     this.buildProgressBar();
     if (this.anonMessage) steps.unshift(this.confirmAnon);
+    mw.hook("dev.icp.init").fire();
     this._controller(steps);
   };
 
@@ -274,8 +275,10 @@ var ICP = (function($) {
    * Builds ICP's modal
    */
   ICP.prototype.buildModal = function() {
-    if (document.getElementById("blackout_CuratedContentToolModal") != "null")
+    if (document.getElementById("blackout_CuratedContentToolModal") != "null") {
       $("#blackout_CuratedContentToolModal").remove();
+      $("#ICPConfigModal").remove();
+    }
     $('body').append('<div id="blackout_CuratedContentToolModal" class="wds-dialog__curtain curated-content-tool-modal__curtain" style="z-index:450">'
       +'<div id="CuratedContentToolModal" class="wds-dialog__wrapper no-scroll curated-content-tool-modal"'
           +' style="display: flex; flex-direction: column; max-width: 700px; width: 700px;">'
@@ -365,7 +368,7 @@ var ICP = (function($) {
         settingsObj.default_action = 1;
       else
         settingsObj.default_action = 0;
-      localStorage.ICPsettings = JSON.stringify(settingsObj);
+      mw.storage.set("ICPsettings", JSON.stringify(settingsObj));
       alert("Alterações salvas!");
     } else if (action == "feedback") {
       var feedbackTxt = prompt("Envie um comentário sobre essa ferramenta para os administradores: ");
@@ -592,7 +595,7 @@ var ICP = (function($) {
    * @param {String} size CSS width
    */
   ICP.prototype.resizeModal = function(size) {
-    $("#CuratedContentToolModal").css('width', size || "");
+    $("#CuratedContentToolModal").css('width', size || "700px");
   };
 
   /**
@@ -782,14 +785,10 @@ var ICP = (function($) {
   };
 
   ICP.prototype._getICPSettings = function() {
-    var settings = {};
-    if (localStorage.ICPsettings) {
-      settings = JSON.parse(localStorage.ICPsettings);
-      this.userActions.ICPconfig = localStorage.ICPsettings;
-    } else {
-      settings.default_action = 1;
-      this.userActions.ICPconfig = false;
-    }
+    var defaultSettings = {default_action: 1};
+    var settingsRaw = (mw.storage && mw.storage.get("ICPsettings")) || JSON.stringify(defaultSettings);
+    var settings = JSON.parse(settingsRaw);
+    this.userActions.ICPconfig = settingsRaw;
     return settings;
   };
 
