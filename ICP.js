@@ -15,6 +15,20 @@ var ICP = (function($) {
 
   /**
    * ICP framework class
+   * @property {String} version ICP version
+   * @property {String} articleName Article name
+   * @property {String} articleTitle Article title
+   * @property {String[]} articleWikitext Array of step's generated wikitext
+   * @property {Boolean} wysiwyg Whether user is using WYSIWYG editor (deprecated)
+   * @property {Object} userActions Metrics about user ICP usage
+   * @property {MwApi} mwApi MediaWiki's API object wrapper
+   * @property {VeUiSurface} VESurface VisualEditor's Surface object
+   * @property {Boolean} anonMessage Whether to show a warning message to anons before continuing
+   * @property {Boolean} sendFeedbackEnabled Enables send feedback mechanism
+   * @property {Boolean} closeFeedbackEnabled Enables a prompt to ask for user feedback beforing aborting
+   * @property {Boolean} wikitextAutoReset Enables wikitext automatic reset for a step reset
+   * @property {Boolean} replaceArticleWikitext Whether ICP should replace article's previous wikitext (deprecated)
+   * @property {Boolean} replaceFandomStandardLayout Whether ICP should replace Fandom's Standard Layout (deprecated)
    * @exports ICP
    */
   var ICP = function() {
@@ -38,10 +52,12 @@ var ICP = (function($) {
   };
 
   /**
-   * Wraps a given function in order to handle any untreated exceptions
-   * 
-   * Inspired by https://blog.sentry.io/2016/01/04/client-javascript-reporting-window-onerror
-   * 
+   * @summary Wraps a given function in order to handle any untreated exceptions
+   * @description Inspired by {@link https://blog.sentry.io/2016/01/04/client-javascript-reporting-window-onerror}
+   * @example
+   * $("#elementId").click(this.errorHandler(function() {
+   *    // ...
+   * }));
    * @param {Function} fn Function to be wrapped
    * @returns {Function} Wrapped function
    */
@@ -142,6 +158,7 @@ var ICP = (function($) {
    * because mediawiki.api would get stuck at "loading" status. This forces mw.Api
    * to load by calling it directly, bypassing any cache or mw.loader controll.
    * With any luck, this should not happen in production.
+   * @private
    */
   ICP.prototype.forceMwApiLoad = function() {
     mw.loader.load("https://slot1-images.wikia.nocookie.net/__load/-/debug%3Dfalse%26lang%3Dpt-br%26skin%3Doasis%26version%3D1591798434636-20200610T140000Z/mediawiki.api");
@@ -164,6 +181,7 @@ var ICP = (function($) {
 
   /**
    * ICP logic flow manager
+   * @private
    */
   ICP.prototype.controller = function() {
     var steps = this.getSteps();
@@ -225,50 +243,6 @@ var ICP = (function($) {
    */
   ICP.prototype.isNewArticle = function() {
     return mw.config.get("wgArticleId") === 0;
-  };
-
-  /**
-   * Article wikitext manager
-   * 
-   * Each step should produce only one small piece of the
-   * generated wikitext for the article structure. As such,
-   * step's funcions should use this class to correctly and
-   * independently manage its wikitext
-   * 
-   * @param {ICP} icp ICP instance
-   * @param {Number} stepIndex Step index number
-   * @exports StepWikitext
-   */
-  var StepWikitext = function(icp, stepIndex) {
-    this.icp = icp;
-    this.index = stepIndex;
-    if (this.icp.articleWikitext[this.index] === undefined || this.icp.wikitextAutoReset)
-      this.icp.articleWikitext[this.index] = "";
-  };
-
-  /**
-   * Resets step's accumulated wikitext
-   */
-  StepWikitext.prototype.reset = function() {
-    this.icp.articleWikitext[this.index] = "";
-  };
-
-  /**
-   * Appends wikitext code to accumulated step's wikitext
-   * 
-   * @param {String} text Wikitext code
-   */
-  StepWikitext.prototype.append = function(text) {
-    this.icp.articleWikitext[this.index] += text;
-  };
-  
-  /**
-   * Returns generated step's wikitext
-   * 
-   * @returns {String} Wikitext code
-   */
-  StepWikitext.prototype.get = function() {
-    return this.icp.articleWikitext[this.index];
   };
 
   /**
@@ -380,6 +354,10 @@ var ICP = (function($) {
     }
   }
 
+  /**
+   * Builds ICP's progress bar
+   * @private
+   */
   ICP.prototype.buildProgressBar = function() {
     var instance = this;
     var olElement = document.createElement("ol");
@@ -402,6 +380,10 @@ var ICP = (function($) {
     $("#CuratedContentToolModal nav").html(olElement);
   };
 
+  /**
+   * Updates progress bar with last step executed
+   * @private
+   */
   ICP.prototype.updateProgressBar = function() {
     var liElements = $("#CuratedContentToolModal nav ol li");
     var numSteps = this.getSteps().length;
@@ -472,121 +454,6 @@ var ICP = (function($) {
     });
     $("#CuratedContentToolModal section").append(button);
     return dfd.promise();
-  };
-
-  /**
-   * Manager for building infobox inside ICP modal
-   * 
-   * @param {String} content HTML content for description
-   * @param {String} title Infobox's title
-   * @param {Object} [options] Options
-   * @param {String} [options.infoboxClassList] Infobox class list
-   * @exports ModalInfobox
-   */
-  var ModalInfobox = function(content, title, options) {
-    options = options || {};
-    var container = document.createElement("div");
-    container.style.position = "relative";
-    var contentDiv = document.createElement("div");
-    contentDiv.style.position = "fixed";
-    contentDiv.innerHTML = content;
-    container.appendChild(contentDiv);
-    var infoboxRoot = document.createElement("aside");
-    infoboxRoot.classList = options.infoboxClassList || "portable-infobox pi-background pi-theme-Media pi-layout-default";
-    var infoboxTitle = document.createElement("h2");
-    infoboxTitle.classList = "pi-item pi-item-spacing pi-title";
-    infoboxTitle.innerText = title;
-    infoboxRoot.appendChild(infoboxTitle);
-    container.appendChild(infoboxRoot);
-    this.container = container;
-    this.infoboxRoot = infoboxRoot;
-    this.textareaValues = {};
-  };
-
-  /**
-   * Adds a infobox field with textarea for user to write
-   * 
-   * @param {String} label Infobox field label
-   * @param {String} source Infobox field source name
-   * @param {Object} [options] Field options
-   * @param {String} [options.value] Textarea initial value
-   * @param {HTMLElement} [options.element] Infobox field value (defaults to textarea)
-   */
-  ModalInfobox.prototype.addInfoboxField = function(label, source, options) {
-    options = options || {};
-    var infoboxField = document.createElement("div");
-    infoboxField.classList = "pi-item pi-data pi-item-spacing pi-border-color";
-    var infoboxFieldLabel = document.createElement("h3");
-    infoboxFieldLabel.classList = "pi-data-label pi-secondary-font";
-    infoboxFieldLabel.textContent = label;
-    var infoboxFieldValue = document.createElement("div");
-    infoboxFieldValue.classList = "pi-data-value pi-font";
-    if (options.element) {
-      infoboxFieldValue.appendChild(options.element);
-    } else {
-      var textarea = document.createElement("textarea");
-      textarea.placeholder = "Preencher";
-      if (options.value) textarea.value = options.value;
-      infoboxFieldValue.appendChild(textarea);
-      this.textareaValues[source] = textarea;
-    }
-    infoboxField.appendChild(infoboxFieldLabel);
-    infoboxField.appendChild(infoboxFieldValue);
-    this.infoboxRoot.appendChild(infoboxField);
-  };
-
-  /**
-   * 
-   * @param {String} label Infobox field label
-   * @param {String} source Infobox field source name
-   * @param {Object} selectOptions Select options
-   * @param {String} selectOptions.id Select id
-   * @param {Function} selectOptions.callback Select callback for change event
-   * @param {Object[]} selectOptions.options Select options for select's options
-   * @param {String} selectOptions.options[].value Select element value
-   * @param {String} selectOptions.options[].label Select element label
-   */
-  ModalInfobox.prototype.addInfoboxFieldSelect = function(label, source, selectOptions) {
-    var select = document.createElement("select");
-    if (selectOptions.id) select.id = selectOptions.id;
-    selectOptions.options.forEach(function(option) {
-      var optionElem = document.createElement("option");
-      optionElem.value = option.value;
-      optionElem.textContent = option.label;
-      select.appendChild(optionElem);
-    });
-    if (selectOptions.callback) $(select).change(selectOptions.callback);
-    this.addInfoboxField(label, source, {element: select});
-    this.textareaValues[source] = select;
-  };
-
-  /**
-   * Returns infobox root element
-   * 
-   * @returns {HTMLElement} Aside element
-   */
-  ModalInfobox.prototype.getInfoboxRoot = function() {
-    return this.infoboxRoot;
-  };
-
-  /**
-   * Inserts infobox content into modal
-   */
-  ModalInfobox.prototype.getContent = function() {
-    return this.container;
-  };
-
-  /**
-   * Returns all user input on all textareas by source field name
-   * 
-   * @returns {Object} User input by field
-   */
-  ModalInfobox.prototype.getValues = function() {
-    var values = {};
-    for (var source in this.textareaValues) {
-      values[source] = this.textareaValues[source].value;
-    }
-    return values;
   };
 
   /**
@@ -769,6 +636,12 @@ var ICP = (function($) {
     }
   }
 
+  /**
+   * Encondes given string s URI
+   * 
+   * @param {String} txt String to be encoded
+   * @returns {String} Encoded string
+   */
   ICP.prototype.encodeURL = function(txt) {
     return encodeURI(txt.replace(/ /g, "_"));
   };
@@ -792,18 +665,49 @@ var ICP = (function($) {
     return settings;
   };
 
+  /**
+   * @summary Condition which must be satisfied in order to ICP to open up
+   * @description Can be overwritten by child class if you wish to enforce different condition.
+   * @returns {Boolean} Whether ICP should open up or not
+   */
   ICP.prototype.shouldOpenICP = function() {
     return ((this.isNewArticle() && this.isMainNamespace()) || this.isSpecialCreatePage());
   };
 
+  /**
+   * @summary How to define article formatted title
+   * @description Can be overwritten by child class if you wish to have different rules
+   *              (e.g., removing namespace prefix)
+   * @param {String} articleTitle ICP's articleName
+   * @returns {String} Article formatted title
+   */
   ICP.prototype.setArticleTitle = function(articleTitle) {
     this.articleTitle = articleTitle;
   };
 
+  /**
+   * Send feedback function
+   */
   ICP.prototype.sendFeedback = function() {
     return null;
   };
 
+  /**
+   * @summary ICP initialization flow
+   * @description Should be called with <code>errorHandler</code> in order to avoid crashing ICP if any
+   *              unexpected errors occur
+   * @example
+   * mw.hook("dev.icp").add(function(icpModule) {
+   *    ICP = icpModule.ICP;
+   *    StepWikitext = icpModule.StepWikitext;
+   *    ModalInfobox = icpModule.ModalInfobox;
+   *    icpModule.extend(MyWiki);
+   *
+   *    var mywiki = new MyWiki();
+   *    mywiki.errorHandler(mywiki.init);
+   *    mywiki.init.__errorHandler__();
+   * });
+   */
   ICP.prototype.init = function() {
     var instance = this;
     console.info('ICP init v'+this.version+' with base v'+ICPversion);
@@ -846,6 +750,189 @@ var ICP = (function($) {
           $("#ca-edit").click(function() {instance.controller() });
         }
     }
+  };
+
+  /**
+   * @summary Article wikitext manager
+   * @description Each step should produce only one small piece of the
+   *              generated wikitext for the article structure. As such,
+   *              step's funcions should use this class to correctly and
+   *              independently manage its wikitext
+   * @example
+   * MyICP.prototype.myStep = function() {
+   *    var dfd = new $.Deferred();
+   * 
+   *    var wikitext = new StepWikitext(this, this._currentStepIndex);
+   *    wikitext.append("[[Hello world]]\n");
+   * 
+   *    dfd.resolve();
+   *    return dfd;
+   * };
+   * @param {ICP} icp ICP instance
+   * @param {Number} stepIndex Step index number
+   * @exports StepWikitext
+   */
+  var StepWikitext = function(icp, stepIndex) {
+    this.icp = icp;
+    this.index = stepIndex;
+    if (this.icp.articleWikitext[this.index] === undefined || this.icp.wikitextAutoReset)
+      this.icp.articleWikitext[this.index] = "";
+  };
+
+  /**
+   * Resets step's accumulated wikitext
+   */
+  StepWikitext.prototype.reset = function() {
+    this.icp.articleWikitext[this.index] = "";
+  };
+
+  /**
+   * Appends wikitext code to accumulated step's wikitext
+   * 
+   * @param {String} text Wikitext code
+   */
+  StepWikitext.prototype.append = function(text) {
+    this.icp.articleWikitext[this.index] += text;
+  };
+  
+  /**
+   * Returns generated step's wikitext
+   * 
+   * @returns {String} Wikitext code
+   */
+  StepWikitext.prototype.get = function() {
+    return this.icp.articleWikitext[this.index];
+  };
+
+  /**
+   * Manager for building infobox inside ICP modal
+   * 
+   * @example
+   * MyICP.prototype.infoboxStep = function() {
+   *    var dfd = new $.Deferred();
+   *    // ...
+   *    var modalContent = new ModalInfobox(modalToolbox, this.articleTitle);
+   *    modalContent.addInfoboxFieldSelect("Character type", "type", selectOptions);
+   *    modalContent.addInfoboxField(labelTagText, "field", opts);
+   *    this.appendButtonToModalBody("Done").then(function() {
+   *        var infoboxContent = modalContent.getValues();
+   *        // infoboxContent = {"type": "userInput", "field": "anotherUserInput"} ...
+   *    });
+   * };
+   * 
+   * @param {String} content HTML content for description
+   * @param {String} title Infobox's title
+   * @param {Object} [options] Options
+   * @param {String} [options.infoboxClassList] Infobox class list
+   * @exports ModalInfobox
+   */
+  var ModalInfobox = function(content, title, options) {
+    options = options || {};
+    var container = document.createElement("div");
+    container.style.position = "relative";
+    var contentDiv = document.createElement("div");
+    contentDiv.style.position = "fixed";
+    contentDiv.innerHTML = content;
+    container.appendChild(contentDiv);
+    var infoboxRoot = document.createElement("aside");
+    infoboxRoot.classList = options.infoboxClassList || "portable-infobox pi-background pi-theme-Media pi-layout-default";
+    var infoboxTitle = document.createElement("h2");
+    infoboxTitle.classList = "pi-item pi-item-spacing pi-title";
+    infoboxTitle.innerText = title;
+    infoboxRoot.appendChild(infoboxTitle);
+    container.appendChild(infoboxRoot);
+    this.container = container;
+    this.infoboxRoot = infoboxRoot;
+    this.textareaValues = {};
+  };
+
+  /**
+   * Adds a infobox field with textarea for user to write
+   * 
+   * @param {String} label Infobox field label
+   * @param {String} source Infobox field source name
+   * @param {Object} [options] Field options
+   * @param {String} [options.value] Textarea initial value
+   * @param {HTMLElement} [options.element] Infobox field value (defaults to textarea)
+   */
+  ModalInfobox.prototype.addInfoboxField = function(label, source, options) {
+    options = options || {};
+    var infoboxField = document.createElement("div");
+    infoboxField.classList = "pi-item pi-data pi-item-spacing pi-border-color";
+    var infoboxFieldLabel = document.createElement("h3");
+    infoboxFieldLabel.classList = "pi-data-label pi-secondary-font";
+    infoboxFieldLabel.textContent = label;
+    var infoboxFieldValue = document.createElement("div");
+    infoboxFieldValue.classList = "pi-data-value pi-font";
+    if (options.element) {
+      infoboxFieldValue.appendChild(options.element);
+    } else {
+      var textarea = document.createElement("textarea");
+      textarea.placeholder = "Preencher";
+      if (options.value) textarea.value = options.value;
+      infoboxFieldValue.appendChild(textarea);
+      this.textareaValues[source] = textarea;
+    }
+    infoboxField.appendChild(infoboxFieldLabel);
+    infoboxField.appendChild(infoboxFieldValue);
+    this.infoboxRoot.appendChild(infoboxField);
+  };
+
+  /**
+   * Adds a infobox field with a select box for user to select
+   * 
+   * @param {String} label Infobox field label
+   * @param {String} source Infobox field source name
+   * @param {Object} selectOptions Select options
+   * @param {String} selectOptions.id Select id
+   * @param {Function} selectOptions.callback Select callback for change event
+   * @param {Object[]} selectOptions.options Select options for select's options
+   * @param {String} selectOptions.options[].value Select element value
+   * @param {String} selectOptions.options[].label Select element label
+   */
+  ModalInfobox.prototype.addInfoboxFieldSelect = function(label, source, selectOptions) {
+    var select = document.createElement("select");
+    if (selectOptions.id) select.id = selectOptions.id;
+    selectOptions.options.forEach(function(option) {
+      var optionElem = document.createElement("option");
+      optionElem.value = option.value;
+      optionElem.textContent = option.label;
+      select.appendChild(optionElem);
+    });
+    if (selectOptions.callback) $(select).change(selectOptions.callback);
+    this.addInfoboxField(label, source, {element: select});
+    this.textareaValues[source] = select;
+  };
+
+  /**
+   * Returns infobox root element
+   * 
+   * @returns {HTMLElement} Aside element
+   */
+  ModalInfobox.prototype.getInfoboxRoot = function() {
+    return this.infoboxRoot;
+  };
+
+  /**
+   * Inserts infobox content into modal
+   * 
+   * @returns {HTMLDivElement} Infobox's div element
+   */
+  ModalInfobox.prototype.getContent = function() {
+    return this.container;
+  };
+
+  /**
+   * Returns all user input on all textareas by source field name
+   * 
+   * @returns {Object} User input by field
+   */
+  ModalInfobox.prototype.getValues = function() {
+    var values = {};
+    for (var source in this.textareaValues) {
+      values[source] = this.textareaValues[source].value;
+    }
+    return values;
   };
 
   /**
