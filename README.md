@@ -48,3 +48,28 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 python3 -m unittest discover -s tests/
 ```
+
+## Rodar ESLinter
+
+Requer NodeJS > 10.0.0.
+
+```bash
+npm install
+npx eslint ICP.js SWWICP.js --fix
+```
+
+## Gerar documentação
+
+```bash
+npm install
+./node_modules/.bin/jsdoc ICP.js README.md --destination docs --template ./node_modules/minami
+```
+
+Para subir a documentação para o GitHub Pages:
+
+```bash
+git checkout docs
+git add docs/
+git commit -m "Update documentation"
+git push origin docs
+```
