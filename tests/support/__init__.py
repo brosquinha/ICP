@@ -4,9 +4,10 @@ from time import sleep
 from unittest import TestCase
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, UnexpectedAlertPresentException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.expected_conditions import alert_is_present
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
 
@@ -14,9 +15,8 @@ class ICPTestSuite(TestCase):
     
     @classmethod
     def setUpClass(cls):
-        chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
-        cls.driver = webdriver.Chrome(executable_path=chromedriver_path)
-        cls.support = Support(cls.driver)
+        cls.support = Support()
+        cls.driver = cls.support.driver
         with open('ICP.js') as f:
             cls.support.icp_content = f.read()
         with open('SWWICP.js') as f:
@@ -26,20 +26,27 @@ class ICPTestSuite(TestCase):
         pass
 
     def set_up(self, url):
-        self.driver.implicitly_wait(3)
+        self.support.driver.implicitly_wait(3)
         self.support.get_url(url)
         self.support.clear_localstorage()
+        self.driver = self.support.driver
 
     @classmethod
     def tearDownClass(cls):
-        Support(cls.driver).treat_eventual_alert()
-        cls.driver.close()
+        cls.support.treat_eventual_alert()
+        cls.support.driver.close()
 
 
 class Support():
 
-    def __init__(self, driver):
-        self.driver = driver
+    def __init__(self):
+        chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
+        chrome_prefs = {
+            "download.default_directory": "/dev/null"
+        }
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_experimental_option("prefs", chrome_prefs)
+        self.driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
     
     def get_new_icp_version(self):
         return re.findall(r"var ICPversion = \'(.*)\'\;", self.icp_content)[0]
@@ -74,11 +81,16 @@ class Support():
         )
     
     def get_url(self, url):
-        self.driver.get(url)
-        self.wait_for_ve()
-        self.wait_for_icp()
-        self.load_new_icp()
-        self.wait_for_new_icp()
+        try:
+            self.driver.get(url)
+            self.wait_for_ve()
+            self.wait_for_icp()
+            self.load_new_icp()
+            self.wait_for_new_icp()
+        except UnexpectedAlertPresentException:
+            self.driver.close()
+            self.__init__()
+            self.get_url(url)
     
     def get_legends_article(self):
         self.get_url("https://starwars.fandom.com/pt/wiki/Legends:Teste?action=edit&useeditor=source")
@@ -89,6 +101,7 @@ class Support():
     def skip_step_0(self):
         self.driver.find_element_by_css_selector(
             "#ICPNewArticleGrid div[data-tipo='Personagem infobox']").click()
+        sleep(0.5)
 
     def skip_step_1(self):
         sleep(0.5)
@@ -120,7 +133,7 @@ class Support():
         )
 
     def wait_for_wookiee_response(self):
-        WebDriverWait(self.driver, 10).until(
+        WebDriverWait(self.driver, 15).until(
             lambda d: d.find_element_by_css_selector("#blackout_CuratedContentToolModal h3").text == "Passo 5: Categorias"
         )
     
