@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.1';
+    var ICPversion = '3.1.2';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -524,7 +524,6 @@ var SWWICP = (function($) {
         wookieeWikitext += "== Bibliografia =="+wookiee.bibliography;
       wookieeWikitext = wookieeWikitext.trimEnd();
       wookieeWikitext += "\n\n== Notas e referências ==\n{{Reflist}}\n\n";
-      wookieeWikitext += this._addInterlang(wookiee);
   
       this.apiGetPageContents("Star Wars Wiki:Apêndice de Tradução de obras/JSON").then(this.errorHandler(function(data) {
         var fixes = JSON.parse(data.replace("<pre>", '').replace("</pre>", ''));
@@ -532,6 +531,7 @@ var SWWICP = (function($) {
           var txtRegEx = new RegExp(fixes.replacements[i][0], "g");
           wookieeWikitext = wookieeWikitext.replace(txtRegEx, fixes.replacements[i][1]);
         }
+        wookieeWikitext += this._addInterlang(wookiee);
         wikitext.append(wookieeWikitext);
         dfd.resolve();
       }));
