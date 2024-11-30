@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.1.2';
+    var ICPversion = '3.2.0';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -221,32 +221,67 @@ var SWWICP = (function($) {
       else
       {
         //In-universe article
+        var availableEras;
         modalContent = '<img src="';
-        modalContent += (this.isCanonNamespace) ? "https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png" : "https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png";
+        modalContent += (this.isCanonNamespace) ? "https://vignette.wikia.nocookie.net/pt.starwars/images/0/07/Eras-canon-transp.png" : "https://vignette.wikia.nocookie.net/pt.starwars/images/8/8d/Eras-legends.png";
         modalContent += '" style="width:150px;float:right;" />';
         modalContent += '<p style="font-size:14px">Esse artigo existe no universo <span style="font-weight:bold">';
         if (this.isCanonNamespace)
         {
+          availableEras = [
+            ["dotj", "Era do Alvorecer dos Jedi", "https://static.wikia.nocookie.net/ptstarwars/images/a/a9/DawnofJediWhite.png"],
+            ["tor", "Era da Velha República", "https://static.wikia.nocookie.net/ptstarwars/images/9/93/TORWhite.png"],
+            ["thr", "Era da Alta República", "https://static.wikia.nocookie.net/ptstarwars/images/1/10/HighRepublicBlack.png"],
+            ["fotj", "Era da Queda dos Jedi", "https://static.wikia.nocookie.net/ptstarwars/images/2/2d/RepublicWhite.png"],
+            ["rote", "Era do Império", "https://static.wikia.nocookie.net/ptstarwars/images/a/a6/Imp_roundel_alt.svg"],
+            ["aor", "Era da Rebelião", "https://static.wikia.nocookie.net/ptstarwars/images/9/9b/BlackRebelStarbird.png"],
+            ["tnr", "Era da Nova República", "https://static.wikia.nocookie.net/ptstarwars/images/b/b8/NewRepubWhite.png"],
+            ["rofo", "Era da Ascensão da Primeira Ordem", "https://static.wikia.nocookie.net/ptstarwars/images/9/97/FirstOrderWhite.png"],
+            ["cnjo", "Era da Nova Ordem Jedi", "https://static.wikia.nocookie.net/ptstarwars/images/5/56/NJOWhite.png"]
+          ];
           modalContent += 'Cânon';
-          txtButtonYes = 'Sim, também existe no <i>Legends</i>';
-          txtButtonNo = 'Não, existe somente no Cânon';
+          txtButtonYes = 'Também existe no <i>Legends</i>';
+          txtButtonNo = 'Existe somente no Cânon';
           wikitext.append("{{Eras|canon");
         }
         else
         {
+          availableEras = [
+            ["pre", "Era da Pré-República", "https://static.wikia.nocookie.net/ptstarwars/images/4/4e/30px-Era-pre.png"],
+            ["antr", "Era Anterior à República", "https://static.wikia.nocookie.net/ptstarwars/images/4/4e/30px-Era-pre.png"],
+            ["velha", "Era da Velha República", "https://static.wikia.nocookie.net/ptstarwars/images/9/97/Era-old.png"],
+            ["ascimp", "Era da Ascensão do Império", "https://static.wikia.nocookie.net/ptstarwars/images/4/4c/30px-Era-imp.png"],
+            ["reb", "Era da Rebelião", "https://static.wikia.nocookie.net/ptstarwars/images/d/d3/30px-Era-reb.png"],
+            ["nova", "Era da Nova República", "https://static.wikia.nocookie.net/ptstarwars/images/8/8f/30px-Era-new.png"],
+            ["noj", "Era da Nova Ordem Jedi", "https://static.wikia.nocookie.net/ptstarwars/images/b/bf/30px-Era-njo.png"],
+            ["leg", "Era do Legado", "https://static.wikia.nocookie.net/ptstarwars/images/d/d8/30px-Era-leg.png"]
+          ];
           modalContent += '<i>Legends</i>';
-          txtButtonYes = 'Sim, também existe no Cânon';
-          txtButtonNo = 'Não, existe somente no <i>Legends</i>';
+          txtButtonYes = 'Também existe no Cânon';
+          txtButtonNo = 'Existe somente no <i>Legends</i>';
           wikitext.append("{{Eras|legends");
         }
-        modalContent += '</span>. Ele existe também no outro universo?</p>';
+        modalContent += '</span>. Selecione as Eras nas quais o tópico do artigo percente, e depois indique se ele existe também no outro universo</p>';
+        modalContent += '<div id="erasOptions" style="display:flex;justify-content:space-around;">';
+        availableEras.forEach(function(eraItem) {
+          modalContent += '<label style="display:flex;flex-direction:column;" title="'+eraItem[1]+'">';
+          modalContent += '<input type="checkbox" name="'+eraItem[0]+'" /><img src="'+eraItem[2]+'" style="width:30px" /></label>';
+        });
+        var addSelectedEras = this.errorHandler(function() {
+          $("#erasOptions input:checked").each(function(index) {
+            wikitext.append("|" + $(this).attr('name'))
+          });
+        });
         this.updateModalBody(modalContent);
         this.appendButtonToModalBody(txtButtonYes).then(this.errorHandler(function(button) {
-          wikitext.append((instance.isCanonNamespace) ? "|legends}}\n" : "|canon}}\n");
+          wikitext.append((instance.isCanonNamespace) ? "|legends" : "|canon");
+          addSelectedEras();
+          wikitext.append("}}\n");
           instance.userActions.erasAnswer = true;
           dfd.resolve();
         }));
         this.appendButtonToModalBody(txtButtonNo).then(this.errorHandler(function(button) {
+          addSelectedEras();
           wikitext.append("}}\n");
           instance.userActions.erasAnswer = false;
           dfd.resolve();
