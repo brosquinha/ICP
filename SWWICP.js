@@ -10,7 +10,7 @@
 var SWWICP = (function($) {
     "use strict";
   
-    var ICPversion = '3.2.0';
+    var ICPversion = '3.2.1';
     var ICP;
     var ModalInfobox;
     var StepWikitext;
@@ -499,7 +499,9 @@ var SWWICP = (function($) {
       var instance = this;
       var success = this.errorHandler(function(data) {
         try {
-          data = JSON.parse(data);
+          var pageId = Object.keys(data.query.pages)[0];
+          if (pageId == '-1') dfd.reject();
+          data = data.query.pages[pageId].revisions[0]['*'];
         } catch (e) {
           data = false;
         }
@@ -516,8 +518,9 @@ var SWWICP = (function($) {
         console.warn(error);
         dfd.reject();
       };
-      this.ajaxGet("https://www.99luca11.com/sww_helper?legacy=false&qm="+this.encodeURL(wookieePagename), success, error);
-      // After migrating Wookiee and SWW to UCP, maybe we can replace this for https://www.mediawiki.org/wiki/Manual:CORS
+      
+      var wookieApi = new mw.Api({ajax: {url: 'https://starwars.fandom.com/api.php'}});
+      wookieApi.get({action: 'query', prop: 'revisions', titles: wookieePagename, rvprop: 'content'}).then(success).fail(error);
       return dfd.promise();
     };
   
